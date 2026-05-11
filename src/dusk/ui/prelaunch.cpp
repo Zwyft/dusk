@@ -7,6 +7,7 @@
 #include "dusk/settings.h"
 #include "dusk/ui/mods.hpp"
 #include "dusk/update_check.hpp"
+#include "modal.hpp"
 #include "preset.hpp"
 #include "settings.hpp"
 #include "version.h"

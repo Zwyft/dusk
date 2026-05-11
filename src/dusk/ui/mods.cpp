@@ -39,7 +39,7 @@ ModsWindow::ModsWindow() : Document(kModsRml) {
     mModCount = mDocument->GetElementById("mod-count");
 
     if (auto* openBtn = mDocument->GetElementById("open-folder-btn")) {
-        openBtn->AddEventListener(Rml::EventId::Click,
+        listen(openBtn, Rml::EventId::Click,
             [](Rml::Event& ev) {
                 mod_manager::open_mods_folder();
                 ev.StopPropagation();
@@ -47,7 +47,7 @@ ModsWindow::ModsWindow() : Document(kModsRml) {
     }
 
     if (auto* refreshBtn = mDocument->GetElementById("refresh-btn")) {
-        refreshBtn->AddEventListener(Rml::EventId::Click,
+        listen(refreshBtn, Rml::EventId::Click,
             [this](Rml::Event& ev) {
                 mod_manager::refresh_all();
                 mNeedsRefresh = true;
@@ -105,7 +105,7 @@ void ModsWindow::build_mod_list(Rml::Element* parent) {
 
         // Capture mod ID for callback
         std::string modId = mod.id;
-        toggle->AddEventListener(Rml::EventId::Click,
+        listen(toggle, Rml::EventId::Click,
             [this, modId](Rml::Event& ev) {
                 auto mods = mod_manager::scan_mods();
                 for (auto& m : mods) {

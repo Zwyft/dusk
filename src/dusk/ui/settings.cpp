@@ -1170,8 +1170,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             {
                 .key = "Discord Rich Presence",
                 .helpText = "Show the current game status on your Discord profile. Requires a restart to take effect.",
-                .isDisabled = [] { return IsMobile; },
                 .onChange = [](bool) { config::Save(); },
+                .isDisabled = [] { return IsMobile; },
             });
         config_bool_select(leftPane, rightPane, getSettings().backend.portableMode,
             {
