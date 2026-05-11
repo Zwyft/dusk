@@ -60,6 +60,14 @@ jobs:
       - name: Patch aurora
         run: python3 ci/patch-aurora.py
 
+      - name: Restore sccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sccache
+          key: sccache-linux-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          restore-keys: |
+            sccache-linux-${{ runner.arch }}-
+
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
@@ -117,6 +125,14 @@ jobs:
           sed -i '' 's/queuedPipelines = 0/g_stats.queuedPipelines = 0/g' extern/aurora/lib/gfx/pipeline_cache.cpp
           sed -i '' 's/createdPipelines = 0/g_stats.createdPipelines = 0/g' extern/aurora/lib/gfx/pipeline_cache.cpp
 
+      - name: Restore sccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Mozilla.sccache
+          key: sccache-macos-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          restore-keys: |
+            sccache-macos-${{ runner.arch }}-
+
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
@@ -165,6 +181,14 @@ jobs:
 
       - name: Patch aurora
         run: python3 ci/patch-aurora.py
+
+      - name: Restore sccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\Mozilla\sccache\cache
+          key: sccache-windows-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          restore-keys: |
+            sccache-windows-${{ runner.arch }}-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
