@@ -25,7 +25,7 @@ def apply(path: Path, old: str, new: str, description: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# card.cpp: prefer {exeDir}/saves/ over AppData in CARDInit
+# card.cpp: prefer local saves/ folder in CARDInit
 # ---------------------------------------------------------------------------
 apply(
     CARD,
@@ -36,27 +36,27 @@ apply(
 
 apply(
     CARD,
-    "  std::string cardWorkingDir;\n"
+    "  std::filesystem::path cardWorkingDir;\n"
     "  if (aurora::g_config.configPath != nullptr)\n"
-    "    cardWorkingDir = aurora::g_config.configPath;\n"
+    "    cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.configPath);\n"
     "  else\n"
-    "    cardWorkingDir = std::filesystem::current_path().string();",
-    "  std::string cardWorkingDir;\n"
+    "    cardWorkingDir = std::filesystem::current_path();",
+    "  std::filesystem::path cardWorkingDir;\n"
     "  {\n"
     "    const char* basePath = SDL_GetBasePath();\n"
     "    if (basePath != nullptr) {\n"
     '      std::filesystem::path localSaves = std::filesystem::path(basePath) / "saves";\n'
     "      SDL_free((void*)basePath);\n"
     "      if (std::filesystem::exists(localSaves)) {\n"
-    "        cardWorkingDir = localSaves.string();\n"
-    '        Log.info("Using local saves folder: {}", cardWorkingDir);\n'
+    "        cardWorkingDir = localSaves;\n"
+    '        Log.info("Using local saves folder: {}", localSaves.string());\n'
     "      }\n"
     "    }\n"
     "    if (cardWorkingDir.empty()) {\n"
     "      if (aurora::g_config.configPath != nullptr)\n"
-    "        cardWorkingDir = aurora::g_config.configPath;\n"
+    "        cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.configPath);\n"
     "      else\n"
-    "        cardWorkingDir = std::filesystem::current_path().string();\n"
+    "        cardWorkingDir = std::filesystem::current_path();\n"
     "    }\n"
     "  }",
     "card.cpp: prefer local saves/ folder in CARDInit",
