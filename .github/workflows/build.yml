@@ -7,6 +7,10 @@ on:
       - '*LICENSE'
   pull_request:
 
+permissions:
+  actions: write
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -64,6 +68,9 @@ jobs:
 
       - name: Build
         run: cmake --build --preset x-linux-ci-${{matrix.preset}}
+
+      - name: Print sccache stats
+        run: sccache --show-stats
 
       - name: Generate AppImage
         run: ci/build-appimage.sh
