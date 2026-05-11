@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Dusk</string>
     <string name="documents_provider_summary">Dusk saves, settings, mods, and texture replacements</string>
+    <string name="documents_provider_root_name">Dusk Data</string>
 </resources>
