@@ -2,9 +2,7 @@
 
 #include "dusk/config.hpp"
 #include "dusk/mod_manager.hpp"
-#include "dusk/ui/window.hpp"
 #include "m_Do/m_Do_main.h"
-#include "window.hpp"
 
 #include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Element.h>

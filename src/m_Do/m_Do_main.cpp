@@ -11,7 +11,6 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <thread>
 #include "DynamicLink.h"
 #include "JSystem/JAudio2/JASAudioThread.h"
 #include "JSystem/JAudio2/JAUSectionHeap.h"
