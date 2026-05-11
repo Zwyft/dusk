@@ -1437,6 +1437,7 @@ set(DUSK_FILES
         src/dusk/logging.cpp
         src/dusk/settings.cpp
         src/dusk/stubs.cpp
+        src/dusk/touch_controls.cpp
         src/dusk/update_check.cpp
         src/dusk/update_check.hpp
         #src/dusk/m_Do_ext_dusk.cpp
