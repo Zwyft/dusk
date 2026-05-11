@@ -180,10 +180,10 @@ struct UserSettings {
     struct {
         // Touch controls
         ConfigVar<bool> enabled;
-        ConfigVar<bool> tapToClick;
+        ConfigVar<bool> menuTapNav;
         ConfigVar<float> opacity;
         ConfigVar<float> scale;
-        // Per-element normalized positions (0–1 of screen width/height)
+        // Per-element normalized positions (0-1 of screen width/height)
         ConfigVar<float> btnAX, btnAY;
         ConfigVar<float> btnBX, btnBY;
         ConfigVar<float> btnXX, btnXY;
