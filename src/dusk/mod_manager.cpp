@@ -1,6 +1,7 @@
 #include "dusk/mod_manager.hpp"
 
 #include "dusk/logging.h"
+#include "dusk/main.h"
 
 #include <algorithm>
 #include <fstream>
