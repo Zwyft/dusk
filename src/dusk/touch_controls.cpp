@@ -651,7 +651,7 @@ void apply_virtual_input(interface_of_controller_pad* pad) {
             pad->mMainStickValue = len;
             // Binary angle: (0x8000/pi) * atan2(X, -Y) matches JUTGamePad::CStick::calc
             pad->mMainStickAngle = static_cast<s16>(
-                (0x8000 / kPi) * std::atan2f(g_stickMX, -g_stickMY));
+                (0x8000 / kPi) * atan2f(g_stickMX, -g_stickMY));
         }
     }
     if (std::abs(pad->mCStickPosX) < 0.1f && std::abs(pad->mCStickPosY) < 0.1f) {
@@ -661,7 +661,7 @@ void apply_virtual_input(interface_of_controller_pad* pad) {
             float len = std::sqrt(g_stickCX * g_stickCX + g_stickCY * g_stickCY);
             pad->mCStickValue = len;
             pad->mCStickAngle = static_cast<s16>(
-                (0x8000 / kPi) * std::atan2f(g_stickCX, -g_stickCY));
+                (0x8000 / kPi) * atan2f(g_stickCX, -g_stickCY));
         }
     }
 }

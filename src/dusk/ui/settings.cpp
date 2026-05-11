@@ -1046,7 +1046,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 "Opacity", "Transparency of the virtual buttons while playing.",
                 10, 100, 5,
                 [] { return !touch_controls::is_enabled(); });
-            config_bool_select(leftPane, rightPane, getSettings().touch.tapToClick,
+            config_bool_select(leftPane, rightPane, getSettings().touch.menuTapNav,
                 {
                     .key = "Tap to Confirm",
                     .helpText = "When enabled, tapping anywhere on screen (outside the virtual buttons) "
