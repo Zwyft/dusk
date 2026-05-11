@@ -26,6 +26,7 @@ static constexpr const char* kModsRml = R"(
 <div id="mod-list" />
 <button id="open-folder-btn">Open Mods Folder</button>
 <button id="refresh-btn">Refresh Mods</button>
+<button id="back-btn">Back</button>
 </pane>
 </content>
 </window>
@@ -51,6 +52,14 @@ ModsWindow::ModsWindow() : Document(kModsRml) {
             [this](Rml::Event& ev) {
                 mod_manager::refresh_all();
                 mNeedsRefresh = true;
+                ev.StopPropagation();
+            });
+    }
+
+    if (auto* backBtn = mDocument->GetElementById("back-btn")) {
+        listen(backBtn, Rml::EventId::Click,
+            [this](Rml::Event& ev) {
+                pop();
                 ev.StopPropagation();
             });
     }

@@ -64,9 +64,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/sccache
-          key: sccache-linux-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          key: sccache-linux-v1
           restore-keys: |
-            sccache-linux-${{ runner.arch }}-
+            sccache-linux-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -129,9 +129,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Library/Caches/Mozilla.sccache
-          key: sccache-macos-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          key: sccache-macos-v1
           restore-keys: |
-            sccache-macos-${{ runner.arch }}-
+            sccache-macos-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -186,9 +186,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~\AppData\Local\Mozilla\sccache\cache
-          key: sccache-windows-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', 'files.cmake', 'include/dusk_pch.hpp') }}
+          key: sccache-windows-v1
           restore-keys: |
-            sccache-windows-${{ runner.arch }}-
+            sccache-windows-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
