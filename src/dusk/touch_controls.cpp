@@ -34,6 +34,7 @@ enum CtrlId : int {
     CTRL_STICK_C,
     CTRL_COUNT,
     CTRL_NONE = -1,
+    CTRL_SCREEN_NAV = CTRL_COUNT,  // tap empty screen → dpad/A when menuTapNav is on
 };
 
 // ---------------------------------------------------------------------------
@@ -189,6 +190,18 @@ static float scaled_radius(int id) {
 // Hit testing
 // ---------------------------------------------------------------------------
 
+// Translates a screen tap (px,py) to a PAD bit for menu navigation.
+// Center zone (within 15% of screen half-size) → A; otherwise the dominant axis direction.
+static uint32_t screen_nav_bit(float px, float py, float w, float h) {
+    float dx = px - w * 0.5f;
+    float dy = py - h * 0.5f;
+    float adx = std::abs(dx) / (w * 0.5f);
+    float ady = std::abs(dy) / (h * 0.5f);
+    if (adx < 0.30f && ady < 0.30f) return PAD_BUTTON_A;
+    if (adx > ady) return (dx > 0.f) ? PAD_BUTTON_RIGHT : PAD_BUTTON_LEFT;
+    return (dy > 0.f) ? PAD_BUTTON_DOWN : PAD_BUTTON_UP;
+}
+
 // Returns the PAD bit corresponding to which D-pad quadrant (px,py) lands in.
 // Returns 0 if outside the D-pad area or in the dead-zone center.
 static uint32_t dpad_bit_at(float px, float py, float w, float h) {
@@ -238,6 +251,7 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         float dx = px - cx, dy = py - cy;
         if (dx * dx + dy * dy <= r * r) return i;
     }
+    if (getSettings().touch.menuTapNav.getValue()) return CTRL_SCREEN_NAV;
     return CTRL_NONE;
 }
 
@@ -274,7 +288,7 @@ static void recompute_virtual_state() {
         if (!f.active || f.ctrl == CTRL_NONE) continue;
         if (f.ctrl >= CTRL_BTN_A && f.ctrl <= CTRL_BTN_START) {
             g_held |= kDefs[f.ctrl].padBit;
-        } else if (f.ctrl == CTRL_DPAD) {
+        } else if (f.ctrl == CTRL_DPAD || f.ctrl == CTRL_SCREEN_NAV) {
             g_held |= f.dpadBit;
         } else if (f.ctrl == CTRL_STICK_MAIN) {
             g_stickMX = f.stickX;
@@ -341,6 +355,8 @@ static void on_finger_down(const SDL_TouchFingerEvent& ev) {
         // button press: nothing extra needed
     } else if (ctrl == CTRL_DPAD) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
+    } else if (ctrl == CTRL_SCREEN_NAV) {
+        f->dpadBit = screen_nav_bit(px, py, w, h);
     } else {
         // stick: compute initial deflection
         compute_stick(ctrl, px, py, w, h, f->stickX, f->stickY);
@@ -370,6 +386,8 @@ static void on_finger_motion(const SDL_TouchFingerEvent& ev) {
 
     if (f->ctrl == CTRL_DPAD) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
+    } else if (f->ctrl == CTRL_SCREEN_NAV) {
+        f->dpadBit = screen_nav_bit(px, py, w, h);
     } else if (f->ctrl == CTRL_STICK_MAIN || f->ctrl == CTRL_STICK_C) {
         compute_stick(f->ctrl, px, py, w, h, f->stickX, f->stickY);
     }

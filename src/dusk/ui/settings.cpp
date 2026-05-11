@@ -1040,12 +1040,10 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
             config_percent_select(leftPane, rightPane, getSettings().touch.scale,
                 "Button Size", "Size of the virtual buttons as a percentage of their default size.",
-                50, 200, 5,
-                [] { return !touch_controls::is_enabled(); });
+                50, 200, 5);
             config_percent_select(leftPane, rightPane, getSettings().touch.opacity,
                 "Opacity", "Transparency of the virtual buttons while playing.",
-                10, 100, 5,
-                [] { return !touch_controls::is_enabled(); });
+                10, 100, 5);
             leftPane.register_control(
                 leftPane.add_button("Customize Layout").on_pressed([] {
                     mDoAud_seStartMenu(kSoundItemChange);
@@ -1057,6 +1055,16 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     pane.add_text("Drag buttons to reposition them on screen.");
                     pane.add_rml("<br/><br/>Closes settings and enters layout mode. "
                                  "Tap <b>Done</b> when finished to save.");
+                });
+            config_bool_select(leftPane, rightPane, getSettings().touch.menuTapNav,
+                {
+                    .key = "UI Tap Navigation",
+                    .helpText = "Tap anywhere on the game screen to navigate in-game menus.<br/><br/>"
+                                "Tapping the <b>center</b> of the screen presses A (confirm). "
+                                "Tapping an <b>edge</b> fires the D-pad in that direction, "
+                                "letting you move the cursor to buttons like Save or Back "
+                                "without using the joystick overlay.<br/><br/>"
+                                "Taps on touch controls take priority.",
                 });
         }
 

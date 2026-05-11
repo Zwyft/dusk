@@ -122,6 +122,7 @@ UserSettings g_userSettings = {
             false
 #endif
         },
+        .menuTapNav {"touch.menuTapNav", false},
         .opacity {"touch.opacity", 0.75f},
         .scale {"touch.scale", 1.0f},
         .btnAX {"touch.btnAX", 0.88f}, .btnAY {"touch.btnAY", 0.70f},
@@ -258,6 +259,7 @@ void registerSettings() {
 
     // Touch controls
     Register(g_userSettings.touch.enabled);
+    Register(g_userSettings.touch.menuTapNav);
     Register(g_userSettings.touch.opacity);
     Register(g_userSettings.touch.scale);
     Register(g_userSettings.touch.btnAX); Register(g_userSettings.touch.btnAY);
