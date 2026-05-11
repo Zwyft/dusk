@@ -10,6 +10,7 @@
 #include "dusk/imgui/ImGuiEngine.hpp"
 #include "dusk/livesplit.h"
 #include "dusk/main.h"
+#include "dusk/touch_controls.hpp"
 #include "graphics_tuner.hpp"
 #include "m_Do/m_Do_main.h"
 #include "menu_bar.hpp"
@@ -723,6 +724,46 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Turbo Key", getSettings().game.enableTurboKeybind,
             "Hold Tab to increase game speed by up to 4x.",
             [] { return getSettings().game.speedrunMode; });
+
+        if (IsMobile) {
+            leftPane.add_section("Touch Controls");
+            config_bool_select(leftPane, rightPane, getSettings().touch.enabled,
+                {
+                    .key = "Touch Controls",
+                    .helpText = "Show on-screen virtual buttons while playing.<br/><br/>"
+                                "When a physical controller connects, the overlay hides "
+                                "automatically and reappears when the controller disconnects.",
+                    .onChange = [](bool) { config::Save(); },
+                });
+            config_percent_select(leftPane, rightPane, getSettings().touch.scale,
+                "Button Size", "Size of the virtual buttons as a percentage of their default size.",
+                50, 200, 5,
+                [] { return !touch_controls::is_enabled(); });
+            config_percent_select(leftPane, rightPane, getSettings().touch.opacity,
+                "Opacity", "Transparency of the virtual buttons while playing.",
+                10, 100, 5,
+                [] { return !touch_controls::is_enabled(); });
+            config_bool_select(leftPane, rightPane, getSettings().touch.menuTapNav,
+                {
+                    .key = "Tap to Confirm",
+                    .helpText = "When enabled, tapping anywhere on screen (outside the virtual buttons) "
+                                "acts as pressing the A button to confirm menu selections.",
+                    .onChange = [](bool) { config::Save(); },
+                    .isDisabled = [] { return !touch_controls::is_enabled(); },
+                });
+            leftPane.register_control(
+                leftPane.add_button("Customize Layout").on_pressed([] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    touch_controls::enter_customize_mode();
+                    if (auto* doc = ui::top_document()) doc->pop();
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_text("Drag buttons to reposition them on screen.");
+                    pane.add_rml("<br/><br/>Closes settings and enters layout mode. "
+                                 "Tap <b>Done</b> when finished to save.");
+                });
+        }
     });
 
     add_tab("Audio", [this](Rml::Element* content) {

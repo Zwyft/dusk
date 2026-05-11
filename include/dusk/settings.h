@@ -180,6 +180,25 @@ struct UserSettings {
     } game;
 
     struct {
+        // Touch controls
+        ConfigVar<bool> enabled;
+        ConfigVar<bool> menuTapNav;
+        ConfigVar<float> opacity;
+        ConfigVar<float> scale;
+        ConfigVar<float> btnAX, btnAY;
+        ConfigVar<float> btnBX, btnBY;
+        ConfigVar<float> btnXX, btnXY;
+        ConfigVar<float> btnYX, btnYY;
+        ConfigVar<float> btnLX, btnLY;
+        ConfigVar<float> btnRX, btnRY;
+        ConfigVar<float> btnZX, btnZY;
+        ConfigVar<float> btnStartX, btnStartY;
+        ConfigVar<float> dpadX, dpadY;
+        ConfigVar<float> stickMainX, stickMainY;
+        ConfigVar<float> stickCX, stickCY;
+    } touch;
+
+    struct {
         ConfigVar<std::string> isoPath;
         ConfigVar<DiscVerificationState> isoVerification;
         ConfigVar<std::string> graphicsBackend;
