@@ -1426,6 +1426,7 @@ set(DUSK_FILES
         src/dusk/file_select.hpp
         src/dusk/frame_interpolation.cpp
         src/dusk/game_clock.cpp
+        src/dusk/mod_manager.cpp
         src/dusk/globals.cpp
         src/dusk/gyro.cpp
 		src/dusk/gamepad_color.cpp
@@ -1491,6 +1492,8 @@ set(DUSK_FILES
         src/dusk/ui/pane.hpp
         src/dusk/ui/menu_bar.cpp
         src/dusk/ui/menu_bar.hpp
+        src/dusk/ui/mods.cpp
+        src/dusk/ui/mods.hpp
         src/dusk/ui/prelaunch.cpp
         src/dusk/ui/prelaunch.hpp
         src/dusk/ui/preset.cpp

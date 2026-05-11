@@ -57,6 +57,7 @@
 #include "dusk/iso_validate.hpp"
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/mod_manager.hpp"
 #include "dusk/ui/menu_bar.hpp"
 #include "dusk/ui/overlay.hpp"
 #include "dusk/ui/prelaunch.hpp"
@@ -723,6 +724,7 @@ int game_main(int argc, char* argv[]) {
         config.imGuiInitCallback = &aurora_imgui_init_callback;
         config.allowTextureReplacements = true;
         config.allowTextureDumps = false;
+        dusk::mod_manager::initialize();
         auroraInfo = aurora_initialize(argc, argv, &config);
     }
 
