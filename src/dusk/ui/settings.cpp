@@ -737,7 +737,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
             config_percent_select(leftPane, rightPane, getSettings().touch.scale,
                 "Button Size", "Size of the virtual buttons as a percentage of their default size.",
-                50, 200, 5,
+                50, 500, 10,
                 [] { return !touch_controls::is_enabled(); });
             config_percent_select(leftPane, rightPane, getSettings().touch.opacity,
                 "Opacity", "Transparency of the virtual buttons while playing.",
