@@ -14,6 +14,74 @@ Dusk is a reverse-engineered reimplementation of Twilight Princess.
 
 It aims to be as accurate as possible to the original while also providing new options, enhancements, and tools to customize your experience.
 
+# Features
+
+## 🎮 Touch Controls *(Android & iOS)*
+
+Play the full game without a physical controller using Dusk's built-in virtual gamepad overlay.
+
+- **Full button coverage** — A, B, X, Y, L, R, Z, Start, D-pad, Main Stick, and C-Stick are all available on-screen
+- **Draggable layout** — tap **Edit** in the bottom-right corner to enter customize mode, then drag any button or stick to wherever feels natural on your screen
+- **Persistent positions** — your layout is saved automatically when you tap **Done**, so it survives restarts
+- **Opacity & scale** — adjustable via the in-game settings menu
+
+### Controller Auto-Toggle
+
+Dusk detects physical controllers (Bluetooth, USB) and adapts automatically:
+
+| Event | Behavior |
+|---|---|
+| Controller connects | Touch overlay hides automatically |
+| Last controller disconnects | Touch overlay reappears automatically |
+| You tap **Hide / Touch** | Manually override at any time; auto-behavior defers to your choice |
+
+> [!NOTE]
+> The **Hide / Touch** toggle button is always visible in the bottom-right corner during gameplay — even when the overlay is off — so you can bring it back with a single tap.
+
+### Tap to Confirm
+
+When enabled under **Settings → Input → Touch Controls → Tap to Confirm**, tapping anywhere on screen (outside the virtual buttons) acts as pressing the **A button** — perfect for confirming menu selections without reaching for the virtual A button.
+
+## 🧩 Mod Support
+
+Dusk supports texture replacement mods via a built-in mod manager.
+
+- **Easy installation** — drop mod folders into the `mods/` directory (accessible via **Mods → Open Mods Folder**)
+- **Enable/disable per mod** — toggle mods on and off from the pre-launch **Mods** screen without restarting
+- **Instant apply** — changes take effect the next time the game loads textures
+- **Mod manifest** — each mod needs a `mod.json` with name, version, author, and description
+
+### Creating a Mod
+
+1. Create a folder with your mod name inside the `mods/` directory
+2. Add a `mod.json` manifest:
+```json
+{
+  "name": "HD Texture Pack",
+  "version": "1.0.0",
+  "author": "YourName",
+  "description": "Replaces textures with HD versions"
+}
+```
+3. Add your `.dds` texture files to the folder
+4. Launch Dusk, go to **Mods**, and toggle your mod on
+
+## 🔄 Multi-Platform CI/CD
+
+Every commit automatically builds all four platforms via GitHub Actions:
+
+| Platform | Artifact | Runner |
+|---|---|---|
+| Linux | AppImage | `ubuntu-24.04` |
+| macOS | `.app` bundle | `macos-15` (Apple Silicon) |
+| Windows | `.exe` + `.dll` | `windows-2022` (MSVC x64) |
+| Android | `.apk` (arm64-v8a + x86_64) | `ubuntu-24.04` + Android NDK 29 |
+
+- **Auto-upload** — artifacts are available on every successful build
+- **Concurrent builds** — duplicate runs are cancelled automatically
+- **Node.js 24 compatible** — pre-empts the June 2026 deprecation deadline
+- **Fork-friendly** — no self-hosted runners required; runs on stock GitHub runners
+
 # Setup
 
 > [!IMPORTANT]
