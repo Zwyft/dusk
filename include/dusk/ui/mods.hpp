@@ -1,6 +1,6 @@
 #pragma once
 
-#include "document.hpp"
+#include "dusk/ui/document.hpp"
 
 namespace dusk::ui {
 
