@@ -72,40 +72,50 @@ void ModsWindow::build_mod_list(Rml::Element* parent) {
     }
 
     for (auto& mod : mods) {
-        auto* row = parent->CreateChild("div");
+        auto* doc = parent->GetOwnerDocument();
+        auto row = doc->CreateElement("div");
         if (!row) continue;
         row->SetClass("mod-row", true);
 
         // Mod name and info
-        auto* info = row->CreateChild("div");
+        auto info = doc->CreateElement("div");
         info->SetClass("mod-info", true);
 
         Rml::String title = mod.name;
         if (!mod.version.empty()) title += " v" + mod.version;
-        auto* nameEl = info->CreateChild("span");
+        auto nameEl = doc->CreateElement("span");
         nameEl->SetClass("mod-name", true);
         nameEl->SetInnerRML(title);
+        info->AppendChild(std::move(nameEl));
 
         if (!mod.author.empty()) {
-            auto* authorEl = info->CreateChild("span");
+            auto authorEl = doc->CreateElement("span");
             authorEl->SetClass("mod-author detail", true);
             authorEl->SetInnerRML("by " + mod.author);
+            info->AppendChild(std::move(authorEl));
         }
 
         if (!mod.description.empty()) {
-            auto* descEl = info->CreateChild("span");
+            auto descEl = doc->CreateElement("span");
             descEl->SetClass("mod-description detail", true);
             descEl->SetInnerRML(mod.description);
+            info->AppendChild(std::move(descEl));
         }
 
+        row->AppendChild(std::move(info));
+
         // Enable/disable toggle
-        auto* toggle = row->CreateChild("button");
+        auto toggle = doc->CreateElement("button");
         toggle->SetClass(mod.enabled ? "mod-toggle enabled" : "mod-toggle", true);
         toggle->SetInnerRML(mod.enabled ? "Enabled" : "Disabled");
 
         // Capture mod ID for callback
         std::string modId = mod.id;
-        listen(toggle, Rml::EventId::Click,
+        auto* togglePtr = toggle.get();
+        row->AppendChild(std::move(toggle));
+        parent->AppendChild(std::move(row));
+
+        listen(togglePtr, Rml::EventId::Click,
             [this, modId](Rml::Event& ev) {
                 auto mods = mod_manager::scan_mods();
                 for (auto& m : mods) {
@@ -124,9 +134,7 @@ void ModsWindow::refresh_ui() {
     if (!mModList) return;
 
     // Clear existing children
-    while (mModList->GetFirstChild()) {
-        mModList->RemoveChild(mModList->GetFirstChild());
-    }
+    if (mModList) mModList->SetInnerRML("");
 
     build_mod_list(mModList);
     mNeedsRefresh = false;
