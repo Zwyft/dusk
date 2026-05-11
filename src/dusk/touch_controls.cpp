@@ -34,6 +34,7 @@ enum CtrlId : int {
     CTRL_STICK_C,
     CTRL_COUNT,
     CTRL_NONE = -1,
+    CTRL_SCREEN_NAV = CTRL_COUNT,  // tap empty screen -> dpad/A when menuTapNav is on
 };
 
 // ---------------------------------------------------------------------------
@@ -55,7 +56,7 @@ static constexpr CtrlDef kDefs[CTRL_COUNT] = {
     {"L",  PAD_TRIGGER_L,   IM_COL32( 90, 90, 90,220), IM_COL32( 60, 60, 60,170), 34.f},
     {"R",  PAD_TRIGGER_R,   IM_COL32( 90, 90, 90,220), IM_COL32( 60, 60, 60,170), 34.f},
     {"Z",  PAD_TRIGGER_Z,   IM_COL32( 80, 50,140,220), IM_COL32( 55, 35,100,170), 28.f},
-    // Start: UTF-8 ≡ (hamburger / three lines)
+    // Start: UTF-8 equivalent (hamburger / three lines)
     {"\xe2\x89\xa1", PAD_BUTTON_START, IM_COL32(80,80,80,220), IM_COL32(55,55,55,170), 26.f},
     {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 48.f}, // dpad
     {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 52.f}, // main stick
@@ -86,15 +87,6 @@ static uint32_t g_held = 0;
 static uint32_t g_prevHeld = 0;
 static float g_stickMX = 0.f, g_stickMY = 0.f;  // main stick
 static float g_stickCX = 0.f, g_stickCY = 0.f;  // c-stick
-
-// ---------------------------------------------------------------------------
-// Tap-to-click state
-// ---------------------------------------------------------------------------
-static bool g_tapPendingA = false;
-static bool g_tapTracking = false;
-static SDL_FingerID g_tapFinger = 0;
-static float g_tapStartX = 0.f, g_tapStartY = 0.f;
-static uint64_t g_tapStartMs = 0;
 
 // ---------------------------------------------------------------------------
 // Customize mode state
@@ -198,6 +190,18 @@ static float scaled_radius(int id) {
 // Hit testing
 // ---------------------------------------------------------------------------
 
+// Translates a screen tap (px,py) to a PAD bit for menu navigation.
+// Center zone (within 30% of screen half-size) -> A; otherwise the dominant axis direction.
+static uint32_t screen_nav_bit(float px, float py, float w, float h) {
+    float dx = px - w * 0.5f;
+    float dy = py - h * 0.5f;
+    float adx = std::abs(dx) / (w * 0.5f);
+    float ady = std::abs(dy) / (h * 0.5f);
+    if (adx < 0.30f && ady < 0.30f) return PAD_BUTTON_A;
+    if (adx > ady) return (dx > 0.f) ? PAD_BUTTON_RIGHT : PAD_BUTTON_LEFT;
+    return (dy > 0.f) ? PAD_BUTTON_DOWN : PAD_BUTTON_UP;
+}
+
 // Returns the PAD bit corresponding to which D-pad quadrant (px,py) lands in.
 // Returns 0 if outside the D-pad area or in the dead-zone center.
 static uint32_t dpad_bit_at(float px, float py, float w, float h) {
@@ -208,7 +212,7 @@ static uint32_t dpad_bit_at(float px, float py, float w, float h) {
     float dy = py - cy;
     float dist = std::sqrt(dx * dx + dy * dy);
     if (dist < r * 0.15f || dist > r) return 0;
-    // Angle: 0 = right, π/2 = down (screen coords)
+    // Angle: 0 = right, pi/2 = down (screen coords)
     static constexpr float kPi = 3.14159265f;
     float angle = std::atan2(dy, dx);
     if (angle > -kPi * 0.25f && angle <  kPi * 0.25f) return PAD_BUTTON_RIGHT;
@@ -247,6 +251,7 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         float dx = px - cx, dy = py - cy;
         if (dx * dx + dy * dy <= r * r) return i;
     }
+    if (getSettings().touch.menuTapNav.getValue()) return CTRL_SCREEN_NAV;
     return CTRL_NONE;
 }
 
@@ -283,7 +288,7 @@ static void recompute_virtual_state() {
         if (!f.active || f.ctrl == CTRL_NONE) continue;
         if (f.ctrl >= CTRL_BTN_A && f.ctrl <= CTRL_BTN_START) {
             g_held |= kDefs[f.ctrl].padBit;
-        } else if (f.ctrl == CTRL_DPAD) {
+        } else if (f.ctrl == CTRL_DPAD || f.ctrl == CTRL_SCREEN_NAV) {
             g_held |= f.dpadBit;
         } else if (f.ctrl == CTRL_STICK_MAIN) {
             g_stickMX = f.stickX;
@@ -304,7 +309,7 @@ static void compute_stick(int ctrlId, float px, float py, float w, float h,
     float cy = get_y(ctrlId) * h;
     float r  = scaled_radius(ctrlId);
     float dx = px - cx;
-    float dy = -(py - cy);  // flip Y: screen-down → game-down inverted
+    float dy = -(py - cy);  // flip Y: screen-down -> game-down inverted
     float dist = std::sqrt(dx * dx + dy * dy);
     if (dist > r) {
         dx = dx / dist * r;
@@ -340,16 +345,7 @@ static void on_finger_down(const SDL_TouchFingerEvent& ev) {
     }
 
     int ctrl = hit_test(px, py, w, h, false);
-    if (ctrl == CTRL_NONE) {
-        if (getSettings().touch.tapToClick.getValue()) {
-            g_tapTracking = true;
-            g_tapFinger = ev.fingerID;
-            g_tapStartX = px;
-            g_tapStartY = py;
-            g_tapStartMs = ev.timestamp;
-        }
-        return;
-    }
+    if (ctrl == CTRL_NONE) return;
 
     FingerState* f = alloc_finger(ev.fingerID);
     if (!f) return;
@@ -359,6 +355,8 @@ static void on_finger_down(const SDL_TouchFingerEvent& ev) {
         // button press: nothing extra needed
     } else if (ctrl == CTRL_DPAD) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
+    } else if (ctrl == CTRL_SCREEN_NAV) {
+        f->dpadBit = screen_nav_bit(px, py, w, h);
     } else {
         // stick: compute initial deflection
         compute_stick(ctrl, px, py, w, h, f->stickX, f->stickY);
@@ -384,19 +382,12 @@ static void on_finger_motion(const SDL_TouchFingerEvent& ev) {
     }
 
     FingerState* f = find_finger(ev.fingerID);
-    if (!f) {
-        if (g_tapTracking && ev.fingerID == g_tapFinger) {
-            float dx = px - g_tapStartX;
-            float dy = py - g_tapStartY;
-            if (dx * dx + dy * dy > 30.f * 30.f) {
-                g_tapTracking = false;
-            }
-        }
-        return;
-    }
+    if (!f) return;
 
     if (f->ctrl == CTRL_DPAD) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
+    } else if (f->ctrl == CTRL_SCREEN_NAV) {
+        f->dpadBit = screen_nav_bit(px, py, w, h);
     } else if (f->ctrl == CTRL_STICK_MAIN || f->ctrl == CTRL_STICK_C) {
         compute_stick(f->ctrl, px, py, w, h, f->stickX, f->stickY);
     }
@@ -413,13 +404,6 @@ static void on_finger_up(const SDL_TouchFingerEvent& ev) {
             g_dragFinger = 0;
         }
         return;
-    }
-
-    if (g_tapTracking && ev.fingerID == g_tapFinger) {
-        if (ev.timestamp - g_tapStartMs < 300) {
-            g_tapPendingA = true;
-        }
-        g_tapTracking = false;
     }
 
     FingerState* f = find_finger(ev.fingerID);
@@ -642,11 +626,17 @@ void apply_virtual_input(interface_of_controller_pad* pad) {
 
     static constexpr float kPi = 3.14159265f;
 
-    uint32_t effective = g_held;
-    if (g_tapPendingA) {
-        effective |= PAD_BUTTON_A;
-        g_tapPendingA = false;
-    }
+    // When the main stick is strongly deflected in one axis, also fire the
+    // corresponding D-pad button so analog stick input works in menus that
+    // only check PAD_BUTTON_LEFT / RIGHT / UP / DOWN.
+    static constexpr float kDpadThreshold = 0.65f;
+    uint32_t stickDpad = 0;
+    if (std::abs(g_stickMX) >= kDpadThreshold && std::abs(g_stickMX) > std::abs(g_stickMY))
+        stickDpad |= (g_stickMX > 0.f) ? PAD_BUTTON_RIGHT : PAD_BUTTON_LEFT;
+    if (std::abs(g_stickMY) >= kDpadThreshold && std::abs(g_stickMY) > std::abs(g_stickMX))
+        stickDpad |= (g_stickMY > 0.f) ? PAD_BUTTON_UP : PAD_BUTTON_DOWN;
+
+    uint32_t effective = g_held | stickDpad;
     pad->mButtonFlags |= effective;
     uint32_t newPressed = effective & ~g_prevHeld;
     pad->mPressedButtonFlags |= newPressed;
@@ -659,7 +649,7 @@ void apply_virtual_input(interface_of_controller_pad* pad) {
             pad->mMainStickPosY = g_stickMY;
             float len = std::sqrt(g_stickMX * g_stickMX + g_stickMY * g_stickMY);
             pad->mMainStickValue = len;
-            // Binary angle: (0x8000/π) * atan2(X, −Y) matches JUTGamePad::CStick::calc
+            // Binary angle: (0x8000/pi) * atan2(X, -Y) matches JUTGamePad::CStick::calc
             pad->mMainStickAngle = static_cast<s16>(
                 (0x8000 / kPi) * std::atan2f(g_stickMX, -g_stickMY));
         }
