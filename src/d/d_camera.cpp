@@ -31,6 +31,8 @@
 #if TARGET_PC
 #include "dusk/frame_interpolation.h"
 #include "dusk/logging.h"
+#include "dusk/settings.h"
+#include <SDL3/SDL_mouse.h>
 #include "imgui.h"
 #endif
 
@@ -7646,6 +7648,16 @@ bool dCamera_c::freeCamera() {
     }
 
     cXyz camMovement = {mPadInfo.mCStick.mLastPosX, mPadInfo.mCStick.mLastPosY, 0.0f};
+
+    // Mouse free look: blend mouse delta with C-stick input
+    if (dusk::getSettings().game.enableMouseFreeLook) {
+        float mouseX, mouseY;
+        SDL_GetRelativeMouseState(&mouseX, &mouseY);
+        constexpr float kMouseSensitivity = 0.005f;
+        float mouseScale = kMouseSensitivity * dusk::getSettings().game.freeCameraSensitivity;
+        camMovement.x += mouseX * mouseScale;
+        camMovement.y += mouseY * mouseScale;
+    }
     f32 magnitude = sqrt(mPadInfo.mCStick.mLastPosX * mPadInfo.mCStick.mLastPosX + mPadInfo.mCStick.mLastPosY * mPadInfo.mCStick.mLastPosY);
 
     // If we aren't in manual cam mode, don't trigger it if the player tries to hit C-up

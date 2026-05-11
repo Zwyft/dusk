@@ -6,7 +6,12 @@
 
 #include "m_Do/m_Do_main.h"
 #include <dolphin/vi.h>
+#include <chrono>
 #include <cstring>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <thread>
 #include "DynamicLink.h"
 #include "JSystem/JAudio2/JASAudioThread.h"
 #include "JSystem/JAudio2/JAUSectionHeap.h"
@@ -339,6 +344,23 @@ void main01(void) {
         }
 
         aurora_end_frame();
+
+        // Frame rate limiter
+        {
+            static auto lastFrame = std::chrono::steady_clock::now();
+            int fpsLimit = dusk::getSettings().game.fpsLimit.getValue();
+            if (fpsLimit > 0) {
+                auto target = std::chrono::microseconds(1'000'000 / fpsLimit);
+                auto now = std::chrono::steady_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - lastFrame);
+                if (elapsed < target) {
+                    std::this_thread::sleep_for(target - elapsed);
+                    lastFrame = std::chrono::steady_clock::now();
+                } else {
+                    lastFrame = now;
+                }
+            }
+        }
 
         FrameMark;
 
@@ -693,6 +715,16 @@ int game_main(int argc, char* argv[]) {
     }
 
     dusk::ConfigPath = calculate_config_path();
+
+    // Portable mode: override config path if portable.txt exists next to the executable
+    {
+        std::error_code ec;
+        auto exeDir = std::filesystem::current_path(ec);
+        if (!ec && std::filesystem::exists(exeDir / "portable.txt")) {
+            dusk::ConfigPath = exeDir / "portable";
+            std::filesystem::create_directories(dusk::ConfigPath, ec);
+        }
+    }
     const auto startupLogLevel = static_cast<AuroraLogLevel>(parsed_arg_options["log-level"].as<uint8_t>());
     dusk::InitializeFileLogging(dusk::ConfigPath, startupLogLevel);
 
@@ -722,14 +754,39 @@ int game_main(int argc, char* argv[]) {
         config.allowJoystickBackgroundEvents = dusk::getSettings().game.allowBackgroundInput;
         config.pauseOnFocusLost = dusk::getSettings().game.pauseOnFocusLost;
         config.imGuiInitCallback = &aurora_imgui_init_callback;
+        config.maxTextureAnisotropy = static_cast<uint16_t>(dusk::getSettings().game.anisotropicFiltering.getValue());
         config.allowTextureReplacements = true;
         config.allowTextureDumps = false;
         dusk::mod_manager::initialize();
+
+        // Auto-backup saves on launch
+        if (dusk::getSettings().game.autoBackupSaves.getValue()) {
+            auto backupDir = dusk::ConfigPath / "saves" / "backups";
+            std::error_code ec;
+            if (std::filesystem::exists(dusk::ConfigPath / "saves", ec)) {
+                auto now = std::chrono::system_clock::now();
+                auto time = std::chrono::system_clock::to_time_t(now);
+                std::ostringstream oss;
+                oss << "backup_" << std::put_time(std::localtime(&time), "%Y%m%d_%H%M%S");
+                auto dest = backupDir / oss.str();
+                std::filesystem::create_directories(dest, ec);
+                for (const auto& entry : std::filesystem::directory_iterator(dusk::ConfigPath / "saves", ec)) {
+                    if (ec) break;
+                    if (entry.is_regular_file()) {
+                        std::filesystem::copy_file(entry.path(), dest / entry.path().filename(),
+                            std::filesystem::copy_options::skip_existing, ec);
+                    }
+                }
+            }
+        }
+
         auroraInfo = aurora_initialize(argc, argv, &config);
     }
 
 #ifdef DUSK_DISCORD
-    dusk::discord::initialize();
+    if (dusk::getSettings().backend.discordEnabled.getValue()) {
+        dusk::discord::initialize();
+    }
 #endif
 
     VISetWindowTitle(

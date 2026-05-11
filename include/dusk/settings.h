@@ -150,6 +150,13 @@ struct UserSettings {
         ConfigVar<bool> debugFlyCam;
         ConfigVar<bool> debugFlyCamLockEvents;
         ConfigVar<bool> allowBackgroundInput;
+        ConfigVar<bool> enableMouseFreeLook;
+        ConfigVar<bool> firstPersonFreeCam;
+
+        // Quality of Life
+        ConfigVar<int> anisotropicFiltering;
+        ConfigVar<int> fpsLimit;
+        ConfigVar<bool> autoBackupSaves;
 
         // Cheats
         ConfigVar<bool> infiniteHearts;
@@ -208,6 +215,8 @@ struct UserSettings {
         ConfigVar<bool> checkForUpdates;
         ConfigVar<int> cardFileType;
         ConfigVar<bool> enableAdvancedSettings;
+        ConfigVar<bool> discordEnabled;
+        ConfigVar<bool> portableMode;
     } backend;
 };
 

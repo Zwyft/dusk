@@ -480,6 +480,27 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
                 .onChange = [](bool value) { aurora_enable_vsync(value); },
             });
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "FPS Limit",
+                .getValue = [] {
+                    int v = getSettings().game.fpsLimit.getValue();
+                    return v == 0 ? Rml::String{"Unlimited"} : Rml::String{std::to_string(v)};
+                },
+            }),
+            rightPane, [](Pane& pane) {
+                for (int fps : {0, 30, 60, 120}) {
+                    pane.add_button({
+                        .text = fps == 0 ? "Unlimited" : Rml::String{std::to_string(fps)},
+                        .isSelected = [fps] { return getSettings().game.fpsLimit.getValue() == fps; },
+                    }).on_pressed([fps] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().game.fpsLimit.setValue(fps);
+                        config::Save();
+                    });
+                }
+                pane.add_rml("Limits the maximum framerate. Requires a restart to take effect.");
+            });
         config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
             {
                 .key = "Lock 4:3 Aspect Ratio",
@@ -599,6 +620,28 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             {
                 .key = "Enable Depth of Field",
             });
+
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "Anisotropic Filtering",
+                .getValue = [] {
+                    int v = getSettings().game.anisotropicFiltering.getValue();
+                    return v == 0 ? Rml::String{"Off"} : Rml::String{std::to_string(v) + "x"};
+                },
+            }),
+            rightPane, [](Pane& pane) {
+                for (int af : {0, 2, 4, 8, 16}) {
+                    pane.add_button({
+                        .text = af == 0 ? "Off" : Rml::String{std::to_string(af) + "x"},
+                        .isSelected = [af] { return getSettings().game.anisotropicFiltering.getValue() == af; },
+                    }).on_pressed([af] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().game.anisotropicFiltering.setValue(af);
+                        config::Save();
+                    });
+                }
+                pane.add_rml("Improves texture clarity at oblique viewing angles. Higher values have a small performance cost. Requires a restart.");
+            });
         config_bool_select(leftPane, rightPane, getSettings().game.enableMapBackground,
             {
                 .key = "Enable Mini-Map Shadows",
@@ -646,6 +689,18 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         config_percent_select(leftPane, rightPane, getSettings().game.freeCameraSensitivity,
             "Free Camera Sensitivity", "Adjusts twin-stick camera sensitivity.", 50, 200, 5,
             [] { return !getSettings().game.freeCamera; });
+        config_bool_select(leftPane, rightPane, getSettings().game.enableMouseFreeLook,
+            {
+                .key = "Mouse Free Look",
+                .helpText = "Use the mouse to control the camera when Free Camera is enabled. Click the game window to capture the cursor.",
+                .isDisabled = [] { return !getSettings().game.freeCamera; },
+            });
+        config_bool_select(leftPane, rightPane, getSettings().game.firstPersonFreeCam,
+            {
+                .key = "First Person Free Cam",
+                .helpText = "Switch to first-person view when Free Camera is enabled, instead of orbiting behind Link.",
+                .isDisabled = [] { return !getSettings().game.freeCamera; },
+            });
         addOption("Invert First Person X Axis", getSettings().game.invertFirstPersonXAxis,
             "Invert horizontal movement while aiming with items or first person camera. Applies to both stick and gyro aiming.");
         addOption("Invert First Person Y Axis", getSettings().game.invertFirstPersonYAxis,
@@ -997,6 +1052,13 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
 
         leftPane.add_section("Dusk");
 #if DUSK_CAN_OPEN_DATA_FOLDER
+
+        config_bool_select(leftPane, rightPane, getSettings().game.autoBackupSaves,
+            {
+                .key = "Auto-Backup Saves",
+                .helpText = "Automatically create a timestamped backup of your save files on game launch. Backups are stored in the saves/backups/ folder.",
+                .onChange = [](bool) { config::Save(); },
+            });
         leftPane.register_control(
             leftPane.add_button("Open Data Folder").on_pressed([] {
                 mDoAud_seStartMenu(kSoundClick);
@@ -1102,6 +1164,20 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             {
                 .key = "Show Pipeline Compilation",
                 .helpText = "Show an overlay when shaders are being compiled for your hardware.",
+            });
+
+        config_bool_select(leftPane, rightPane, getSettings().backend.discordEnabled,
+            {
+                .key = "Discord Rich Presence",
+                .helpText = "Show the current game status on your Discord profile. Requires a restart to take effect.",
+                .isDisabled = [] { return IsMobile; },
+                .onChange = [](bool) { config::Save(); },
+            });
+        config_bool_select(leftPane, rightPane, getSettings().backend.portableMode,
+            {
+                .key = "Portable Mode",
+                .helpText = "Store all config, saves, and mods in a 'portable/' folder next to the Dusk executable instead of the system config directory. Requires a restart to take effect.",
+                .onChange = [](bool) { config::Save(); },
             });
         config_bool_select(leftPane, rightPane, getSettings().backend.checkForUpdates,
             {

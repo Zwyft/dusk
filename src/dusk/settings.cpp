@@ -87,6 +87,13 @@ UserSettings g_userSettings = {
         .debugFlyCam {"game.debugFlyCam", false},
         .debugFlyCamLockEvents {"game.debugFlyCamLockEvents", true},
         .allowBackgroundInput {"game.allowBackgroundInput", true},
+        .enableMouseFreeLook {"game.enableMouseFreeLook", false},
+        .firstPersonFreeCam {"game.firstPersonFreeCam", false},
+
+        // Quality of Life
+        .anisotropicFiltering {"game.anisotropicFiltering", 16},
+        .fpsLimit {"game.fpsLimit", 0},
+        .autoBackupSaves {"game.autoBackupSaves", true},
 
         // Cheats
         .infiniteHearts {"game.infiniteHearts", false},
@@ -150,6 +157,8 @@ UserSettings g_userSettings = {
         .checkForUpdates {"backend.checkForUpdates", true},
         .cardFileType {"backend.cardFileType", static_cast<int>(CARD_GCIFOLDER)},
         .enableAdvancedSettings {"backend.enableAdvancedSettings", false},
+        .discordEnabled {"backend.discordEnabled", true},
+        .portableMode {"backend.portableMode", false},
     }
 };
 
@@ -248,6 +257,11 @@ void registerSettings() {
     Register(g_userSettings.game.debugFlyCam);
     Register(g_userSettings.game.debugFlyCamLockEvents);
     Register(g_userSettings.game.allowBackgroundInput);
+    Register(g_userSettings.game.enableMouseFreeLook);
+    Register(g_userSettings.game.firstPersonFreeCam);
+    Register(g_userSettings.game.anisotropicFiltering);
+    Register(g_userSettings.game.fpsLimit);
+    Register(g_userSettings.game.autoBackupSaves);
 
     // Touch controls
     Register(g_userSettings.touch.enabled);
@@ -275,6 +289,8 @@ void registerSettings() {
     Register(g_userSettings.backend.checkForUpdates);
     Register(g_userSettings.backend.cardFileType);
     Register(g_userSettings.backend.enableAdvancedSettings);
+    Register(g_userSettings.backend.discordEnabled);
+    Register(g_userSettings.backend.portableMode);
 }
 
 // Transient settings
