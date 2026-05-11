@@ -191,15 +191,34 @@ static float scaled_radius(int id) {
 // ---------------------------------------------------------------------------
 
 // Translates a screen tap (px,py) to a PAD bit for menu navigation.
-// Center zone (within 15% of screen half-size) → A; otherwise the dominant axis direction.
+// Center zone (within 20% of screen half-size) -> A; otherwise the dominant axis direction.
+// The 20% threshold keeps A reliably reachable while leaving enough room for directional input.
 static uint32_t screen_nav_bit(float px, float py, float w, float h) {
     float dx = px - w * 0.5f;
     float dy = py - h * 0.5f;
     float adx = std::abs(dx) / (w * 0.5f);
     float ady = std::abs(dy) / (h * 0.5f);
-    if (adx < 0.30f && ady < 0.30f) return PAD_BUTTON_A;
+    if (adx < 0.20f && ady < 0.20f) return PAD_BUTTON_A;
     if (adx > ady) return (dx > 0.f) ? PAD_BUTTON_RIGHT : PAD_BUTTON_LEFT;
     return (dy > 0.f) ? PAD_BUTTON_DOWN : PAD_BUTTON_UP;
+}
+
+// Computes a full analog-stick deflection from a screen tap for menu navigation.
+// This runs alongside screen_nav_bit so menus driven by the stick (item wheel, etc.)
+// respond to taps just as well as D-pad-driven menus.
+// outX/outY are in [-1,1]; both are 0 in the center dead zone (A-button region).
+static void screen_nav_stick(float px, float py, float w, float h,
+                              float& outX, float& outY) {
+    float dx = (px - w * 0.5f) / (w * 0.5f);
+    float dy = -((py - h * 0.5f) / (h * 0.5f));  // flip Y: screen-down -> game-down inverted
+    float len = std::sqrt(dx * dx + dy * dy);
+    if (len < 0.20f) {   // matches the A-button dead zone in screen_nav_bit
+        outX = outY = 0.f;
+        return;
+    }
+    if (len > 1.f) { dx /= len; dy /= len; }  // clamp to unit circle
+    outX = dx;
+    outY = dy;
 }
 
 // Returns the PAD bit corresponding to which D-pad quadrant (px,py) lands in.
@@ -284,19 +303,39 @@ static void recompute_virtual_state() {
     g_held    = 0;
     g_stickMX = g_stickMY = 0.f;
     g_stickCX = g_stickCY = 0.f;
+    bool hasPhysicalStick = false;
+    float navStickX = 0.f, navStickY = 0.f;
+    bool hasScreenNav = false;
+
     for (auto& f : g_fingers) {
         if (!f.active || f.ctrl == CTRL_NONE) continue;
         if (f.ctrl >= CTRL_BTN_A && f.ctrl <= CTRL_BTN_START) {
             g_held |= kDefs[f.ctrl].padBit;
-        } else if (f.ctrl == CTRL_DPAD || f.ctrl == CTRL_SCREEN_NAV) {
+        } else if (f.ctrl == CTRL_DPAD) {
             g_held |= f.dpadBit;
+        } else if (f.ctrl == CTRL_SCREEN_NAV) {
+            g_held |= f.dpadBit;
+            // Collect stick direction; applied below only if no physical stick is active.
+            // This allows item-wheel and other stick-driven menus to respond to taps
+            // in addition to the D-pad bits already fired above.
+            hasScreenNav = true;
+            navStickX = f.stickX;
+            navStickY = f.stickY;
         } else if (f.ctrl == CTRL_STICK_MAIN) {
             g_stickMX = f.stickX;
             g_stickMY = f.stickY;
+            hasPhysicalStick = true;
         } else if (f.ctrl == CTRL_STICK_C) {
             g_stickCX = f.stickX;
             g_stickCY = f.stickY;
         }
+    }
+
+    // Screen nav drives the stick only when the player's finger isn't already on the
+    // stick overlay. Physical stick always takes priority.
+    if (hasScreenNav && !hasPhysicalStick) {
+        g_stickMX = navStickX;
+        g_stickMY = navStickY;
     }
 }
 
@@ -357,6 +396,7 @@ static void on_finger_down(const SDL_TouchFingerEvent& ev) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
     } else if (ctrl == CTRL_SCREEN_NAV) {
         f->dpadBit = screen_nav_bit(px, py, w, h);
+        screen_nav_stick(px, py, w, h, f->stickX, f->stickY);
     } else {
         // stick: compute initial deflection
         compute_stick(ctrl, px, py, w, h, f->stickX, f->stickY);
@@ -388,6 +428,7 @@ static void on_finger_motion(const SDL_TouchFingerEvent& ev) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
     } else if (f->ctrl == CTRL_SCREEN_NAV) {
         f->dpadBit = screen_nav_bit(px, py, w, h);
+        screen_nav_stick(px, py, w, h, f->stickX, f->stickY);
     } else if (f->ctrl == CTRL_STICK_MAIN || f->ctrl == CTRL_STICK_C) {
         compute_stick(f->ctrl, px, py, w, h, f->stickX, f->stickY);
     }
@@ -626,17 +667,14 @@ void apply_virtual_input(interface_of_controller_pad* pad) {
 
     static constexpr float kPi = 3.14159265f;
 
-    // When the main stick is strongly deflected in one axis, also fire the
-    // corresponding D-pad button so analog stick input works in menus that
-    // only check PAD_BUTTON_LEFT / RIGHT / UP / DOWN.
-    static constexpr float kDpadThreshold = 0.65f;
-    uint32_t stickDpad = 0;
-    if (std::abs(g_stickMX) >= kDpadThreshold && std::abs(g_stickMX) > std::abs(g_stickMY))
-        stickDpad |= (g_stickMX > 0.f) ? PAD_BUTTON_RIGHT : PAD_BUTTON_LEFT;
-    if (std::abs(g_stickMY) >= kDpadThreshold && std::abs(g_stickMY) > std::abs(g_stickMX))
-        stickDpad |= (g_stickMY > 0.f) ? PAD_BUTTON_UP : PAD_BUTTON_DOWN;
-
-    uint32_t effective = g_held | stickDpad;
+    // DO NOT map the main stick to D-pad buttons here.
+    // This was intentionally removed (commit 294349c) because it breaks gameplay:
+    // the stick is used for movement/camera and the game reads both independently.
+    // Synthesizing D-pad from stick input causes menu inputs to fire during normal
+    // movement and generally makes the joystick behave as a d-pad. Do not add it
+    // back, even to "fix" menu navigation — menus that need d-pad input should
+    // be handled at the UI layer, not by aliasing stick output.
+    uint32_t effective = g_held;
     pad->mButtonFlags |= effective;
     uint32_t newPressed = effective & ~g_prevHeld;
     pad->mPressedButtonFlags |= newPressed;
