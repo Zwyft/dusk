@@ -1493,7 +1493,6 @@ set(DUSK_FILES
         src/dusk/ui/menu_bar.cpp
         src/dusk/ui/menu_bar.hpp
         src/dusk/ui/mods.cpp
-        src/dusk/ui/mods.hpp
         src/dusk/ui/prelaunch.cpp
         src/dusk/ui/prelaunch.hpp
         src/dusk/ui/preset.cpp
