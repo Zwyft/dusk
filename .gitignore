@@ -49,3 +49,7 @@ compile_commands.json
 pipeline_cache.bin
 
 extract
+
+# Local build environment
+.build-tools/
+.build-env
