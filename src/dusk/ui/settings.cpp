@@ -1052,8 +1052,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     .helpText = "When enabled, tapping anywhere on screen (outside the virtual buttons) "
                                 "acts as pressing the A button to confirm menu selections.",
                     .onChange = [](bool) { config::Save(); },
-                },
-                [] { return !touch_controls::is_enabled(); });
+                    .isDisabled = [] { return !touch_controls::is_enabled(); },
+                });
             leftPane.register_control(
                 leftPane.add_button("Customize Layout").on_pressed([] {
                     mDoAud_seStartMenu(kSoundItemChange);
