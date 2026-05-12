@@ -242,4 +242,8 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            artifacts/**/*
+            artifacts/**/dusk-*/*-android.apk
+            artifacts/**/dusk-*/*win32*.exe
+            artifacts/**/dusk-*/*win32*.dll
+            artifacts/**/dusk-*/*linux*.AppImage
+            artifacts/**/dusk-*/*macos*.app
