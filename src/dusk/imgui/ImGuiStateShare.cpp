@@ -4,7 +4,6 @@
 #include "ImGuiEngine.hpp"
 
 #include "imgui.h"
-#include "SDL3/SDL_touch.h"
 #include "fmt/format.h"
 #include "absl/strings/escaping.h"
 #include "nlohmann/json.hpp"
@@ -269,39 +268,28 @@ void ImGuiStateShare::tick() {
         s_prevSelectHeld = selectHeld;
     }
 
-    // Mobile: 3-finger tap opens save state UI
+    // Mobile: use Android back button to open save state UI
     if (dusk::IsGameLaunched && getSettings().game.enableSaveStates &&
         !dusk::getTransientSettings().stateShareLoadActive) {
-        static int s_fingerCount = 0;
-        static bool s_prevThreeFingerTap = false;
+        bool openTriggered = false;
 
-        bool threeFingerTap = false;
-
-        // Count active touch fingers using SDL touch API
-        int activeFingers = 0;
-        int touchDeviceCount = 0;
-        SDL_TouchID* touchDevices = SDL_GetTouchDevices(&touchDeviceCount);
-        for (int i = 0; i < touchDeviceCount; i++) {
-            SDL_TouchID touchId = touchDevices[i];
-            int fingersOnDevice = 0;
-            SDL_GetTouchFingers(touchId, &fingersOnDevice);
-            activeFingers += fingersOnDevice;
+        // Check Android back button (requires SDL_HINT_ANDROID_TRAP_BACK_BUTTON = "1")
+        if (dusk::g_imguiConsole.ConsumeAndroidBackTrigger()) {
+            openTriggered = true;
         }
 
-        // Detect 3-finger tap (3 fingers down then released)
-        if (activeFingers == 3 && s_fingerCount < 3) {
-            s_fingerCount = 3;
-        } else if (activeFingers == 0 && s_fingerCount == 3) {
-            threeFingerTap = true;
-            s_fingerCount = 0;
-        } else if (activeFingers != 3) {
-            s_fingerCount = activeFingers;
+        // Check controller/gamepad back button (works with physical controllers and emulated input)
+        for (u32 port = 0; port < PAD_MAX_CONTROLLERS; ++port) {
+            if (mDoCPd_c::isConnect(port)) {
+                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_BACK) {
+                    openTriggered = true;
+                }
+            }
         }
 
-        if (threeFingerTap && !s_prevThreeFingerTap) {
+        if (openTriggered) {
             m_showQuickMenu = true;
         }
-        s_prevThreeFingerTap = threeFingerTap;
     }
 }
 

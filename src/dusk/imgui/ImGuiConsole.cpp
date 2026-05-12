@@ -235,7 +235,13 @@ namespace dusk {
     ImGuiConsole::ImGuiConsole() {}
 
     void ImGuiConsole::HandleSDLEvent(const SDL_Event& event) {
-        (void)event;
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDL_SCANCODE_AC_BACK) {
+            m_androidBackPrev = m_androidBackPressed;
+            m_androidBackPressed = true;
+        } else if (event.type == SDL_EVENT_KEY_UP && event.key.key == SDL_SCANCODE_AC_BACK) {
+            m_androidBackPrev = m_androidBackPressed;
+            m_androidBackPressed = false;
+        }
     }
 
     void ImGuiConsole::UpdateSettings() {

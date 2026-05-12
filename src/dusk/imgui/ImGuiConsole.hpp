@@ -26,6 +26,14 @@ public:
 
     static bool CheckMenuViewToggle(ImGuiKey key, bool& active);
     void AddToast(std::string_view message, float duration = 3.f);
+    bool ConsumeAndroidBackTrigger() {
+        if (m_androidBackPressed && !m_androidBackPrev) {
+            m_androidBackPrev = m_androidBackPressed;
+            return true;
+        }
+        m_androidBackPrev = m_androidBackPressed;
+        return false;
+    }
 
 private:
     struct Toast {
@@ -40,6 +48,8 @@ private:
 
     bool m_isHidden = true;
     bool m_isLaunchInitialized = false;
+    bool m_androidBackPressed = false;
+    bool m_androidBackPrev = false;
     ImGuiWindow* m_dragScrollWindow = nullptr;
     ImVec2 m_dragScrollLastMousePos = {};
     std::deque<Toast> m_toasts;

@@ -25,6 +25,7 @@
 #include "JSystem/JUtility/JUTReport.h"
 #include "SSystem/SComponent/c_counter.h"
 #include "SSystem/SComponent/c_API_graphic.h"
+#include <SDL3/SDL_hints.h>
 #include "Z2AudioLib/Z2WolfHowlMgr.h"
 #include "c/c_dylink.h"
 #include "d/d_com_inf_game.h"
@@ -762,6 +763,11 @@ int game_main(int argc, char* argv[]) {
         config.allowTextureReplacements = true;
         config.allowTextureDumps = false;
         dusk::mod_manager::initialize();
+
+        // Enable Android back button trapping so we can detect it in-game
+        if (dusk::IsMobile) {
+            SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
+        }
 
         // Auto-backup saves on launch
         if (dusk::getSettings().game.autoBackupSaves.getValue()) {
