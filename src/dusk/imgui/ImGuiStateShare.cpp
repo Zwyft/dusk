@@ -4,6 +4,7 @@
 #include "ImGuiEngine.hpp"
 
 #include "imgui.h"
+#include "SDL3/SDL_touch.h"
 #include "fmt/format.h"
 #include "absl/strings/escaping.h"
 #include "nlohmann/json.hpp"
@@ -274,13 +275,17 @@ void ImGuiStateShare::tick() {
         static int s_fingerCount = 0;
         static bool s_prevThreeFingerTap = false;
 
-        auto& io = ImGui::GetIO();
         bool threeFingerTap = false;
 
-        // Count active touch fingers
+        // Count active touch fingers using SDL touch API
         int activeFingers = 0;
-        for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) {
-            if (io.MouseDown[i]) activeFingers++;
+        int touchDeviceCount = 0;
+        SDL_TouchID* touchDevices = SDL_GetTouchDevices(&touchDeviceCount);
+        for (int i = 0; i < touchDeviceCount; i++) {
+            SDL_TouchID touchId = touchDevices[i];
+            int fingersOnDevice = 0;
+            SDL_GetTouchFingers(touchId, &fingersOnDevice);
+            activeFingers += fingersOnDevice;
         }
 
         // Detect 3-finger tap (3 fingers down then released)
