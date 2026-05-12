@@ -107,7 +107,7 @@ Rml::Element* create_controller_warning(Rml::Element* parent) {
 SDL_Gamepad* gamepad_for_port(u32 port) noexcept {
     const s32 index = PADGetIndexForPort(port);
     if (index < 0) {
-        return reinterpret_cast<SDL_Gamepad*>(0x1);  // Return fake gamepad to avoid warning
+        return nullptr;
     }
     return PADGetSDLGamepadForIndex(static_cast<u32>(index));
 }

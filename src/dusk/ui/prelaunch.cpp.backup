@@ -43,14 +43,6 @@ const Rml::String kDocumentSource = R"RML(
     <div class="background" />
     <content id="root" open>
         <menu>
-            <!-- Add touch controls visibility check -->
-            <script type="text/javascript">
-                document.addEventListener("DOMContentLoaded", function() {
-                    if (typeof touch_controls !== "undefined" && touch_controls.is_enabled()) {
-                        document.body.classList.add("touch-controls-enabled");
-                    }
-                });
-            </script>
             <hero class="intro-item delay-0">
                 <div class="eyebrow"><span>Twilit Realm</span> presents</div>
                 <img src="res/logo-mascot.png" />

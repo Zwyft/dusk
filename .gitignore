@@ -53,3 +53,29 @@ extract
 # Local build environment
 .build-tools/
 .build-env
+
+# Build artifacts
+build/
+platforms/android/app/build/
+*.apk
+*.so
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build scripts and temporary files
+*.sh
+*.patch

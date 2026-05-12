@@ -67,6 +67,13 @@ ModsWindow::ModsWindow() : Document(kModsRml) {
     refresh_ui();
 }
 
+void ModsWindow::show() {
+    Document::show();
+    if (mRoot) {
+        mRoot->SetAttribute("open", "");
+    }
+}
+
 void ModsWindow::build_mod_list(Rml::Element* parent) {
     auto mods = mod_manager::scan_mods();
     mFocusedIndex = 0;

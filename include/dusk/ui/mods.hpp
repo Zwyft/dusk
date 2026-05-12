@@ -7,6 +7,7 @@ namespace dusk::ui {
 class ModsWindow : public Document {
 public:
     ModsWindow();
+    void show() override;
     void update() override;
     bool handle_nav_command(Rml::Event& event, NavCommand cmd) override;
 
