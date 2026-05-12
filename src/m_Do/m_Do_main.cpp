@@ -67,6 +67,7 @@
 #include "dusk/ui/prelaunch.hpp"
 #include "dusk/ui/preset.hpp"
 #include "dusk/ui/ui.hpp"
+#include "dusk/touch_controls.hpp"
 #include "version.h"
 
 #include <aurora/aurora.h>
@@ -194,6 +195,7 @@ bool launchUILoop() {
             case AURORA_SDL_EVENT:
                 dusk::ui::handle_event(event->sdl);
                 dusk::g_imguiConsole.HandleSDLEvent(event->sdl);
+                dusk::touch_controls::handle_event(event->sdl);
                 break;
             case AURORA_DISPLAY_SCALE_CHANGED:
                 dusk::ImGuiEngine_Initialize(event->windowSize.scale);
@@ -278,6 +280,7 @@ void main01(void) {
             case AURORA_SDL_EVENT:
                 dusk::ui::handle_event(event->sdl);
                 dusk::g_imguiConsole.HandleSDLEvent(event->sdl);
+                dusk::touch_controls::handle_event(event->sdl);
                 break;
             case AURORA_DISPLAY_SCALE_CHANGED:
                 dusk::ImGuiEngine_Initialize(event->windowSize.scale);
@@ -311,6 +314,7 @@ void main01(void) {
                 for (int sim_tick = 0; sim_tick < pacing.sim_ticks_to_run; ++sim_tick) {
                     dusk::frame_interp::begin_sim_tick();
                     mDoCPd_c::read();
+                    dusk::touch_controls::apply_virtual_input(&mDoCPd_c::getCpadInfo(PAD_1));
                     dusk::gyro::read(pacing.sim_pace);
                     fapGm_Execute();
                     mDoAud_Execute();
@@ -333,6 +337,7 @@ void main01(void) {
 
             // Game Inputs
             mDoCPd_c::read();
+            dusk::touch_controls::apply_virtual_input(&mDoCPd_c::getCpadInfo(PAD_1));
             dusk::gyro::read(pacing.presentation_dt_seconds);
 
             // EXECUTE GAME LOGIC & RENDER
@@ -819,6 +824,7 @@ int game_main(int argc, char* argv[]) {
     }
 
     dusk::ui::initialize();
+    dusk::touch_controls::init();
     dusk::ui::push_document(std::make_unique<dusk::ui::Overlay>(), true, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::MenuBar>(), false);
 

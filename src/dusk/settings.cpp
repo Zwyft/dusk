@@ -120,7 +120,8 @@ UserSettings g_userSettings = {
         // Tools
         .speedrunMode {"game.speedrunMode", false},
         .liveSplitEnabled {"game.liveSplitEnabled", false},
-        .recordingMode {"game.recordingMode", false}
+        .recordingMode {"game.recordingMode", false},
+        .enableSaveStates {"game.enableSaveStates", false}
     },
 
     .touch = {
@@ -231,6 +232,7 @@ void registerSettings() {
     Register(g_userSettings.game.speedrunMode);
     Register(g_userSettings.game.liveSplitEnabled);
     Register(g_userSettings.game.recordingMode);
+    Register(g_userSettings.game.enableSaveStates);
     Register(g_userSettings.game.fastSpinner);
     Register(g_userSettings.game.infiniteHearts);
     Register(g_userSettings.game.infiniteArrows);

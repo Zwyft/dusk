@@ -688,4 +688,17 @@ void notify_controller_removed() {
     }
 }
 
+void init() {
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS)
+    // On mobile: if no physical controllers are connected and touch is
+    // disabled (likely from a previous session where a controller was
+    // connected), re-enable it automatically.
+    if (!is_enabled() && g_controllerCount == 0) {
+        getSettings().touch.enabled.setValue(true);
+        g_autoDisabled = false;
+        config::Save();
+    }
+#endif
+}
+
 } // namespace dusk::touch_controls

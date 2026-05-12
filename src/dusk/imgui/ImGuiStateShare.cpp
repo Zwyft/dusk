@@ -8,6 +8,7 @@
 #include "nlohmann/json.hpp"
 
 #include "d/d_com_inf_game.h"
+#include "m_Do/m_Do_controller_pad.h"
 #include "dusk/main.h"
 #include "dusk/io.hpp"
 #include "dusk/logging.h"
@@ -36,6 +37,7 @@ struct StateSharePacket {
 static constexpr size_t PACKET_TOTAL     = sizeof(StateSharePacket) + sizeof(dSv_info_c);
 static constexpr size_t PACKET_SAVE_ONLY = sizeof(StateSharePacket) + sizeof(dSv_save_c);
 static constexpr auto STATES_FILENAME = "states.json";
+static constexpr auto QUICKSAVE_PREFIX = "quicksave_";
 
 static bool ValidateEncodedState(const std::string&);
 
@@ -47,6 +49,224 @@ void ImGuiStateShare::onMergeFileSelected(void* userdata, const char* path, cons
 }
 
 
+
+static std::filesystem::path GetQuickSaveFilePath(int slot) {
+    return ConfigPath / fmt::format("{}{}.json", QUICKSAVE_PREFIX, slot);
+}
+
+void ImGuiStateShare::loadQuickSaves() {
+    m_quickSavesLoaded = true;
+    for (int i = 0; i < 4; ++i) {
+        auto& slot = m_quickSaves[i];
+        const auto path = GetQuickSaveFilePath(i);
+        slot.occupied = false;
+        if (!std::filesystem::exists(path)) {
+            continue;
+        }
+        try {
+            auto data = io::FileStream::ReadAllBytes(path);
+            auto j = json::parse(data);
+            if (!j.is_object() || !j.contains("data")) {
+                continue;
+            }
+            slot.encoded = j["data"].get<std::string>();
+            if (!ValidateEncodedState(slot.encoded)) {
+                slot.occupied = false;
+                continue;
+            }
+            slot.occupied = true;
+            if (j.contains("stage")) slot.stageName = j["stage"].get<std::string>();
+            if (j.contains("room")) slot.roomNo = j["room"].get<int8_t>();
+            if (j.contains("timestamp")) {
+                auto ts = j["timestamp"].get<int64_t>();
+                slot.timestamp = std::chrono::system_clock::time_point(std::chrono::seconds(ts));
+            }
+        } catch (...) {
+            slot.occupied = false;
+        }
+    }
+}
+
+void ImGuiStateShare::saveQuickSaves() {
+    for (int i = 0; i < 4; ++i) {
+        const auto& slot = m_quickSaves[i];
+        const auto path = GetQuickSaveFilePath(i);
+        if (!slot.occupied) {
+            std::error_code ec;
+            std::filesystem::remove(path, ec);
+            continue;
+        }
+        json j;
+        j["data"] = slot.encoded;
+        j["stage"] = slot.stageName;
+        j["room"] = slot.roomNo;
+        j["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
+            slot.timestamp.time_since_epoch()).count();
+        try {
+            io::FileStream::WriteAllText(path, j.dump(2));
+        } catch (...) {
+        }
+    }
+}
+
+void ImGuiStateShare::quickSave(int slot) {
+    if (slot < 0 || slot >= 4 || !dusk::IsGameLaunched) return;
+    if (dusk::getTransientSettings().stateShareLoadActive) return;
+
+    auto& entry = m_quickSaves[slot];
+    entry.encoded = encodeCurrentState();
+    entry.stageName = dComIfGp_getStartStageName();
+    entry.roomNo = dComIfGp_getStartStageRoomNo();
+    entry.timestamp = std::chrono::system_clock::now();
+    entry.occupied = true;
+    saveQuickSaves();
+    m_statusMsg = fmt::format("Quick save {} saved.", slot + 1);
+}
+
+bool ImGuiStateShare::quickLoad(int slot) {
+    if (slot < 0 || slot >= 4) return false;
+    if (!m_quickSaves[slot].occupied) return false;
+    if (dusk::getTransientSettings().stateShareLoadActive) return false;
+
+    bool ok = applyEncodedState(m_quickSaves[slot].encoded,
+                                fmt::format("Quick Save {}", slot + 1));
+    if (ok) {
+        m_statusMsg = fmt::format("Loaded quick save {}.", slot + 1);
+    }
+    return ok;
+}
+
+bool ImGuiStateShare::hasQuickSave(int slot) const {
+    return slot >= 0 && slot < 4 && m_quickSaves[slot].occupied;
+}
+
+std::string ImGuiStateShare::quickSaveInfo(int slot) const {
+    if (slot < 0 || slot >= 4 || !m_quickSaves[slot].occupied) return "";
+    const auto& s = m_quickSaves[slot];
+    auto now = std::chrono::system_clock::now();
+    auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - s.timestamp).count();
+    std::string timeStr;
+    if (diff < 60) timeStr = fmt::format("{}s ago", diff);
+    else if (diff < 3600) timeStr = fmt::format("{}m ago", diff / 60);
+    else if (diff < 86400) timeStr = fmt::format("{}h ago", diff / 3600);
+    else timeStr = fmt::format("{}d ago", diff / 86400);
+    std::string typeTag = s.isFullState ? "[FULL] " : "";
+    return fmt::format("{}{} R{} ({})", typeTag, s.stageName, (int)s.roomNo, timeStr);
+}
+
+void ImGuiStateShare::quickSaveFull(int slot) {
+    if (slot < 0 || slot >= 4 || !dusk::IsGameLaunched) return;
+    if (dusk::getTransientSettings().stateShareLoadActive) return;
+
+    auto& entry = m_quickSaves[slot];
+    auto stateData = save_state::captureState();
+
+    // Encode the full state
+    size_t bound = ZSTD_compressBound(stateData.size());
+    std::string compressed(bound, '\0');
+    compressed.resize(ZSTD_compress(compressed.data(), bound, stateData.data(), stateData.size(), 1));
+    entry.encoded = absl::Base64Escape(compressed);
+    entry.stageName = dComIfGp_getStartStageName();
+    entry.roomNo = dComIfGp_getStartStageRoomNo();
+    entry.timestamp = std::chrono::system_clock::now();
+    entry.occupied = true;
+    entry.isFullState = true;
+    saveQuickSaves();
+    m_statusMsg = fmt::format("Full quick save {} saved.", slot + 1);
+}
+
+bool ImGuiStateShare::quickLoadFull(int slot) {
+    if (slot < 0 || slot >= 4) return false;
+    if (!m_quickSaves[slot].occupied) return false;
+    if (!m_quickSaves[slot].isFullState) return false;
+    if (dusk::getTransientSettings().stateShareLoadActive) return false;
+
+    std::string decoded;
+    if (!absl::Base64Unescape(m_quickSaves[slot].encoded, &decoded)) {
+        m_statusMsg = "Invalid base64.";
+        return false;
+    }
+
+    unsigned long long dSize = ZSTD_getFrameContentSize(decoded.data(), decoded.size());
+    if (dSize == ZSTD_CONTENTSIZE_ERROR || dSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+        m_statusMsg = "Not a valid state string.";
+        return false;
+    }
+
+    std::vector<uint8_t> stateData(dSize);
+    size_t result = ZSTD_decompress(stateData.data(), stateData.size(), decoded.data(), decoded.size());
+    if (ZSTD_isError(result)) {
+        m_statusMsg = fmt::format("Decompression failed: {}", ZSTD_getErrorName(result));
+        return false;
+    }
+
+    bool ok = save_state::restoreState(stateData);
+    if (ok) {
+        m_statusMsg = fmt::format("Loaded full quick save {}.", slot + 1);
+    }
+    return ok;
+}
+
+void ImGuiStateShare::tick() {
+    if (dusk::IsGameLaunched) {
+        tickPendingApply();
+        if (dusk::getTransientSettings().stateShareLoadActive) {
+            if (fopOvlpM_IsPeek()) {
+                m_stateSharePeekSeen = true;
+            } else if (m_stateSharePeekSeen) {
+                dusk::getTransientSettings().stateShareLoadActive = false;
+                m_stateSharePeekSeen = false;
+            }
+        }
+    }
+
+    if (!m_loaded) {
+        loadStatesFile();
+    }
+    if (!m_quickSavesLoaded) {
+        loadQuickSaves();
+    }
+
+    if (!m_pendingMergePath.empty()) {
+        mergeFromFile(m_pendingMergePath);
+        m_pendingMergePath.clear();
+    }
+
+    // Quick save/load hotkeys: Ctrl+F1-F4 to save, F1-F4 to load
+    if (dusk::IsGameLaunched && !dusk::getTransientSettings().stateShareLoadActive) {
+        auto& io = ImGui::GetIO();
+        for (int i = 0; i < 4; ++i) {
+            ImGuiKey key = (ImGuiKey)(ImGuiKey_F1 + i);
+            if (ImGui::IsKeyDown(key) && io.KeyCtrl) {
+                quickSave(i);
+            } else if (ImGui::IsKeyPressed(key) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
+                if (hasQuickSave(i)) {
+                    quickLoad(i);
+                }
+            }
+        }
+    }
+
+    // Android/Desktop: Controller Select/Back button opens save state UI
+    if (dusk::IsGameLaunched && getSettings().game.enableSaveStates &&
+        !dusk::getTransientSettings().stateShareLoadActive) {
+        static bool s_prevSelectHeld = false;
+        bool selectHeld = false;
+
+        for (u32 port = 0; port < PAD_MAX_CONTROLLERS; ++port) {
+            if (mDoCPd_c::isConnect(port)) {
+                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_START) {
+                    selectHeld = true;
+                }
+            }
+        }
+
+        if (selectHeld && !s_prevSelectHeld) {
+            m_showQuickMenu = true;
+        }
+        s_prevSelectHeld = selectHeld;
+    }
+}
 
 static std::filesystem::path GetStatesFilePath() {
     return ConfigPath / STATES_FILENAME;
@@ -243,42 +463,131 @@ void ImGuiStateShare::mergeFromFile(const std::string& path) {
 }
 
 void ImGuiStateShare::draw(bool& open) {
-    if (dusk::IsGameLaunched) {
-        tickPendingApply();
-        if (dusk::getTransientSettings().stateShareLoadActive) {
-            if (fopOvlpM_IsPeek()) {
-                m_stateSharePeekSeen = true;
-            } else if (m_stateSharePeekSeen) {
-                dusk::getTransientSettings().stateShareLoadActive = false;
-                m_stateSharePeekSeen = false;
-            }
-        }
-    }
-
-    if (!m_loaded) {
-        loadStatesFile();
-    }
-
-    if (!m_pendingMergePath.empty()) {
-        mergeFromFile(m_pendingMergePath);
-        m_pendingMergePath.clear();
-    }
-
-    if (!open) {
-        return;
-    }
-
-    ImGui::SetNextWindowSizeConstraints(ImVec2(400, 0), ImVec2(FLT_MAX, FLT_MAX));
-    if (!ImGui::Begin("State Manager", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
-        ImGui::End();
+    if (!open && !m_showQuickMenu) {
         return;
     }
 
     const bool gameRunning = dusk::IsGameLaunched;
     const bool loadInProgress = dusk::getTransientSettings().stateShareLoadActive;
 
+    if (m_showQuickMenu && gameRunning && !loadInProgress) {
+        ImGui::OpenPopup("##QuickSaveMenu");
+        m_showQuickMenu = false;
+    }
+
+    if (ImGui::BeginPopup("##QuickSaveMenu", ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Quick Saves");
+        ImGui::Separator();
+
+        for (int i = 0; i < 4; ++i) {
+            ImGui::PushID(i + 200);
+            const auto& slot = m_quickSaves[i];
+            const bool hasSave = slot.occupied;
+
+            if (hasSave) {
+                ImGui::Text("%s", quickSaveInfo(i).c_str());
+            } else {
+                ImGui::TextDisabled("Empty");
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Save", ImVec2(50, 0))) {
+                quickSave(i);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Full", ImVec2(50, 0))) {
+                quickSaveFull(i);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Load", ImVec2(50, 0))) {
+                if (hasSave) {
+                    if (slot.isFullState) quickLoadFull(i);
+                    else quickLoad(i);
+                }
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (hasSave && ImGui::Button("Del", ImVec2(30, 0))) {
+                m_quickSaves[i] = {};
+                saveQuickSaves();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::Spacing();
+        ImGui::TextDisabled("Save=stage reload, Full=instant");
+        if (ImGui::Button("Close", ImVec2(-1, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (!open) {
+        return;
+    }
+
+    ImGui::SetNextWindowSizeConstraints(ImVec2(450, 0), ImVec2(FLT_MAX, FLT_MAX));
+    if (!ImGui::Begin("Save States", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
+        ImGui::End();
+        return;
+    }
+
+    // Quick Save Slots
+    ImGui::Text("Quick Saves");
+    ImGui::Separator();
+
+    for (int i = 0; i < 4; ++i) {
+        ImGui::PushID(i + 100);
+        const auto& slot = m_quickSaves[i];
+        const bool hasSave = slot.occupied;
+
+        if (hasSave) {
+            ImGui::Text("%s", quickSaveInfo(i).c_str());
+        } else {
+            ImGui::TextDisabled("Empty");
+        }
+
+        ImGui::SameLine();
+        if (!gameRunning || loadInProgress) { ImGui::BeginDisabled(); }
+        if (ImGui::Button("Save", ImVec2(50, 0))) {
+            quickSave(i);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Full", ImVec2(50, 0))) {
+            quickSaveFull(i);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Load", ImVec2(50, 0))) {
+            if (hasSave) {
+                if (slot.isFullState) quickLoadFull(i);
+                else quickLoad(i);
+            }
+        }
+        if (!gameRunning || loadInProgress) { ImGui::EndDisabled(); }
+
+        ImGui::SameLine();
+        if (hasSave && ImGui::Button("Del", ImVec2(30, 0))) {
+            m_quickSaves[i] = {};
+            saveQuickSaves();
+            m_statusMsg = fmt::format("Quick save {} deleted.", i + 1);
+        }
+
+        ImGui::PopID();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Named States
+    ImGui::Text("Named States");
+    ImGui::Separator();
+
     const float rowH  = ImGui::GetTextLineHeightWithSpacing();
-    const float listH = rowH * 8 + ImGui::GetStyle().FramePadding.y * 2;
+    const float listH = rowH * 6 + ImGui::GetStyle().FramePadding.y * 2;
     ImGui::BeginChild("##states", ImVec2(0, listH), true);
 
     if (m_states.empty()) {

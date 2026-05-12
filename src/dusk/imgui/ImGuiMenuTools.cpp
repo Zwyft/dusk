@@ -30,6 +30,10 @@ extern bool enableLodBias;
 namespace dusk {
     ImGuiMenuTools::ImGuiMenuTools() {}
 
+    void ImGuiMenuTools::tick() {
+        m_stateShare.tick();
+    }
+
     void ImGuiMenuTools::draw() {
         if (ImGui::BeginMenu("Tools")) {
             if (!dusk::IsGameLaunched) {

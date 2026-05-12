@@ -184,6 +184,7 @@ struct UserSettings {
         ConfigVar<bool> speedrunMode;
         ConfigVar<bool> liveSplitEnabled;
         ConfigVar<bool> recordingMode;
+        ConfigVar<bool> enableSaveStates;
     } game;
 
     struct {

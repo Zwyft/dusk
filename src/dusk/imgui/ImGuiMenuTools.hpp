@@ -13,6 +13,7 @@ namespace dusk {
     class ImGuiMenuTools {
     public:
         ImGuiMenuTools();
+        void tick();
         void draw();
         void afterDraw();
 

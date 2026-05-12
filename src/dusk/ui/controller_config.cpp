@@ -5,6 +5,11 @@
 #include "pane.hpp"
 #include "number_button.hpp"
 
+#include "dusk/config.hpp"
+#include "dusk/imgui/ImGuiEngine.hpp"
+#include "dusk/settings.h"
+#include "dusk/touch_controls.hpp"
+
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
@@ -27,6 +32,10 @@ Rml::String current_controller_name(int port) {
     const char* name = PADGetName(port);
     if (name != nullptr) {
         return name;
+    }
+    if (port == 0 && dusk::IsMobile && dusk::touch_controls::is_enabled() &&
+        PADGetIndexForPort(port) < 0 && !keyboard_active(port)) {
+        return "Touch";
     }
     return keyboard_active(port) ? "Keyboard" : "None";
 }
@@ -416,7 +425,10 @@ void ControllerConfigWindow::render_page(Pane& pane, int port, Page page) {
                 {
                     .text = "None",
                 .isSelected =
-                    [port] { return PADGetIndexForPort(port) < 0 && !keyboard_active(port); },
+                    [port] {
+                        return PADGetIndexForPort(port) < 0 && !keyboard_active(port) &&
+                               !(port == 0 && dusk::IsMobile && dusk::touch_controls::is_enabled());
+                    },
             })
             .on_pressed([this, port] {
                 mDoAud_seStartMenu(kSoundItemChange);
@@ -437,6 +449,25 @@ void ControllerConfigWindow::render_page(Pane& pane, int port, Page page) {
                 PADSetKeyboardActive(static_cast<u32>(port), TRUE);
                 PADSerializeMappings();
             });
+
+        if (dusk::IsMobile) {
+            pane.add_button({
+                                .text = "Touch",
+                                .isSelected = [port] {
+                                    return port == 0 && dusk::touch_controls::is_enabled() &&
+                                           PADGetIndexForPort(port) < 0 && !keyboard_active(port);
+                                },
+                            })
+                .on_pressed([this, port] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    cancel_pending_binding();
+                    PADClearPort(port);
+                    PADSetKeyboardActive(static_cast<u32>(port), FALSE);
+                    getSettings().touch.enabled.setValue(true);
+                    config::Save();
+                    PADSerializeMappings();
+                });
+        }
 
         const u32 controllerCount = PADCount();
         if (controllerCount == 0) {

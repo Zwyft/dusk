@@ -20,6 +20,7 @@
 #include "dusk/livesplit.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
+#include "dusk/touch_controls.hpp"
 #include "dusk/ui/ui.hpp"
 #include "f_pc/f_pc_manager.h"
 #include "f_pc/f_pc_name.h"
@@ -251,6 +252,8 @@ namespace dusk {
     void ImGuiConsole::PreDraw() {
         ZoneScoped;
 
+        m_menuTools.tick();
+
         UpdateSettings();
 
         if (ImGui::IsKeyPressed(ImGuiKey_F11)) {
@@ -399,6 +402,7 @@ namespace dusk {
     void ImGuiConsole::PostDraw() {
         m_menuTools.afterDraw();
         ShowPipelineProgress();
+        dusk::touch_controls::draw();
     }
 
     void ImGuiConsole::UpdateDragScroll() {

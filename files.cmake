@@ -1460,9 +1460,11 @@ set(DUSK_FILES
         src/dusk/imgui/ImGuiStubLog.cpp
         src/dusk/imgui/ImGuiMapLoader.cpp
         src/dusk/imgui/ImGuiSaveEditor.cpp
-        src/dusk/imgui/ImGuiStateShare.hpp
-        src/dusk/imgui/ImGuiStateShare.cpp
-        src/dusk/ui/achievements.cpp
+         src/dusk/imgui/ImGuiStateShare.hpp
+         src/dusk/imgui/ImGuiStateShare.cpp
+         src/dusk/save_state.cpp
+         include/dusk/save_state.hpp
+         src/dusk/ui/achievements.cpp
         src/dusk/ui/achievements.hpp
         src/dusk/ui/bool_button.cpp
         src/dusk/ui/bool_button.hpp

@@ -5,6 +5,9 @@ struct interface_of_controller_pad;
 
 namespace dusk::touch_controls {
 
+// Call once at startup to reconcile touch state with controller presence.
+void init();
+
 // Process a raw SDL event (call from the Aurora event loop on AURORA_SDL_EVENT).
 void handle_event(const SDL_Event& event);
 
