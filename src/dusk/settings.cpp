@@ -121,7 +121,13 @@ UserSettings g_userSettings = {
         .speedrunMode {"game.speedrunMode", false},
         .liveSplitEnabled {"game.liveSplitEnabled", false},
         .recordingMode {"game.recordingMode", false},
-        .enableSaveStates {"game.enableSaveStates", false}
+        .enableSaveStates {"game.enableSaveStates",
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS)
+            true
+#else
+            false
+#endif
+        }
     },
 
     .touch = {

@@ -255,7 +255,7 @@ void ImGuiStateShare::tick() {
 
         for (u32 port = 0; port < PAD_MAX_CONTROLLERS; ++port) {
             if (mDoCPd_c::isConnect(port)) {
-                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_START) {
+                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_BACK) {
                     selectHeld = true;
                 }
             }
@@ -265,6 +265,37 @@ void ImGuiStateShare::tick() {
             m_showQuickMenu = true;
         }
         s_prevSelectHeld = selectHeld;
+    }
+
+    // Mobile: 3-finger tap opens save state UI
+    if (dusk::IsGameLaunched && getSettings().game.enableSaveStates &&
+        !dusk::getTransientSettings().stateShareLoadActive) {
+        static int s_fingerCount = 0;
+        static bool s_prevThreeFingerTap = false;
+
+        auto& io = ImGui::GetIO();
+        bool threeFingerTap = false;
+
+        // Count active touch fingers
+        int activeFingers = 0;
+        for (int i = 0; i < io.MouseDownCount; i++) {
+            if (io.MouseDown[i]) activeFingers++;
+        }
+
+        // Detect 3-finger tap (3 fingers down then released)
+        if (activeFingers == 3 && s_fingerCount < 3) {
+            s_fingerCount = 3;
+        } else if (activeFingers == 0 && s_fingerCount == 3) {
+            threeFingerTap = true;
+            s_fingerCount = 0;
+        } else if (activeFingers != 3) {
+            s_fingerCount = activeFingers;
+        }
+
+        if (threeFingerTap && !s_prevThreeFingerTap) {
+            m_showQuickMenu = true;
+        }
+        s_prevThreeFingerTap = threeFingerTap;
     }
 }
 
@@ -725,10 +756,14 @@ void ImGuiStateShare::draw(bool& open) {
 }
 
 void ImGuiMenuTools::ShowStateShare() {
-    if (!getSettings().backend.enableAdvancedSettings ||
-        !ImGuiConsole::CheckMenuViewToggle(ImGuiKey_F8, m_showStateShare))
-    {
-        return;
+    // On mobile, always allow the quick menu (triggered by 3-finger tap or back button)
+    // On desktop, require F8 toggle or advanced settings
+    if (!dusk::IsMobile) {
+        if (!getSettings().backend.enableAdvancedSettings ||
+            !ImGuiConsole::CheckMenuViewToggle(ImGuiKey_F8, m_showStateShare))
+        {
+            return;
+        }
     }
     m_stateShare.draw(m_showStateShare);
 }
