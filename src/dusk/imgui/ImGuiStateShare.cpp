@@ -1,6 +1,7 @@
 #include "ImGuiStateShare.hpp"
 #include "ImGuiMenuTools.hpp"
 #include "ImGuiConsole.hpp"
+#include "ImGuiEngine.hpp"
 
 #include "imgui.h"
 #include "fmt/format.h"
@@ -278,7 +279,7 @@ void ImGuiStateShare::tick() {
 
         // Count active touch fingers
         int activeFingers = 0;
-        for (int i = 0; i < io.MouseDownCount; i++) {
+        for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) {
             if (io.MouseDown[i]) activeFingers++;
         }
 
