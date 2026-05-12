@@ -29,6 +29,13 @@ class ImGuiStateShare {
 public:
     void draw(bool& open);
     void tick();
+    bool consumeQuickMenuTrigger() {
+        if (m_showQuickMenu) {
+            m_showQuickMenu = false;
+            return true;
+        }
+        return false;
+    }
 
     void quickSave(int slot);
     bool quickLoad(int slot);

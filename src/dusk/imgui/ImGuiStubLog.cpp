@@ -2,6 +2,8 @@
 #include <mutex>
 
 #include "dusk/logging.h"
+#include "dusk/main.h"
+#include "dusk/settings.h"
 #include "imgui.h"
 #include "ImGuiMenuTools.hpp"
 
@@ -93,5 +95,9 @@ namespace dusk {
         std::lock_guard lock(StubLogMutex);
 
         ClearPastFrame();
+
+        if (dusk::IsGameLaunched && getSettings().game.enableSaveStates) {
+            m_stateShare.consumeQuickMenuTrigger();
+        }
     }
 }
