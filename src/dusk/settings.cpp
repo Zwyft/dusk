@@ -139,8 +139,8 @@ UserSettings g_userSettings = {
 #endif
         },
         .menuTapNav {"touch.menuTapNav", false},
-        .opacity {"touch.opacity", 0.75f},
-        .scale {"touch.scale", 1.0f},
+        .opacity {"touch.opacity", 0.45f},
+        .scale {"touch.scale", 2.75f},
         .btnAX {"touch.btnAX", 0.88f}, .btnAY {"touch.btnAY", 0.70f},
         .btnBX {"touch.btnBX", 0.80f}, .btnBY {"touch.btnBY", 0.82f},
         .btnXX {"touch.btnXX", 0.88f}, .btnXY {"touch.btnXY", 0.58f},
