@@ -1517,6 +1517,8 @@ set(DUSK_FILES
         src/dusk/ui/ui.hpp
         src/dusk/ui/window.cpp
         src/dusk/ui/window.hpp
+        src/dusk/ui/warp.cpp
+        src/dusk/ui/warp.hpp
         src/dusk/achievements.cpp
         src/dusk/iso_validate.cpp
         src/dusk/livesplit.cpp
