@@ -799,11 +799,50 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 "Opacity", "Transparency of the virtual buttons while playing.",
                 10, 100, 5,
                 [] { return !touch_controls::is_enabled(); });
+            leftPane.register_control(
+                leftPane.add_child<NumberButton>(NumberButton::Props{
+                    .key = "Left Stick Deadzone",
+                    .getValue = [] { return getSettings().touch.stickMainDeadzone.getValue(); },
+                    .setValue = [](int value) {
+                        getSettings().touch.stickMainDeadzone.setValue(value);
+                        config::Save();
+                    },
+                    .isDisabled = [] { return !touch_controls::is_enabled(); },
+                    .max = 50,
+                    .suffix = "%",
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_text("Deadzone for the left virtual joystick. Higher values require more finger movement before input registers.");
+                });
+            leftPane.register_control(
+                leftPane.add_child<NumberButton>(NumberButton::Props{
+                    .key = "Right Stick Deadzone",
+                    .getValue = [] { return getSettings().touch.stickCDeadzone.getValue(); },
+                    .setValue = [](int value) {
+                        getSettings().touch.stickCDeadzone.setValue(value);
+                        config::Save();
+                    },
+                    .isDisabled = [] { return !touch_controls::is_enabled(); },
+                    .max = 50,
+                    .suffix = "%",
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_text("Deadzone for the right virtual joystick. Higher values require more finger movement before input registers.");
+                });
             config_bool_select(leftPane, rightPane, getSettings().touch.menuTapNav,
                 {
                     .key = "Tap to Confirm",
                     .helpText = "When enabled, tapping anywhere on screen (outside the virtual buttons) "
                                 "acts as pressing the A button to confirm menu selections.",
+                    .onChange = [](bool) { config::Save(); },
+                    .isDisabled = [] { return !touch_controls::is_enabled(); },
+                });
+            config_bool_select(leftPane, rightPane, getSettings().touch.floatingCamera,
+                {
+                    .key = "Floating Camera Zone",
+                    .helpText = "Shows an additional virtual joystick on the right side of the screen for camera control. The C-stick will be hidden when enabled.",
                     .onChange = [](bool) { config::Save(); },
                     .isDisabled = [] { return !touch_controls::is_enabled(); },
                 });

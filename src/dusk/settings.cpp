@@ -152,6 +152,12 @@ UserSettings g_userSettings = {
         .dpadX {"touch.dpadX", 0.12f}, .dpadY {"touch.dpadY", 0.58f},
         .stickMainX {"touch.stickMainX", 0.13f}, .stickMainY {"touch.stickMainY", 0.78f},
         .stickCX {"touch.stickCX", 0.74f}, .stickCY {"touch.stickCY", 0.84f},
+        .stickMainDeadzone {"touch.stickMainDeadzone", 15},
+        .stickCDeadzone {"touch.stickCDeadzone", 15},
+        .floatingCamera {"touch.floatingCamera", false},
+        .floatingCameraX {"touch.floatingCameraX", 0.85f},
+        .floatingCameraY {"touch.floatingCameraY", 0.70f},
+        .floatingCameraSize {"touch.floatingCameraSize", 1.0f},
     },
 
     .backend = {
@@ -287,6 +293,12 @@ void registerSettings() {
     Register(g_userSettings.touch.dpadX); Register(g_userSettings.touch.dpadY);
     Register(g_userSettings.touch.stickMainX); Register(g_userSettings.touch.stickMainY);
     Register(g_userSettings.touch.stickCX); Register(g_userSettings.touch.stickCY);
+    Register(g_userSettings.touch.stickMainDeadzone);
+    Register(g_userSettings.touch.stickCDeadzone);
+    Register(g_userSettings.touch.floatingCamera);
+    Register(g_userSettings.touch.floatingCameraX);
+    Register(g_userSettings.touch.floatingCameraY);
+    Register(g_userSettings.touch.floatingCameraSize);
 
     Register(g_userSettings.backend.isoPath);
     Register(g_userSettings.backend.isoVerification);

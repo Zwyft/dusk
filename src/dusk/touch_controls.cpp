@@ -32,6 +32,7 @@ enum CtrlId : int {
     CTRL_DPAD,        // single widget, four hit-zones
     CTRL_STICK_MAIN,
     CTRL_STICK_C,
+    CTRL_FLOATING_CAM,
     CTRL_COUNT,
     CTRL_NONE = -1,
     CTRL_SCREEN_NAV = CTRL_COUNT,  // tap empty screen -> dpad/A when menuTapNav is on
@@ -61,6 +62,7 @@ static constexpr CtrlDef kDefs[CTRL_COUNT] = {
     {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 48.f}, // dpad
     {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 52.f}, // main stick
     {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 42.f}, // c-stick
+    {nullptr, 0, IM_COL32(65,65,65,200), IM_COL32(42,42,42,160), 52.f}, // floating cam
 };
 
 // ---------------------------------------------------------------------------
@@ -108,6 +110,10 @@ static bool g_autoDisabled = false;
 // ---------------------------------------------------------------------------
 // Settings accessors (switch dispatch avoids template array problems)
 // ---------------------------------------------------------------------------
+static float get_floating_x() { return getSettings().touch.floatingCameraX.getValue(); }
+static float get_floating_y() { return getSettings().touch.floatingCameraY.getValue(); }
+static bool is_floating_enabled() { return getSettings().touch.floatingCamera.getValue(); }
+
 static float get_x(int id) {
     auto& t = getSettings().touch;
     switch (id) {
@@ -122,6 +128,7 @@ static float get_x(int id) {
     case CTRL_DPAD:       return t.dpadX.getValue();
     case CTRL_STICK_MAIN: return t.stickMainX.getValue();
     case CTRL_STICK_C:    return t.stickCX.getValue();
+    case CTRL_FLOATING_CAM: return is_floating_enabled() ? get_floating_x() : 0.5f;
     default: return 0.5f;
     }
 }
@@ -140,6 +147,7 @@ static float get_y(int id) {
     case CTRL_DPAD:       return t.dpadY.getValue();
     case CTRL_STICK_MAIN: return t.stickMainY.getValue();
     case CTRL_STICK_C:    return t.stickCY.getValue();
+    case CTRL_FLOATING_CAM: return is_floating_enabled() ? get_floating_y() : 0.5f;
     default: return 0.5f;
     }
 }
@@ -159,6 +167,7 @@ static void set_x(int id, float v) {
     case CTRL_DPAD:       t.dpadX.setValue(v); break;
     case CTRL_STICK_MAIN: t.stickMainX.setValue(v); break;
     case CTRL_STICK_C:    t.stickCX.setValue(v); break;
+    case CTRL_FLOATING_CAM: if (is_floating_enabled()) t.floatingCameraX.setValue(v); break;
     default: break;
     }
 }
@@ -178,12 +187,17 @@ static void set_y(int id, float v) {
     case CTRL_DPAD:       t.dpadY.setValue(v); break;
     case CTRL_STICK_MAIN: t.stickMainY.setValue(v); break;
     case CTRL_STICK_C:    t.stickCY.setValue(v); break;
+    case CTRL_FLOATING_CAM: if (is_floating_enabled()) t.floatingCameraY.setValue(v); break;
     default: break;
     }
 }
 
 static float scaled_radius(int id) {
-    return kDefs[id].radius * getSettings().touch.scale.getValue();
+    float base = kDefs[id].radius;
+    if (id == CTRL_FLOATING_CAM) {
+        return base * getSettings().touch.floatingCameraSize.getValue();
+    }
+    return base * getSettings().touch.scale.getValue();
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +258,13 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         float dx = px - cx, dy = py - cy;
         if (dx * dx + dy * dy <= r * r) return s;
     }
+    if (is_floating_enabled()) {
+        float cx = get_floating_x() * w;
+        float cy = get_floating_y() * h;
+        float r  = scaled_radius(CTRL_FLOATING_CAM);
+        float dx = px - cx, dy = py - cy;
+        if (dx * dx + dy * dy <= r * r) return CTRL_FLOATING_CAM;
+    }
     for (int i = CTRL_BTN_START; i >= CTRL_BTN_A; --i) {
         float cx = get_x(i) * w;
         float cy = get_y(i) * h;
@@ -293,7 +314,7 @@ static void recompute_virtual_state() {
         } else if (f.ctrl == CTRL_STICK_MAIN) {
             g_stickMX = f.stickX;
             g_stickMY = f.stickY;
-        } else if (f.ctrl == CTRL_STICK_C) {
+        } else if (f.ctrl == CTRL_STICK_C || f.ctrl == CTRL_FLOATING_CAM) {
             g_stickCX = f.stickX;
             g_stickCY = f.stickY;
         }
@@ -318,6 +339,22 @@ static void compute_stick(int ctrlId, float px, float py, float w, float h,
     }
     outX = (r > 0.f) ? dx / r : 0.f;
     outY = (r > 0.f) ? dy / r : 0.f;
+
+    // Apply deadzone for sticks
+    if (ctrlId == CTRL_STICK_MAIN || ctrlId == CTRL_STICK_C || ctrlId == CTRL_FLOATING_CAM) {
+        int deadzone = (ctrlId == CTRL_STICK_MAIN)
+                           ? getSettings().touch.stickMainDeadzone.getValue()
+                           : getSettings().touch.stickCDeadzone.getValue();
+        float dzNorm = deadzone / 100.0f;
+        if (dzNorm > 0.f) {
+            float mag = std::sqrt(outX * outX + outY * outY);
+            if (mag > 0.f) {
+                float newMag = std::max(0.f, (mag - dzNorm) / (1.f - dzNorm));
+                outX = outX / mag * newMag;
+                outY = outY / mag * newMag;
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -375,8 +412,13 @@ static void on_finger_motion(const SDL_TouchFingerEvent& ev) {
         if (ev.fingerID == g_dragFinger && g_dragCtrl != CTRL_NONE) {
             float newX = g_dragCtrlStartX + (ev.x - g_dragStartNX);
             float newY = g_dragCtrlStartY + (ev.y - g_dragStartNY);
-            set_x(g_dragCtrl, newX);
-            set_y(g_dragCtrl, newY);
+            if (g_dragCtrl == CTRL_FLOATING_CAM && is_floating_enabled()) {
+                getSettings().touch.floatingCameraX.setValue(newX);
+                getSettings().touch.floatingCameraY.setValue(newY);
+            } else {
+                set_x(g_dragCtrl, newX);
+                set_y(g_dragCtrl, newY);
+            }
         }
         return;
     }

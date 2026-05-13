@@ -204,6 +204,12 @@ struct UserSettings {
         ConfigVar<float> dpadX, dpadY;
         ConfigVar<float> stickMainX, stickMainY;
         ConfigVar<float> stickCX, stickCY;
+        ConfigVar<int> stickMainDeadzone;
+        ConfigVar<int> stickCDeadzone;
+        ConfigVar<bool> floatingCamera;
+        ConfigVar<float> floatingCameraX;
+        ConfigVar<float> floatingCameraY;
+        ConfigVar<float> floatingCameraSize;
     } touch;
 
     struct {
