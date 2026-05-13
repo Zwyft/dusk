@@ -383,7 +383,6 @@ namespace dusk {
             m_menuTools.ShowPlayerInfo();
             m_menuTools.ShowAudioDebug();
             m_menuTools.ShowSaveEditor();
-            m_menuTools.ShowStateShare();
             m_menuTools.ShowActorSpawner();
         }
 
