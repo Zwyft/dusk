@@ -20,6 +20,7 @@
 
 #include <unordered_set>
 #include <zstd.h>
+#include <dusk/autosave.h>
 
 namespace dusk {
 
@@ -335,6 +336,8 @@ bool ImGuiStateShare::applyEncodedState(const std::string& encoded, const std::s
         m_statusMsg = fmt::format("Decompression failed: {}", ZSTD_getErrorName(result));
         return false;
     }
+
+    toggleAutoSave(false);
 
     StateSharePacket pkt;
     memcpy(&pkt, raw.data(), sizeof(pkt));
