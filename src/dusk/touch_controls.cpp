@@ -76,6 +76,9 @@ struct FingerState {
     // For CTRL_STICK_*: current normalized output in [-1, 1]
     float stickX = 0.f;
     float stickY = 0.f;
+    // For CTRL_FLOATING_CAM: origin of the touch (for relative motion)
+    float touchOriginX = 0.f;
+    float touchOriginY = 0.f;
     bool active = false;
 };
 
@@ -249,20 +252,7 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         }
         return CTRL_NONE;
     }
-    // Gameplay hit-test: D-pad needs a directional hit, sticks need inside outer circle
-    if (dpad_bit_at(px, py, w, h) != 0) return CTRL_DPAD;
-    for (int s : {CTRL_STICK_MAIN, CTRL_STICK_C}) {
-        float cx = get_x(s) * w;
-        float cy = get_y(s) * h;
-        float r  = scaled_radius(s);
-        float dx = px - cx, dy = py - cy;
-        if (dx * dx + dy * dy <= r * r) return s;
-    }
-    // Floating camera: invisible zone on right side of screen
-    if (is_floating_enabled()) {
-        float zoneLeft = w * 0.5f;  // right half of screen
-        if (px > zoneLeft) return CTRL_FLOATING_CAM;
-    }
+    // Gameplay hit-test: buttons first, then sticks, then floating camera
     for (int i = CTRL_BTN_START; i >= CTRL_BTN_A; --i) {
         float cx = get_x(i) * w;
         float cy = get_y(i) * h;
@@ -270,7 +260,12 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         float dx = px - cx, dy = py - cy;
         if (dx * dx + dy * dy <= r * r) return i;
     }
-    if (getSettings().touch.menuTapNav.getValue()) return CTRL_SCREEN_NAV;
+    // Floating camera: invisible zone on right side of screen (only if no button hit)
+    if (is_floating_enabled()) {
+        float zoneLeft = w * 0.5f;
+        if (px > zoneLeft) return CTRL_FLOATING_CAM;
+    }
+    if (dpad_bit_at(px, py, w, h) != 0) return CTRL_DPAD;
     return CTRL_NONE;
 }
 
@@ -392,6 +387,11 @@ static void on_finger_down(const SDL_TouchFingerEvent& ev) {
         f->dpadBit = dpad_bit_at(px, py, w, h);
     } else if (ctrl == CTRL_SCREEN_NAV) {
         f->dpadBit = screen_nav_bit(px, py, w, h);
+    } else if (ctrl == CTRL_FLOATING_CAM) {
+        f->touchOriginX = px;
+        f->touchOriginY = py;
+        f->stickX = 0.f;
+        f->stickY = 0.f;
     } else {
         // stick: compute initial deflection
         compute_stick(ctrl, px, py, w, h, f->stickX, f->stickY);
@@ -430,6 +430,12 @@ static void on_finger_motion(const SDL_TouchFingerEvent& ev) {
         f->dpadBit = screen_nav_bit(px, py, w, h);
     } else if (f->ctrl == CTRL_STICK_MAIN || f->ctrl == CTRL_STICK_C) {
         compute_stick(f->ctrl, px, py, w, h, f->stickX, f->stickY);
+    } else if (f->ctrl == CTRL_FLOATING_CAM) {
+        float dx = px - f->touchOriginX;
+        float dy = py - f->touchOriginY;
+        float maxDelta = std::min(w, h) * 0.2f;
+        f->stickX = std::max(-1.f, std::min(1.f, dx / maxDelta));
+        f->stickY = std::max(-1.f, std::min(1.f, dy / maxDelta));
     }
     recompute_virtual_state();
 }
