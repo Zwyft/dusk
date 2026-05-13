@@ -101,14 +101,6 @@ static int g_dragCtrl = CTRL_NONE;
 static SDL_FingerID g_dragFinger = 0;
 static float g_dragStartNX = 0.f, g_dragStartNY = 0.f;   // normalized finger start
 static float g_dragCtrlStartX = 0.f, g_dragCtrlStartY = 0.f; // ctrl pos when drag began
-// Slider mode: finger down position for value change
-static float g_sliderStartX = 0.f;
-static float g_sliderStartValue = 0.f;
-static bool g_sliderActive = false;
-// Slider target: 0 = scale, 1 = opacity
-static int g_sliderTarget = -1;
-// Adjust mode: 0 = position, 1 = scale, 2 = opacity
-static int g_adjustMode = 0;
 
 // ---------------------------------------------------------------------------
 // Controller auto-disable tracking
