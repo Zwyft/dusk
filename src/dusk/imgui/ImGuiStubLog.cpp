@@ -95,9 +95,5 @@ namespace dusk {
         std::lock_guard lock(StubLogMutex);
 
         ClearPastFrame();
-
-        if (dusk::IsGameLaunched && getSettings().game.enableSaveStates) {
-            m_stateShare.consumeQuickMenuTrigger();
-        }
     }
 }

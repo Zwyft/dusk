@@ -10,7 +10,25 @@
 namespace dusk {
     ImGuiMenuGame::ImGuiMenuGame() {}
 
-    void ImGuiMenuGame::draw() {}
+    void ImGuiMenuGame::draw() {
+        if (ImGui::BeginMenu("Game")) {
+            if (!dusk::IsGameLaunched) {
+                ImGui::BeginDisabled();
+            }
+
+            if (ImGui::MenuItem("Save States")) {
+                if (dusk::IsGameLaunched) {
+                    g_imguiConsole.ShowSaveStates();
+                }
+            }
+
+            if (!dusk::IsGameLaunched) {
+                ImGui::EndDisabled();
+            }
+
+            ImGui::EndMenu();
+        }
+    }
 
     static std::string GetFormattedTime(OSTime ticks) {
         OSCalendarTime time;

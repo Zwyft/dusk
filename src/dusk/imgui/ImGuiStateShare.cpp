@@ -247,50 +247,6 @@ void ImGuiStateShare::tick() {
             }
         }
     }
-
-    // Android/Desktop: Controller Select/Back button opens save state UI
-    if (dusk::IsGameLaunched && getSettings().game.enableSaveStates &&
-        !dusk::getTransientSettings().stateShareLoadActive) {
-        static bool s_prevSelectHeld = false;
-        bool selectHeld = false;
-
-        for (u32 port = 0; port < PAD_MAX_CONTROLLERS; ++port) {
-            if (mDoCPd_c::isConnect(port)) {
-                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_BACK) {
-                    selectHeld = true;
-                }
-            }
-        }
-
-        if (selectHeld && !s_prevSelectHeld) {
-            m_showQuickMenu = true;
-        }
-        s_prevSelectHeld = selectHeld;
-    }
-
-    // Mobile: use Android back button to open save state UI
-    if (dusk::IsGameLaunched && getSettings().game.enableSaveStates &&
-        !dusk::getTransientSettings().stateShareLoadActive) {
-        bool openTriggered = false;
-
-        // Check Android back button (requires SDL_HINT_ANDROID_TRAP_BACK_BUTTON = "1")
-        if (dusk::g_imguiConsole.ConsumeAndroidBackTrigger()) {
-            openTriggered = true;
-        }
-
-        // Check controller/gamepad back button (works with physical controllers and emulated input)
-        for (u32 port = 0; port < PAD_MAX_CONTROLLERS; ++port) {
-            if (mDoCPd_c::isConnect(port)) {
-                if (mDoCPd_c::getTrig(port) & PAD_BUTTON_BACK) {
-                    openTriggered = true;
-                }
-            }
-        }
-
-        if (openTriggered) {
-            m_showQuickMenu = true;
-        }
-    }
 }
 
 static std::filesystem::path GetStatesFilePath() {
@@ -750,16 +706,11 @@ void ImGuiStateShare::draw(bool& open) {
 }
 
 void ImGuiMenuTools::ShowStateShare() {
-    // On mobile, always allow the quick menu (triggered by 3-finger tap or back button)
-    // On desktop, require F8 toggle or advanced settings
-    if (!dusk::IsMobile) {
-        if (!getSettings().backend.enableAdvancedSettings ||
-            !ImGuiConsole::CheckMenuViewToggle(ImGuiKey_F8, m_showStateShare))
-        {
-            return;
-        }
+    if (!dusk::IsGameLaunched) {
+        return;
     }
-    m_stateShare.draw(m_showStateShare);
+    bool open = true;
+    m_stateShare.draw(open);
 }
 
 }
