@@ -258,12 +258,10 @@ static int hit_test(float px, float py, float w, float h, bool customize) {
         float dx = px - cx, dy = py - cy;
         if (dx * dx + dy * dy <= r * r) return s;
     }
+    // Floating camera: invisible zone on right side of screen
     if (is_floating_enabled()) {
-        float cx = get_floating_x() * w;
-        float cy = get_floating_y() * h;
-        float r  = scaled_radius(CTRL_FLOATING_CAM);
-        float dx = px - cx, dy = py - cy;
-        if (dx * dx + dy * dy <= r * r) return CTRL_FLOATING_CAM;
+        float zoneLeft = w * 0.5f;  // right half of screen
+        if (px > zoneLeft) return CTRL_FLOATING_CAM;
     }
     for (int i = CTRL_BTN_START; i >= CTRL_BTN_A; --i) {
         float cx = get_x(i) * w;
@@ -526,6 +524,9 @@ static void draw_controls() {
 
     // --- Analog sticks ---
     for (int s : {CTRL_STICK_MAIN, CTRL_STICK_C}) {
+        // Hide C-stick when floating camera is enabled
+        if (s == CTRL_STICK_C && is_floating_enabled()) continue;
+
         float cx      = get_x(s) * w;
         float cy      = get_y(s) * h;
         float outerR  = scaled_radius(s);
@@ -545,8 +546,8 @@ static void draw_controls() {
         dl->AddCircle({tx, ty}, thumbR, borderCol, 0, 1.5f);
     }
 
-    // --- "C" label on C-stick ---
-    {
+    // --- "C" label on C-stick (hidden when floating camera enabled) ---
+    if (!is_floating_enabled()) {
         float cx = get_x(CTRL_STICK_C) * w;
         float cy = get_y(CTRL_STICK_C) * h;
         float r  = scaled_radius(CTRL_STICK_C);
