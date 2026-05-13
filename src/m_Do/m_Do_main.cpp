@@ -89,6 +89,7 @@
 #include "dusk/audio/DuskAudioSystem.h"
 #include "dusk/audio/DuskDsp.hpp"
 #include "dusk/config.hpp"
+#include "dusk/speedrun.h"
 #include "dusk/settings.h"
 #include "dusk/io.hpp"
 #include "dusk/version.hpp"
@@ -778,6 +779,9 @@ int game_main(int argc, char* argv[]) {
     log_build_info();
 
     dusk::config::LoadFromUserPreferences();
+    if (dusk::getSettings().game.speedrunMode) {
+        dusk::resetForSpeedrunMode();
+    }
     ApplyCVarOverrides(parsed_arg_options["cvar"]);
     dusk::crash_reporting::initialize();
     EnsureInitialPipelineCache(dusk::ConfigPath);
