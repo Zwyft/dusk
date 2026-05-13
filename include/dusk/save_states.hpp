@@ -46,6 +46,9 @@ public:
     void saveQuickSaves();
     void mergeFromFile(const std::string& path);
     void deleteNamedState(int index);
+    void deleteQuickSave(int slot);
+    void addNamedState(const std::string& name, const std::string& encoded, bool isFullState = false);
+    void saveNamedState(const std::string& name);
     void clearAllNamedStates();
     bool applyEncodedState(const std::string& encoded, const std::string& name = {});
 
@@ -53,6 +56,7 @@ public:
 
 private:
     std::string encodeCurrentState();
+    std::string encodeCurrentStateSaveOnly();
     void tickPendingApply();
 
     static void onMergeFileSelected(void* userdata, const char* path, const char* error);

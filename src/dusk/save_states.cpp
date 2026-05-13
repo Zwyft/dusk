@@ -232,6 +232,24 @@ std::string SaveStates::encodeCurrentState() {
     return absl::Base64Escape(compressed);
 }
 
+std::string SaveStates::encodeCurrentStateSaveOnly() {
+    StateSharePacket pkt = {};
+    strncpy(pkt.stageName, dComIfGp_getStartStageName(), 7);
+    pkt.roomNo     = dComIfGp_getStartStageRoomNo();
+    pkt.layer      = dComIfGp_getStartStageLayer();
+    pkt.startPoint = dComIfGp_getStartStagePoint();
+
+    std::string raw(PACKET_SAVE_ONLY, '\0');
+    memcpy(raw.data(), &pkt, sizeof(pkt));
+    memcpy(raw.data() + sizeof(pkt), &g_dComIfG_gameInfo.info.mSavedata, sizeof(dSv_save_c));
+
+    size_t bound = ZSTD_compressBound(raw.size());
+    std::string compressed(bound, '\0');
+    compressed.resize(ZSTD_compress(compressed.data(), bound, raw.data(), raw.size(), 1));
+
+    return absl::Base64Escape(compressed);
+}
+
 bool SaveStates::applyEncodedState(const std::string& encoded, const std::string& name) {
     std::string decoded;
     if (!absl::Base64Unescape(encoded, &decoded)) {
@@ -409,6 +427,26 @@ void SaveStates::deleteNamedState(int index) {
         m_states.erase(m_states.begin() + index);
         saveStatesFile();
     }
+}
+
+void SaveStates::deleteQuickSave(int slot) {
+    if (slot < 0 || slot >= 4) return;
+    m_quickSaves[slot].occupied = false;
+    m_quickSaves[slot].encoded.clear();
+    saveQuickSaves();
+    m_statusMsg = fmt::format("Quick save {} deleted.", slot + 1);
+}
+
+void SaveStates::addNamedState(const std::string& name, const std::string& encoded, bool isFullState) {
+    m_states.push_back({name, encoded, isFullState});
+    saveStatesFile();
+    m_statusMsg = fmt::format("State '{}' saved.", name);
+}
+
+void SaveStates::saveNamedState(const std::string& name) {
+    if (!dusk::IsGameLaunched || dusk::getTransientSettings().stateShareLoadActive) return;
+    auto encoded = encodeCurrentStateSaveOnly();
+    addNamedState(name, encoded, false);
 }
 
 void SaveStates::clearAllNamedStates() {

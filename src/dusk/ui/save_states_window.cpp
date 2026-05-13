@@ -7,6 +7,7 @@
 #include "m_Do/m_Do_main.h"
 #include "dusk/file_select.hpp"
 #include "aurora/lib/window.hpp"
+#include <SDL3/SDL_clipboard.h>
 
 #include <fmt/format.h>
 
@@ -123,7 +124,7 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
             leftPane.register_control(
                 leftPane.add_button("Delete").on_pressed([slot]() {
                     mDoAud_seStartMenu(kSoundClick);
-                    dusk::getSaveStates().setStatusMsg(fmt::format("Quick save {} deleted.", slot + 1));
+                    dusk::getSaveStates().deleteQuickSave(slot);
                 }),
                 rightPane, [](Pane& pane) {
                     pane.clear();
@@ -195,6 +196,18 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
         leftPane.register_control(
             leftPane.add_button("Save Current State").on_pressed([] {
                 mDoAud_seStartMenu(kSoundClick);
+                dusk::SaveStates& ss = dusk::getSaveStates();
+                const auto& states = ss.getNamedStates();
+                int nextNum = 1;
+                for (const auto& s : states) {
+                    if (s.name.rfind("State ", 0) == 0) {
+                        try {
+                            int n = std::stoi(s.name.substr(7));
+                            if (n >= nextNum) nextNum = n + 1;
+                        } catch (...) {}
+                    }
+                }
+                ss.saveNamedState(fmt::format("State {}", nextNum));
             }),
             rightPane, [](Pane& pane) {
                 pane.clear();
@@ -205,6 +218,24 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
     leftPane.register_control(
         leftPane.add_button("Import from Clipboard").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
+            if (SDL_HasClipboardText()) {
+                char* text = SDL_GetClipboardText();
+                if (text && text[0] != '\0') {
+                    dusk::SaveStates& ss = dusk::getSaveStates();
+                    const auto& states = ss.getNamedStates();
+                    int nextNum = 1;
+                    for (const auto& s : states) {
+                        if (s.name.rfind("State ", 0) == 0) {
+                            try {
+                                int n = std::stoi(s.name.substr(7));
+                                if (n >= nextNum) nextNum = n + 1;
+                            } catch (...) {}
+                        }
+                    }
+                    ss.addNamedState(fmt::format("State {}", nextNum), text, false);
+                }
+                SDL_free(text);
+            }
         }),
         rightPane, [](Pane& pane) {
             pane.clear();
@@ -224,6 +255,7 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
         leftPane.register_control(
             leftPane.add_button("Clear All").on_pressed([] {
                 mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().clearAllNamedStates();
             }),
             rightPane, [](Pane& pane) {
                 pane.clear();

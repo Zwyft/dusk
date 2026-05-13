@@ -66,6 +66,36 @@ Dusk supports texture replacement mods via a built-in mod manager.
 3. Add your `.dds` texture files to the folder
 4. Launch Dusk, go to **Mods**, and toggle your mod on
 
+## 💾 Save States
+
+Dusk includes a built-in save state system for saving and loading game progress at any point.
+
+### Quick Saves
+
+Four quick save slots are available while playing. Quick saves use stage-reload capture, meaning when you load a quick save, the game will restart at the stage and room where the save was made.
+
+- **Save** — Captures current game progress and room position
+- **Full** — Captures a full actor snapshot for instant loading without stage transition
+- **Load** — Restore from a quick save slot
+- **Delete** — Remove a quick save
+
+Quick saves persist across sessions and can be loaded even after restarting the game.
+
+### Named States
+
+Save and manage named save states with the following features:
+
+- **Save Current State** — Create a named save state while playing
+- **Load** — Restore a named save state (triggers stage reload)
+- **Delete** — Remove a named state
+- **Import from Clipboard** — Import a state shared via base64 text
+- **Load State Pack** — Import multiple states from a JSON file
+
+Named states persist across sessions and support stage-reload restoration.
+
+> [!NOTE]
+> Save states capture game and save data, not textures or mods. Ensure you have the same mods enabled when loading states that were active when the save was created.
+
 ## 🔄 Multi-Platform CI/CD
 
 Every commit automatically builds all four platforms via GitHub Actions:
@@ -75,7 +105,7 @@ Every commit automatically builds all four platforms via GitHub Actions:
 | Linux | AppImage | `ubuntu-24.04` |
 | macOS | `.app` bundle | `macos-15` (Apple Silicon) |
 | Windows | `.exe` + `.dll` | `windows-2022` (MSVC x64) |
-| Android | `.apk` (arm64-v8a + x86_64) | `ubuntu-24.04` + Android NDK 29 |
+| Android | `.apk` (arm64-v8a) | `ubuntu-24.04` + Android NDK 29 |
 
 - **Auto-upload** — artifacts are available on every successful build
 - **Concurrent builds** — duplicate runs are cancelled automatically
