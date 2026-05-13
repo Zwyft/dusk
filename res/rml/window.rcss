@@ -58,6 +58,82 @@ window[open] {
     }
 }
 
+/* Mobile touch-friendly styles */
+@media (hover: none) and (pointer: coarse), (max-width: 768dp) {
+    body {
+        padding: 24dp;
+    }
+
+    window {
+        flex-direction: column;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 8dp;
+    }
+
+    window tab-bar {
+        flex: 0 0 auto;
+        height: 56dp;
+        font-size: 16dp;
+    }
+
+    window content {
+        flex-direction: column;
+    }
+
+    window content pane {
+        padding: 20dp;
+        gap: 12dp;
+        font-size: 24dp;
+        border-right: none;
+        border-bottom: 1dp #92875B;
+    }
+
+    window content pane:last-of-type {
+        border-bottom: none;
+    }
+
+    /* Larger touch targets */
+    button, select-button {
+        padding: 16dp 24dp;
+        border-radius: 16dp;
+        font-size: 22dp;
+        min-height: 64dp;
+    }
+
+    select-button key {
+        font-size: 20dp;
+    }
+
+    select-button value {
+        font-size: 22dp;
+    }
+
+    .section-heading {
+        font-size: 26dp;
+        padding-top: 16dp;
+    }
+
+    /* Increase spacing between items */
+    window content pane > * {
+        margin-bottom: 8dp;
+    }
+
+    /* Larger scrollbar for touch */
+    scrollbarvertical {
+        width: 12dp;
+    }
+
+    scrollbarvertical slidertrack {
+        width: 12dp;
+    }
+
+    scrollbarvertical sliderbar {
+        width: 12dp;
+        min-height: 32dp;
+    }
+}
+
 window tab-bar {
     flex: 0 0 64dp;
     height: 64dp;

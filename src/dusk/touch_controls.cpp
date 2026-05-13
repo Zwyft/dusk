@@ -673,12 +673,13 @@ void handle_event(const SDL_Event& event) {
 
 void draw() {
     if (!dusk::IsGameLaunched) return;
-    if (dusk::ui::any_document_visible()) return;
 
     if (is_enabled()) {
         draw_controls();
     }
-    draw_ui_buttons();
+    if (!dusk::ui::any_document_visible()) {
+        draw_ui_buttons();
+    }
 }
 
 void apply_virtual_input(interface_of_controller_pad* pad) {
