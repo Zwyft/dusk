@@ -124,9 +124,11 @@ void BaseStringButton::stop_editing(bool commit, bool refocusRoot) {
     // Restore value element
     mValueElem->SetProperty(Rml::PropertyId::Visibility, Rml::Style::Visibility::Visible);
 
-    set_selected(false);
     if (refocusRoot) {
+        set_selected(false);
         mRoot->Focus(true);
+    } else if (commit) {
+        set_selected(false);
     }
 }
 
