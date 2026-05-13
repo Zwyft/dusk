@@ -18,6 +18,7 @@
 #include "menu_bar.hpp"
 #include "pane.hpp"
 #include "prelaunch.hpp"
+#include "save_states_window.hpp"
 #include "ui.hpp"
 
 #if DUSK_ENABLE_SENTRY_NATIVE
@@ -1227,6 +1228,10 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = "Enable quick save/load via 3-finger tap or controller Select button.<br/><br/>"
                             "F1-F4 to load, Ctrl+F1-F4 to save on desktop.",
             });
+    });
+
+    add_tab("Save States", [this](Rml::Element* content) {
+        push(std::make_unique<SaveStatesWindow>());
     });
 }
 

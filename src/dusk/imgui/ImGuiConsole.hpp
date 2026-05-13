@@ -26,9 +26,6 @@ public:
 
     static bool CheckMenuViewToggle(ImGuiKey key, bool& active);
     void AddToast(std::string_view message, float duration = 3.f);
-    void ShowSaveStates() {
-        m_menuTools.ShowStateShare();
-    }
     bool ConsumeAndroidBackTrigger() {
         if (m_androidBackPressed && !m_androidBackPrev) {
             m_androidBackPrev = m_androidBackPressed;

@@ -1436,6 +1436,7 @@ set(DUSK_FILES
         src/dusk/layout.cpp
         src/dusk/logging.cpp
         src/dusk/settings.cpp
+        src/dusk/save_states.cpp
         src/dusk/stubs.cpp
         src/dusk/touch_controls.cpp
         src/dusk/update_check.cpp
@@ -1474,6 +1475,8 @@ set(DUSK_FILES
         src/dusk/ui/component.hpp
         src/dusk/ui/controller_config.cpp
         src/dusk/ui/controller_config.hpp
+        src/dusk/ui/save_states_window.cpp
+        src/dusk/ui/save_states_window.hpp
         src/dusk/ui/document.cpp
         src/dusk/ui/document.hpp
         src/dusk/ui/editor.cpp
