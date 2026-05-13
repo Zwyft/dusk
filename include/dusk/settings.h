@@ -289,6 +289,14 @@ struct UserSettings {
         ConfigVar<bool> portableMode;
         ConfigVar<std::string> customDataPath;
     } backend;
+
+    // Arrays of size 4 for 4 ports
+    struct {
+        std::array<ActionBindConfigVar, 4> firstPersonCamera;
+        std::array<ActionBindConfigVar, 4> callMidna;
+        std::array<ActionBindConfigVar, 4> openDusklightMenu;
+        std::array<ActionBindConfigVar, 4> turboSpeedButton;
+    } actionBindings;
 };
 
 UserSettings& getSettings();

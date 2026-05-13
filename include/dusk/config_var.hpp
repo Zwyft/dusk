@@ -285,6 +285,8 @@ public:
     }
 };
 
+using ActionBindConfigVar = ConfigVar<int>;
+
 }
 
 #endif  // DUSK_CONFIG_VAR_HPP
