@@ -265,6 +265,7 @@ struct UserSettings {
         ConfigVar<bool> enableAdvancedSettings;
         ConfigVar<bool> discordEnabled;
         ConfigVar<bool> portableMode;
+        ConfigVar<std::string> customDataPath;
     } backend;
 };
 

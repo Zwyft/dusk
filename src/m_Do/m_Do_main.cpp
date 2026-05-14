@@ -509,6 +509,11 @@ static void migrate_directory(const std::filesystem::path& from, const std::file
 }
 
 static std::filesystem::path calculate_config_path() {
+    const auto& customPath = dusk::getSettings().backend.customDataPath.getValue();
+    if (!customPath.empty()) {
+        return reinterpret_cast<const char8_t*>(customPath.c_str());
+    }
+
 #ifdef __APPLE__
 #if TARGET_OS_IOS && !TARGET_OS_TV
     const char* documentsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);

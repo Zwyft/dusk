@@ -8,6 +8,7 @@
 #include "dusk/config.hpp"
 #include "dusk/file_select.hpp"
 #include "dusk/imgui/ImGuiEngine.hpp"
+#include "dusk/io.hpp"
 #include "dusk/livesplit.h"
 #include "dusk/main.h"
 #include "dusk/touch_controls.hpp"
@@ -1239,16 +1240,31 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = "Automatically create a timestamped backup of your save files on game launch. Backups are stored in the saves/backups/ folder.",
                 .onChange = [](bool) { config::Save(); },
             });
-        leftPane.register_control(
-            leftPane.add_button("Open Data Folder").on_pressed([] {
-                mDoAud_seStartMenu(kSoundClick);
-                dusk::OpenDataFolder();
-            }),
-            rightPane, [](Pane& pane) {
-                pane.add_text(
-                    "Open the folder where Dusk stores settings, saves, logs, texture "
-                    "replacements, and other app data.");
-            });
+            leftPane.register_control(
+                leftPane.add_button("Open Data Folder").on_pressed([] {
+                    mDoAud_seStartMenu(kSoundClick);
+                    dusk::OpenDataFolder();
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.add_text(
+                        "Open the folder where Dusk stores settings, saves, logs, texture "
+                        "replacements, and other app data.");
+                });
+
+            auto& currentPath = getSettings().backend.customDataPath;
+            leftPane.register_control(
+                currentPath.getValue().empty()
+                    ? leftPane.add_button("Set Custom Data Path")
+                    : leftPane.add_button("Change Custom Data Path"),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_rml(fmt::format("<span class=\"data-folder-current\"><b>Current path:</b><br/>{}</span>",
+                        dusk::io::fs_path_to_string(dusk::ConfigPath)));
+                    pane.add_text(
+                        "Set a custom folder for saves, settings, and mods. "
+                        "Useful for syncing with cloud services like Syncthing. "
+                        "Changes take effect after restart.");
+                });
 #endif
         leftPane.register_control(
             leftPane.add_select_button({

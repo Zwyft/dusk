@@ -182,6 +182,7 @@ UserSettings g_userSettings = {
         .enableAdvancedSettings {"backend.enableAdvancedSettings", false},
         .discordEnabled {"backend.discordEnabled", true},
         .portableMode {"backend.portableMode", false},
+        .customDataPath {"backend.customDataPath", ""},
     }
 };
 
@@ -331,6 +332,7 @@ Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.backend.enableAdvancedSettings);
     Register(g_userSettings.backend.discordEnabled);
     Register(g_userSettings.backend.portableMode);
+    Register(g_userSettings.backend.customDataPath);
 }
 
 // Transient settings
