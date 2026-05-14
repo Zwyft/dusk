@@ -17,4 +17,10 @@ void ShowFileSelect(FileCallback callback, void* userdata, SDL_Window* window,
 
 std::string display_name_for_path(std::string_view path);
 
+#if defined(__ANDROID__) || defined(ANDROID)
+std::string resolve_content_uri(std::string_view path);
+#else
+inline std::string resolve_content_uri(std::string_view path) { return std::string(path); }
+#endif
+
 }  // namespace dusk

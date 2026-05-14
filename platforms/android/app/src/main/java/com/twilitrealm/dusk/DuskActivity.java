@@ -17,6 +17,9 @@ import android.view.WindowInsetsController;
 import org.libsdl.app.SDLActivity;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -229,5 +232,42 @@ public class DuskActivity extends SDLActivity {
 
         String lastSegment = uri.getLastPathSegment();
         return lastSegment != null ? lastSegment : "";
+    }
+
+    public String copyContentUriToTempFile(String uriString) {
+        if (uriString == null || uriString.isEmpty()) {
+            return "";
+        }
+
+        Uri uri = Uri.parse(uriString);
+        if (!"content".equals(uri.getScheme())) {
+            return uriString;
+        }
+
+        String displayName = getDisplayNameForUri(uriString);
+        if (displayName.isEmpty()) {
+            displayName = "disc.iso";
+        }
+
+        File cacheDir = getCacheDir();
+        File tempFile = new File(cacheDir, displayName);
+
+        try (InputStream in = getContentResolver().openInputStream(uri);
+             FileOutputStream out = new FileOutputStream(tempFile)) {
+            if (in == null) {
+                Log.e(TAG, "Unable to open input stream for " + uri);
+                return "";
+            }
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            out.flush();
+            return tempFile.getAbsolutePath();
+        } catch (IOException | SecurityException | IllegalArgumentException e) {
+            Log.e(TAG, "Failed to copy content URI to temp file: " + uri, e);
+            return "";
+        }
     }
 }

@@ -193,4 +193,58 @@ std::string display_name_for_path(std::string_view path) {
 #endif
     return fallback_display_name(path);
 }
+
+std::string resolve_content_uri(std::string_view path) {
+#if defined(__ANDROID__) || defined(ANDROID)
+    if (!path.starts_with("content://")) {
+        return std::string(path);
+    }
+
+    auto* env = static_cast<JNIEnv*>(SDL_GetAndroidJNIEnv());
+    if (env == nullptr) {
+        return {};
+    }
+
+    jobject activity = static_cast<jobject>(SDL_GetAndroidActivity());
+    if (activity == nullptr || clear_pending_exception(env)) {
+        if (activity != nullptr) {
+            env->DeleteLocalRef(activity);
+        }
+        return {};
+    }
+
+    jclass activityClass = env->GetObjectClass(activity);
+    if (activityClass == nullptr || clear_pending_exception(env)) {
+        env->DeleteLocalRef(activity);
+        return {};
+    }
+
+    jmethodID copyUri = env->GetMethodID(
+        activityClass, "copyContentUriToTempFile", "(Ljava/lang/String;)Ljava/lang/String;");
+    env->DeleteLocalRef(activityClass);
+    if (copyUri == nullptr || clear_pending_exception(env)) {
+        env->DeleteLocalRef(activity);
+        return {};
+    }
+
+    jstring uri = env->NewStringUTF(std::string(path).c_str());
+    if (uri == nullptr || clear_pending_exception(env)) {
+        env->DeleteLocalRef(activity);
+        return {};
+    }
+
+    auto* resultStr = static_cast<jstring>(env->CallObjectMethod(activity, copyUri, uri));
+    env->DeleteLocalRef(uri);
+    env->DeleteLocalRef(activity);
+    if (resultStr == nullptr || clear_pending_exception(env)) {
+        return {};
+    }
+
+    std::string result = to_string(env, resultStr);
+    env->DeleteLocalRef(resultStr);
+    return result;
+#else
+    return std::string(path);
+#endif
+}
 }  // namespace dusk
