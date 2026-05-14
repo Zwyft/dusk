@@ -502,10 +502,17 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     }).on_pressed([fps] {
                         mDoAud_seStartMenu(kSoundItemChange);
                         getSettings().game.fpsLimit.setValue(fps);
+                        if (fps == 120) {
+                            getSettings().video.enableVsync.setValue(false);
+                            aurora_enable_vsync(false);
+                        } else if (fps == 30 || fps == 60) {
+                            getSettings().video.enableVsync.setValue(true);
+                            aurora_enable_vsync(true);
+                        }
                         config::Save();
                     });
                 }
-                pane.add_rml("Limits the maximum framerate. Requires a restart to take effect.");
+                pane.add_rml("Limits the maximum framerate. Select 120 for high-refresh displays (disables VSync automatically).");
             });
         config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
             {
