@@ -98,6 +98,7 @@ UserSettings g_userSettings = {
         // Cheats
         .infiniteHearts {"game.infiniteHearts", false},
         .infiniteArrows {"game.infiniteArrows", false},
+        .infiniteSeeds {"game.infiniteSeeds", false},
         .infiniteBombs {"game.infiniteBombs", false},
         .infiniteOil {"game.infiniteOil", false},
         .infiniteOxygen {"game.infiniteOxygen", false},
@@ -108,8 +109,12 @@ UserSettings g_userSettings = {
         .alwaysGreatspin {"game.alwaysGreatspin", false},
         .enableFastIronBoots {"game.enableFastIronBoots", false},
         .canTransformAnywhere {"game.canTransformAnywhere", false},
+        .fastRoll {"game.fastRoll", false},
         .fastSpinner {"game.fastSpinner", false},
         .freeMagicArmor {"game.freeMagicArmor", false},
+        .invincibleEnemies {"game.invincibleEnemies", false},
+        .infiniteChuJelly {"game.infiniteChuJelly", false},
+        .transformWithoutShadowCrystal {"game.transformWithoutShadowCrystal", false},
 
         // Technical
         .restoreWiiGlitches {"game.restoreWiiGlitches", false},
@@ -230,32 +235,15 @@ void registerSettings() {
     Register(g_userSettings.game.shadowResolutionMultiplier);
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
-    Register(g_userSettings.game.enableFastIronBoots);
+Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.game.canTransformAnywhere);
-    Register(g_userSettings.game.freeMagicArmor);
-    Register(g_userSettings.game.restoreWiiGlitches);
-    Register(g_userSettings.game.enableLinkDollRotation);
-    Register(g_userSettings.game.enableAchievementToasts);
-    Register(g_userSettings.game.enableControllerToasts);
-    Register(g_userSettings.game.noMissClimbing);
-    Register(g_userSettings.game.noLowHpSound);
-    Register(g_userSettings.game.midnasLamentNonStop);
-    Register(g_userSettings.game.enableTurboKeybind);
-    Register(g_userSettings.game.speedrunMode);
-    Register(g_userSettings.game.liveSplitEnabled);
-    Register(g_userSettings.game.recordingMode);
-    Register(g_userSettings.game.enableSaveStates);
+    Register(g_userSettings.game.fastRoll);
+    Register(g_userSettings.game.infiniteSeeds);
     Register(g_userSettings.game.fastSpinner);
-    Register(g_userSettings.game.infiniteHearts);
-    Register(g_userSettings.game.infiniteArrows);
-    Register(g_userSettings.game.infiniteBombs);
-    Register(g_userSettings.game.infiniteOil);
-    Register(g_userSettings.game.infiniteOxygen);
-    Register(g_userSettings.game.infiniteRupees);
-    Register(g_userSettings.game.enableIndefiniteItemDrops);
-    Register(g_userSettings.game.moonJump);
-    Register(g_userSettings.game.superClawshot);
-    Register(g_userSettings.game.alwaysGreatspin);
+    Register(g_userSettings.game.freeMagicArmor);
+    Register(g_userSettings.game.invincibleEnemies);
+    Register(g_userSettings.game.infiniteChuJelly);
+    Register(g_userSettings.game.transformWithoutShadowCrystal);
     Register(g_userSettings.game.enableFrameInterpolation);
     Register(g_userSettings.game.gyroMode);
     Register(g_userSettings.game.enableGyroAim);

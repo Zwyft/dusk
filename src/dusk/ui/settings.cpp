@@ -1060,6 +1060,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addCheat("Infinite Hearts", getSettings().game.infiniteHearts, "Keeps your health full.");
         addCheat(
             "Infinite Arrows", getSettings().game.infiniteArrows, "Keeps your arrow count full.");
+        addCheat("Infinite Seeds", getSettings().game.infiniteSeeds, "Keeps your slingshot pellets (seeds) full.");
         addCheat("Infinite Bombs", getSettings().game.infiniteBombs, "Keeps all bomb bags full.");
         addCheat("Infinite Oil", getSettings().game.infiniteOil, "Keeps your lantern oil full.");
         addCheat("Infinite Oxygen", getSettings().game.infiniteOxygen,
@@ -1080,10 +1081,18 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Speeds up movement while wearing the Iron Boots.");
         addCheat("Can Transform Anywhere", getSettings().game.canTransformAnywhere,
             "Allows transforming even if NPCs are looking.");
+        addCheat("Fast Roll", getSettings().game.fastRoll,
+            "Makes Link's roll animation and movement twice as fast.");
         addCheat("Fast Spinner", getSettings().game.fastSpinner,
             "Speeds up Spinner movement while holding R.");
         addCheat("Free Magic Armor", getSettings().game.freeMagicArmor,
             "Lets the magic armor work without consuming rupees.");
+        addCheat("Invincible Enemies", getSettings().game.invincibleEnemies,
+            "Enemies cannot hurt you.");
+        addCheat("Infinite Chu Jelly", getSettings().game.infiniteChuJelly,
+            "Keeps your Chu Jelly supplies full.");
+        addCheat("Transform without Shadow Crystal", getSettings().game.transformWithoutShadowCrystal,
+            "Allows transforming into a wolf without the Shadow Crystal.");
     });
 
     add_tab("Interface", [this](Rml::Element* content) {

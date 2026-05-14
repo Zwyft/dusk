@@ -44,7 +44,7 @@ void daAlink_c::handleWolfHowl() {
         bool canHowl = false;
 
         if (mLinkAcch.ChkGroundHit() && !checkModeFlg(MODE_PLAYER_FLY) && !checkMagneBootsOn()) {
-            if (checkMidnaRide()) {
+if (checkMidnaRide() || dusk::getSettings().game.transformWithoutShadowCrystal) {
                 if ((checkWolf() &&
                      (checkModeFlg(MODE_UNK_1000) || dComIfGp_checkPlayerStatus0(0, 0x10))) ||
                     (!checkWolf() &&
@@ -72,7 +72,8 @@ void daAlink_c::handleQuickTransform() {
     }
 
     // Check to see if Link has the ability to transform.
-    if (!dComIfGs_isEventBit(dSv_event_flag_c::M_077)) {
+    if (!dComIfGs_isEventBit(dSv_event_flag_c::M_077) &&
+        !dusk::getSettings().game.transformWithoutShadowCrystal) {
         return;
     }
 

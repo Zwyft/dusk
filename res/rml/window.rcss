@@ -245,6 +245,17 @@ scrollbarhorizontal sliderbar {
     padding-top: 12dp;
 }
 
+button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.data-folder-current {
+    display: block;
+    font-size: 16dp;
+    color: rgba(224, 219, 200, 65%);
+}
+
 button {
     text-align: center;
     background-color: rgba(17, 16, 10, 20%);

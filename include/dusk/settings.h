@@ -161,6 +161,7 @@ struct UserSettings {
         // Cheats
         ConfigVar<bool> infiniteHearts;
         ConfigVar<bool> infiniteArrows;
+        ConfigVar<bool> infiniteSeeds;
         ConfigVar<bool> infiniteBombs;
         ConfigVar<bool> infiniteOil;
         ConfigVar<bool> infiniteOxygen;
@@ -171,8 +172,12 @@ struct UserSettings {
         ConfigVar<bool> alwaysGreatspin;
         ConfigVar<bool> enableFastIronBoots;
         ConfigVar<bool> canTransformAnywhere;
+        ConfigVar<bool> fastRoll;
         ConfigVar<bool> fastSpinner;
         ConfigVar<bool> freeMagicArmor;
+        ConfigVar<bool> invincibleEnemies;
+        ConfigVar<bool> infiniteChuJelly;
+        ConfigVar<bool> transformWithoutShadowCrystal;
 
         // Technical
         ConfigVar<bool> restoreWiiGlitches;
