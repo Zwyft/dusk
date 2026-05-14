@@ -1216,6 +1216,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "Autosave",
                 .helpText = "Autosaves the game when going to a new area, opening a dungeon door, "
                             "or getting a new item.",
+                .isDisabled = [] { return getSettings().game.speedrunMode; },
             });
         addOption("Instant Saves", getSettings().game.instantSaves,
             "Skips the delay when writing to the Memory Card.");
