@@ -15,6 +15,7 @@
 #include "imgui.h"
 #include "modal.hpp"
 #include "settings.hpp"
+#include "warp.hpp"
 #include "ui.hpp"
 #include "window.hpp"
 
@@ -49,9 +50,7 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
                                                   .autoSelect = false,
                                               });
     mTabBar->add_tab("Settings", [this] { push(std::make_unique<SettingsWindow>()); });
-    // mTabBar->add_tab("Warp", [] {
-    //     // TODO
-    // });
+    mTabBar->add_tab("Warp", [this] { push(std::make_unique<WarpWindow>()); });
 
     if (getSettings().backend.enableAdvancedSettings) {
         mTabBar->add_tab("Editor", [this] { push(std::make_unique<EditorWindow>()); });
