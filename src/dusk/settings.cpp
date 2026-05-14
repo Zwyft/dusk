@@ -10,6 +10,8 @@ UserSettings g_userSettings = {
         .lockAspectRatio {"video.lockAspectRatio", false},
         .enableFpsOverlay {"game.enableFpsOverlay", false},
         .fpsOverlayCorner {"game.fpsOverlayCorner", 0},
+        .windowPositionX {"video.windowPositionX", -1},
+        .windowPositionY {"video.windowPositionY", -1},
     },
 
     .audio = {
@@ -83,6 +85,8 @@ UserSettings g_userSettings = {
         .invertCameraYAxis {"game.invertCameraYAxis", false},
         .invertFirstPersonXAxis {"game.invertFirstPersonXAxis", false},
         .invertFirstPersonYAxis {"game.invertFirstPersonYAxis", false},
+        .invertAirSwimX {"game.invertAirSwimX", false},
+        .invertAirSwimY {"game.invertAirSwimY", false},
         .freeCameraSensitivity {"game.freeCameraSensitivity", 1.0f},
         .debugFlyCam {"game.debugFlyCam", false},
         .debugFlyCamLockEvents {"game.debugFlyCamLockEvents", true},
@@ -123,16 +127,17 @@ UserSettings g_userSettings = {
         .enableTurboKeybind {"game.enableTurboKeybind", false},
 
         // Tools
-        .speedrunMode {"game.speedrunMode", false},
+.speedrunMode {"game.speedrunMode", false},
         .liveSplitEnabled {"game.liveSplitEnabled", false},
         .recordingMode {"game.recordingMode", false},
         .enableSaveStates {"game.enableSaveStates",
-#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS && !TARGET_OS_MACCATALYST)
             true
 #else
             false
 #endif
-        }
+        },
+        .removeQuestMapMarkers {"game.removeQuestMapMarkers", false},
     },
 
     .touch = {
@@ -191,6 +196,8 @@ void registerSettings() {
     Register(g_userSettings.video.lockAspectRatio);
     Register(g_userSettings.video.enableFpsOverlay);
     Register(g_userSettings.video.fpsOverlayCorner);
+    Register(g_userSettings.video.windowPositionX);
+    Register(g_userSettings.video.windowPositionY);
 
     // Audio
     Register(g_userSettings.audio.masterVolume);
@@ -225,6 +232,8 @@ void registerSettings() {
     Register(g_userSettings.game.invertCameraYAxis);
     Register(g_userSettings.game.invertFirstPersonXAxis);
     Register(g_userSettings.game.invertFirstPersonYAxis);
+    Register(g_userSettings.game.invertAirSwimX);
+    Register(g_userSettings.game.invertAirSwimY);
     Register(g_userSettings.game.freeCameraSensitivity);
     Register(g_userSettings.game.minimalHUD);
     Register(g_userSettings.game.pauseOnFocusLost);
@@ -235,10 +244,33 @@ void registerSettings() {
     Register(g_userSettings.game.shadowResolutionMultiplier);
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
+    Register(g_userSettings.game.noLowHpSound);
+    Register(g_userSettings.game.midnasLamentNonStop);
+    Register(g_userSettings.game.enableLinkDollRotation);
+    Register(g_userSettings.game.enableAchievementToasts);
+    Register(g_userSettings.game.enableControllerToasts);
+    Register(g_userSettings.game.noMissClimbing);
+    Register(g_userSettings.game.restoreWiiGlitches);
+    Register(g_userSettings.game.enableTurboKeybind);
+    Register(g_userSettings.game.speedrunMode);
+    Register(g_userSettings.game.liveSplitEnabled);
+    Register(g_userSettings.game.recordingMode);
+    Register(g_userSettings.game.enableSaveStates);
+    Register(g_userSettings.game.infiniteHearts);
+    Register(g_userSettings.game.infiniteArrows);
+    Register(g_userSettings.game.infiniteBombs);
+    Register(g_userSettings.game.infiniteOil);
+    Register(g_userSettings.game.infiniteOxygen);
+    Register(g_userSettings.game.infiniteRupees);
+    Register(g_userSettings.game.enableIndefiniteItemDrops);
+    Register(g_userSettings.game.moonJump);
+    Register(g_userSettings.game.superClawshot);
+    Register(g_userSettings.game.alwaysGreatspin);
 Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.game.canTransformAnywhere);
     Register(g_userSettings.game.fastRoll);
     Register(g_userSettings.game.infiniteSeeds);
+    Register(g_userSettings.game.removeQuestMapMarkers);
     Register(g_userSettings.game.fastSpinner);
     Register(g_userSettings.game.freeMagicArmor);
     Register(g_userSettings.game.invincibleEnemies);

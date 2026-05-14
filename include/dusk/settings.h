@@ -70,6 +70,8 @@ struct UserSettings {
         ConfigVar<bool> lockAspectRatio;
         ConfigVar<bool> enableFpsOverlay;
         ConfigVar<int> fpsOverlayCorner;
+        ConfigVar<int> windowPositionX;
+        ConfigVar<int> windowPositionY;
     } video;
 
     struct {
@@ -146,6 +148,8 @@ struct UserSettings {
         ConfigVar<bool> invertCameraYAxis;
         ConfigVar<bool> invertFirstPersonXAxis;
         ConfigVar<bool> invertFirstPersonYAxis;
+        ConfigVar<bool> invertAirSwimX;
+        ConfigVar<bool> invertAirSwimY;
         ConfigVar<float> freeCameraSensitivity;
         ConfigVar<bool> debugFlyCam;
         ConfigVar<bool> debugFlyCamLockEvents;
@@ -190,6 +194,7 @@ struct UserSettings {
         ConfigVar<bool> liveSplitEnabled;
         ConfigVar<bool> recordingMode;
         ConfigVar<bool> enableSaveStates;
+        ConfigVar<bool> removeQuestMapMarkers;
     } game;
 
     struct {

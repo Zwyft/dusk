@@ -194,8 +194,8 @@ std::string display_name_for_path(std::string_view path) {
     return fallback_display_name(path);
 }
 
-std::string resolve_content_uri(std::string_view path) {
 #if defined(__ANDROID__) || defined(ANDROID)
+std::string resolve_content_uri(std::string_view path) {
     if (!path.starts_with("content://")) {
         return std::string(path);
     }
@@ -243,8 +243,6 @@ std::string resolve_content_uri(std::string_view path) {
     std::string result = to_string(env, resultStr);
     env->DeleteLocalRef(resultStr);
     return result;
-#else
-    return std::string(path);
-#endif
 }
+#endif
 }  // namespace dusk

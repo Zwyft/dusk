@@ -706,6 +706,10 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Invert horizontal movement while aiming with items or first person camera. Applies to both stick and gyro aiming.");
         addOption("Invert First Person Y Axis", getSettings().game.invertFirstPersonYAxis,
             "Invert vertical movement while aiming with items or first person camera. Applies to both stick and gyro aiming.");
+        addOption("Invert Air/Swim X Axis", getSettings().game.invertAirSwimX,
+            "Invert horizontal movement while flying or swimming.");
+        addOption("Invert Air/Swim Y Axis", getSettings().game.invertAirSwimY,
+            "Invert vertical movement while flying or swimming.");
 
         leftPane.add_section("Gyro");
         leftPane.register_control(
@@ -955,6 +959,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Restores patched glitches from Wii USA 1.0, the first released version.");
         addOption("Enable Rotating Link Doll", getSettings().game.enableLinkDollRotation,
             "Enables rotating Link in the collection menu with the C-Stick.");
+        addOption("Hide Owl Statue Markers", getSettings().game.removeQuestMapMarkers,
+            "Removes completed Owl Statue markers from the map and minimap.");
 
         leftPane.add_section("Difficulty");
         leftPane.register_control(
