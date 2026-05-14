@@ -32,6 +32,25 @@ enum class GyroMode : u8 {
     Mouse = 1,
 };
 
+enum class BattleBGMMode : u8 {
+    On = 0,
+    Off = 1,
+    Off_MidnaLament = 2,
+};
+
+enum class IngameHudMode : int {
+    Off = 0,
+    Health = 1,
+    Rupees = 2,
+    ActionButtons = 4,
+    DPad = 8,
+    LampMeter = 16,
+    OxygenMeter = 32,
+    Keys = 64,
+    LightVessel = 128,
+    On = 255,
+};
+
 namespace config {
 template <>
 struct ConfigEnumRange<BloomMode> {
@@ -55,6 +74,18 @@ template <>
 struct ConfigEnumRange<GyroMode> {
     static constexpr auto min = GyroMode::Sensor;
     static constexpr auto max = GyroMode::Mouse;
+};
+
+template <>
+struct ConfigEnumRange<BattleBGMMode> {
+    static constexpr auto min = BattleBGMMode::On;
+    static constexpr auto max = BattleBGMMode::Off_MidnaLament;
+};
+
+template <>
+struct ConfigEnumRange<IngameHudMode> {
+    static constexpr auto min = IngameHudMode::Off;
+    static constexpr auto max = IngameHudMode::On;
 };
 }
 
@@ -112,7 +143,7 @@ struct UserSettings {
 
         // Preferences
         ConfigVar<bool> enableMirrorMode;
-        ConfigVar<bool> minimalHUD;
+        ConfigVar<IngameHudMode> ingameHudMode;
         ConfigVar<bool> pauseOnFocusLost;
         ConfigVar<bool> enableLinkDollRotation;
         ConfigVar<bool> enableAchievementToasts;
@@ -130,7 +161,7 @@ struct UserSettings {
 
         // Audio
         ConfigVar<bool> noLowHpSound;
-        ConfigVar<bool> midnasLamentNonStop;
+        ConfigVar<BattleBGMMode> battleBGM;
 
         // Input
         ConfigVar<GyroMode> gyroMode;

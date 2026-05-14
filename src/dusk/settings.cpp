@@ -49,7 +49,7 @@ UserSettings g_userSettings = {
 
         // Preferences
         .enableMirrorMode {"game.enableMirrorMode", false},
-        .minimalHUD {"game.minimalHUD", false},
+        .ingameHudMode {"game.ingameHudMode", IngameHudMode::On},
         .pauseOnFocusLost {"game.pauseOnFocusLost", false},
         .enableLinkDollRotation {"game.enableLinkDollRotation", false},
         .enableAchievementToasts {"game.enableAchievementToasts", true},
@@ -67,7 +67,7 @@ UserSettings g_userSettings = {
 
         // Audio
         .noLowHpSound {"game.noLowHpSound", false},
-        .midnasLamentNonStop {"game.midnasLamentNonStop", false},
+        .battleBGM {"game.battleBGM", BattleBGMMode::On},
 
         // Input
         .gyroMode {"game.gyroMode", GyroMode::Sensor},
@@ -235,7 +235,7 @@ void registerSettings() {
     Register(g_userSettings.game.invertAirSwimX);
     Register(g_userSettings.game.invertAirSwimY);
     Register(g_userSettings.game.freeCameraSensitivity);
-    Register(g_userSettings.game.minimalHUD);
+    Register(g_userSettings.game.ingameHudMode);
     Register(g_userSettings.game.pauseOnFocusLost);
     Register(g_userSettings.game.bloomMode);
     Register(g_userSettings.game.bloomMultiplier);
@@ -245,7 +245,7 @@ void registerSettings() {
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
     Register(g_userSettings.game.noLowHpSound);
-    Register(g_userSettings.game.midnasLamentNonStop);
+    Register(g_userSettings.game.battleBGM);
     Register(g_userSettings.game.enableLinkDollRotation);
     Register(g_userSettings.game.enableAchievementToasts);
     Register(g_userSettings.game.enableControllerToasts);

@@ -54,6 +54,11 @@ constexpr std::array kGyroInputModeLabels = {
     "Sensor",
     "Mouse",
 };
+constexpr std::array kBattleBGMModeLabels = {
+    "On",
+    "Off",
+    "Off During Midna's Lament",
+};
 
 bool try_parse_backend(std::string_view backend, AuroraBackend& outBackend) {
     if (backend == "auto") {
@@ -920,10 +925,41 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "No Low HP Sound",
                 .helpText = "Disable the beeping sound when having low health.",
             });
-        config_bool_select(leftPane, rightPane, getSettings().game.midnasLamentNonStop,
-            {
-                .key = "Non-Stop Midna's Lament",
-                .helpText = "Prevents enemy music while Midna's Lament is playing.",
+        leftPane.register_control(leftPane.add_select_button({
+                                      .key = "Battle Music",
+                                      .getValue =
+                                          [] {
+                                              const auto mode =
+                                                  getSettings().game.battleBGM.getValue();
+                                              const auto idx = static_cast<size_t>(mode);
+                                              return Rml::String{kBattleBGMModeLabels[idx]};
+                                          },
+                                      .isModified =
+                                          [] {
+                                              return getSettings().game.battleBGM.getValue() !=
+                                                     getSettings().game.battleBGM.getDefaultValue();
+                                          },
+                                  }),
+            rightPane, [](Pane& pane) {
+                for (size_t i = 0; i < kBattleBGMModeLabels.size(); i++) {
+                    pane.add_button({
+                                        .text = Rml::String{kBattleBGMModeLabels[i]},
+                                        .isSelected =
+                                            [i] {
+                                                return getSettings().game.battleBGM.getValue() ==
+                                                       static_cast<BattleBGMMode>(i);
+                                            },
+                                    })
+                        .on_pressed([i] {
+                            mDoAud_seStartMenu(kSoundItemChange);
+                            getSettings().game.battleBGM.setValue(static_cast<BattleBGMMode>(i));
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>On: Plays enemy music normally.<br/>"
+                             "<br/>Off: Disables enemy music entirely.<br/>"
+                             "<br/>Mute During Lament: Prevents enemy music while Midna's Lament "
+                             "is playing. ");
             });
     });
 
@@ -952,9 +988,91 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         leftPane.add_section("General");
         addOption("Mirror Mode", getSettings().game.enableMirrorMode,
             "Mirrors the world horizontally, matching the Wii version of the game.");
-        addOption("Minimal HUD", getSettings().game.minimalHUD,
-            "Disables the elements of the main HUD of the game.<br/>Useful for a more immersive "
-            "experience.");
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "Ingame HUD",
+                .getValue =
+                    [] {
+                        const int val = static_cast<int>(getSettings().game.ingameHudMode.getValue());
+                        if (val == static_cast<int>(IngameHudMode::On)) {
+                            return "On";
+                        } else if (val) {
+                            return "Custom";
+                        } else {
+                            return "Off";
+                        }
+                    },
+                .isModified =
+                    [] {
+                        const auto& hudMode = getSettings().game.ingameHudMode;
+                        return hudMode.getValue() != hudMode.getDefaultValue();
+                    },
+            }),
+            rightPane, [](Pane& pane) {
+                pane.add_button({
+                        .text = "All On",
+                        .isSelected = 
+                            [] {
+                                return getSettings().game.ingameHudMode.getValue() 
+                                        == IngameHudMode::On;
+                            },
+                        })
+                    .on_pressed([] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().game.ingameHudMode.setValue(IngameHudMode::On);
+                        config::Save();
+                });
+                pane.add_button({
+                        .text = "All Off",
+                        .isSelected = 
+                            [] {
+                                return getSettings().game.ingameHudMode.getValue() 
+                                        == IngameHudMode::Off;
+                            },
+                        })
+                    .on_pressed([] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().game.ingameHudMode.setValue(IngameHudMode::Off);
+                        config::Save();
+                });
+                pane.add_rml("<br/>");
+                constexpr std::array kIngameHudModeLabels = {
+                    "Health",
+                    "Rupees",
+                    "Action Buttons",
+                    "D-Pad",
+                    "Lamp Meter",
+                    "Oxygen Meter",
+                    "Keys",
+                    "Vessel of Light"
+                };
+                for (int i = 0; i < static_cast<int>(kIngameHudModeLabels.size()); i++) {
+                    pane.add_button({
+                        .text = kIngameHudModeLabels[i],
+                        .isSelected = 
+                            [i] {
+                                return static_cast<int>(getSettings().game.ingameHudMode.getValue()) 
+                                        & (1 << i);
+                            },
+                        })
+                    .on_pressed([i] {
+                        int val = static_cast<int>(getSettings().game.ingameHudMode.getValue());
+                        if (val & (1 << i)) {
+                            val &= ~(1 << i);
+                        } else {
+                            val |= (1 << i);
+                        }
+
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().game.ingameHudMode.setValue(static_cast<IngameHudMode>(val));
+                        config::Save();
+                    });
+                }
+                pane.add_rml(
+                    "Toggle various elements of the main HUD of the game."
+                );
+            }
+        );
         addOption("Restore Wii 1.0 Glitches", getSettings().game.restoreWiiGlitches,
             "Restores patched glitches from Wii USA 1.0, the first released version.");
         addOption("Enable Rotating Link Doll", getSettings().game.enableLinkDollRotation,
