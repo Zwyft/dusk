@@ -373,7 +373,7 @@ void ControllerConfigWindow::build_port_tab(Rml::Element* content, int port) {
     addPageButton(Page::Sticks, "Sticks", [] { return Rml::String(">"); }, [] { return false; });
     addPageButton(Page::Rumble, "Rumble", [] { return Rml::String(">"); }, [port] { return !PADSupportsRumbleIntensity(static_cast<u32>(port)); });
 
-    leftPane.add_section("Options");
+    leftPane.add_section("Options", true);
     leftPane.register_control(leftPane.add_child<BoolButton>(BoolButton::Props{
                                   .key = "Enable Dead Zones",
                                   .getValue =

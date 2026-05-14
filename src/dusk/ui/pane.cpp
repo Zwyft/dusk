@@ -163,21 +163,47 @@ bool Pane::focus() {
     return false;
 }
 
-Rml::Element* Pane::add_section(const Rml::String& text) {
-    auto* elem = append(mRoot, "div");
-    elem->SetClass("section-heading", true);
-    elem->SetInnerRML(escape(text));
-    return elem;
+Rml::Element* Pane::add_section(const Rml::String& text, bool collapsible) {
+    auto* wrapper = append(mRoot, "div");
+    wrapper->SetClass("section-wrapper", true);
+
+    auto* heading = append(wrapper, "div");
+    heading->SetClass("section-heading", true);
+    if (collapsible) {
+        heading->SetClass("collapsible", true);
+        heading->SetAttribute("tabindex", "0");
+    }
+    heading->SetInnerRML(escape(text));
+
+    auto* content = append(wrapper, "div");
+    content->SetClass("section-content", true);
+    if (collapsible) {
+        wrapper->SetAttribute("collapsed", "");
+    }
+
+    mCurrentSection = collapsible ? content : nullptr;
+
+    if (collapsible) {
+        Component::listen(heading, Rml::EventId::Click, [wrapper](Rml::Event&) {
+            if (wrapper->HasAttribute("collapsed")) {
+                wrapper->RemoveAttribute("collapsed");
+            } else {
+                wrapper->SetAttribute("collapsed", "");
+            }
+        });
+    }
+
+    return heading;
 }
 
 Rml::Element* Pane::add_text(const Rml::String& text) {
-    auto* elem = append(mRoot, "div");
+    auto* elem = append(mCurrentSection ? mCurrentSection : mRoot, "div");
     elem->SetInnerRML(escape(text));
     return elem;
 }
 
 Rml::Element* Pane::add_rml(const Rml::String& rml) {
-    auto* elem = append(mRoot, "div");
+    auto* elem = append(mCurrentSection ? mCurrentSection : mRoot, "div");
     elem->SetInnerRML(rml);
     return elem;
 }

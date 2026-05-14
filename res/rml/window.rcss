@@ -78,19 +78,23 @@ window[open] {
     }
 
     window content {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     window content pane {
         padding: 20dp;
         gap: 12dp;
         font-size: 24dp;
-        border-right: none;
-        border-bottom: 1dp #92875B;
+        border-right: 1dp #92875B;
+        border-bottom: none;
+        flex: 1 1 50%;
+        min-width: 0;
     }
 
     window content pane:last-of-type {
-        border-bottom: none;
+        border-right: none;
+        flex: 0 0 200dp;
+        overflow-y: auto;
     }
 
     /* Larger touch targets */
@@ -243,6 +247,34 @@ scrollbarhorizontal sliderbar {
 
 .section-heading:not(:first-of-type) {
     padding-top: 12dp;
+}
+
+/* Collapsible sections */
+.section-wrapper {
+    display: flex;
+    flex-flow: column;
+}
+
+.section-heading.collapsible {
+    cursor: pointer;
+    user-select: none;
+}
+
+.section-heading.collapsible::after {
+    content: " \25B6";
+    font-size: 14dp;
+    opacity: 0.6;
+    margin-left: 8dp;
+    display: inline-block;
+    transition: transform 0.15s ease-in-out;
+}
+
+.section-wrapper:not([collapsed]) > .section-heading.collapsible::after {
+    transform: rotate(90deg);
+}
+
+.section-wrapper[collapsed] > .section-content {
+    display: none;
 }
 
 button:disabled {

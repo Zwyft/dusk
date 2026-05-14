@@ -463,7 +463,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
         auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
-        leftPane.add_section("Display");
+        leftPane.add_section("Display", true);
 
         leftPane.register_control(leftPane.add_button("Toggle Fullscreen").on_pressed([] {
             mDoAud_seStartMenu(kSoundItemChange);
@@ -574,7 +574,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     "<br/>Display the current framerate in a corner of the screen while playing.");
             });
 
-        leftPane.add_section("Resolution");
+        leftPane.add_section("Resolution", true);
         graphics_tuner_control(*this, leftPane, rightPane,
             getSettings().game.internalResolutionScale,
             GraphicsTunerProps{
@@ -596,7 +596,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .defaultValue = 1,
             }, mPrelaunch);
 
-        leftPane.add_section("Post-Processing");
+        leftPane.add_section("Post-Processing", true);
         graphics_tuner_control(*this, leftPane, rightPane, getSettings().game.bloomMode,
             GraphicsTunerProps{
                 .option = GraphicsOption::BloomMode,
@@ -616,7 +616,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .defaultValue = 100,
             }, mPrelaunch);
 
-        leftPane.add_section("Rendering");
+        leftPane.add_section("Rendering", true);
         config_bool_select(leftPane, rightPane, getSettings().game.enableFrameInterpolation,
             {
                 .key = "Unlock Framerate",
@@ -668,7 +668,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
         };
 
-        leftPane.add_section("Controller");
+        leftPane.add_section("Controller", true);
         leftPane.register_control(leftPane.add_button("Configure Controller").on_pressed([this] {
             push(std::make_unique<ControllerConfigWindow>());
         }),
@@ -683,7 +683,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .onChange = [](bool value) { aurora_set_background_input(value); },
             });
 
-        leftPane.add_section("Camera");
+        leftPane.add_section("Camera", true);
         addOption("Free Camera", getSettings().game.freeCamera,
             "Enables twin-stick camera control, letting the C-Stick move the camera vertically as "
             "well as horizontally.");
@@ -716,7 +716,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Invert Air/Swim Y Axis", getSettings().game.invertAirSwimY,
             "Invert vertical movement while flying or swimming.");
 
-        leftPane.add_section("Gyro");
+        leftPane.add_section("Gyro", true);
         leftPane.register_control(
             leftPane.add_select_button({
                 .key = "Gyro Input Method",
@@ -785,13 +785,13 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Invert Gyro Yaw", getSettings().game.gyroInvertYaw,
             "Invert horizontal gyro aiming.", [] { return !gyro_enabled(); });
 
-        leftPane.add_section("Tools");
+        leftPane.add_section("Tools", true);
         addOption("Turbo Key", getSettings().game.enableTurboKeybind,
             "Hold Tab to increase game speed by up to 4x.",
             [] { return getSettings().game.speedrunMode; });
 
         if (IsMobile) {
-            leftPane.add_section("Touch Controls");
+            leftPane.add_section("Touch Controls", true);
             config_bool_select(leftPane, rightPane, getSettings().touch.enabled,
                 {
                     .key = "Touch Controls",
@@ -875,7 +875,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
         // TODO: Individual sliders for Main Music, Sub Music, Sound Effects, and Fanfare.
-        leftPane.add_section("Volume");
+        leftPane.add_section("Volume", true);
         leftPane.register_control(
             leftPane.add_child<NumberButton>(NumberButton::Props{
                 .key = "Master Volume",
@@ -899,7 +899,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 pane.add_text("Adjusts the volume of all sounds in the game.");
             });
 
-        leftPane.add_section("Effects");
+        leftPane.add_section("Effects", true);
         config_bool_select(leftPane, rightPane, getSettings().audio.enableReverb,
             {
                 .key = "Enable Reverb",
@@ -919,7 +919,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = "Play sound effects when navigating the Dusk menu.",
             });
 
-        leftPane.add_section("Tweaks");
+        leftPane.add_section("Tweaks", true);
         config_bool_select(leftPane, rightPane, getSettings().game.noLowHpSound,
             {
                 .key = "No Low HP Sound",
@@ -985,7 +985,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
         };
 
-        leftPane.add_section("General");
+        leftPane.add_section("General", true);
         addOption("Mirror Mode", getSettings().game.enableMirrorMode,
             "Mirrors the world horizontally, matching the Wii version of the game.");
         leftPane.register_control(
@@ -1080,7 +1080,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Hide Owl Statue Markers", getSettings().game.removeQuestMapMarkers,
             "Removes completed Owl Statue markers from the map and minimap.");
 
-        leftPane.add_section("Difficulty");
+        leftPane.add_section("Difficulty", true);
         leftPane.register_control(
             leftPane.add_child<NumberButton>(NumberButton::Props{
                 .key = "Damage Multiplier",
@@ -1109,7 +1109,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addSpeedrunDisabledOption("No Heart Drops", getSettings().game.noHeartDrops,
             "Hearts will never drop from enemies, pots, and various other places.");
 
-        leftPane.add_section("Quality of Life");
+        leftPane.add_section("Quality of Life", true);
         addOption("Bigger Wallets", getSettings().game.biggerWallets,
             "Wallet sizes are like in the HD version. (500, 1000, 2000)");
         addOption("Disable Rupee Cutscenes", getSettings().game.disableRupeeCutscenes,
@@ -1142,7 +1142,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Quick Transform (R+Y)", getSettings().game.enableQuickTransform,
             "Transform instantly by pressing R and Y simultaneously.");
 
-        leftPane.add_section("Speedrunning");
+        leftPane.add_section("Speedrunning", true);
         config_bool_select(leftPane, rightPane, getSettings().game.speedrunMode,
             {
                 .key = "Speedrun Mode",
@@ -1180,7 +1180,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
         };
 
-        leftPane.add_section("Resources");
+        leftPane.add_section("Resources", true);
         addCheat("Infinite Hearts", getSettings().game.infiniteHearts, "Keeps your health full.");
         addCheat(
             "Infinite Arrows", getSettings().game.infiniteArrows, "Keeps your arrow count full.");
@@ -1194,7 +1194,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addCheat("No Item Timer", getSettings().game.enableIndefiniteItemDrops,
             "Item drops such as rupees and hearts will never disappear after they drop.");
 
-        leftPane.add_section("Abilities");
+        leftPane.add_section("Abilities", true);
         addCheat(
             "Moon Jump (R+A)", getSettings().game.moonJump, "Hold R and A to rise into the air.");
         addCheat("Super Clawshot", getSettings().game.superClawshot,
@@ -1223,7 +1223,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
         auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
-        leftPane.add_section("Dusk");
+        leftPane.add_section("Dusk", true);
 #if DUSK_CAN_OPEN_DATA_FOLDER
 
         config_bool_select(leftPane, rightPane, getSettings().game.autoBackupSaves,
@@ -1382,7 +1382,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     },
             });
 
-        leftPane.add_section("Game");
+        leftPane.add_section("Game", true);
         config_bool_select(leftPane, rightPane, getSettings().game.hideTvSettingsScreen,
             {
                 .key = "Skip TV Settings Screen",
