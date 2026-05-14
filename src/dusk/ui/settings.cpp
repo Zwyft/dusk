@@ -1149,6 +1149,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Allows Wolf Link to howl and change the time of day.");
         addOption("Quick Transform (R+Y)", getSettings().game.enableQuickTransform,
             "Transform instantly by pressing R and Y simultaneously.");
+        addOption("Fast Area Transitions", getSettings().game.fastAreaTransitions,
+            "Reduces fade-out timing when transitioning between areas. Best for SSDs.");
 
         leftPane.add_section("Speedrunning", true);
         config_bool_select(leftPane, rightPane, getSettings().game.speedrunMode,

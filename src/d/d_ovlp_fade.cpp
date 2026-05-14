@@ -74,6 +74,11 @@ static int dOvlpFd_Wait(overlap1_class* i_this) {
 
 static int dOvlpFd_FadeIn(overlap1_class* i_this) {
     int var_r30 = 30;
+#if TARGET_PC
+    if (dusk::getSettings().game.fastAreaTransitions) {
+        var_r30 = 8;
+    }
+#endif
 
     if (i_this->field_0xd0 == 0) {
         if (fpcM_GetProfName(i_this) == fpcNm_OVERLAP0_e || fpcM_GetProfName(i_this) == fpcNm_OVERLAP7_e)
