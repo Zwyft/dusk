@@ -10,6 +10,21 @@
 
 namespace dusk::ui {
 
+static Rml::String escape_rml(const Rml::String& text) {
+    Rml::String out;
+    out.reserve(text.size());
+    for (char c : text) {
+        switch (c) {
+        case '<': out += "&lt;"; break;
+        case '>': out += "&gt;"; break;
+        case '&': out += "&amp;"; break;
+        case '"': out += "&quot;"; break;
+        default: out += c; break;
+        }
+    }
+    return out;
+}
+
 static constexpr const char* kModsRml = R"(
 <rml>
 <head>
@@ -35,6 +50,8 @@ static constexpr const char* kModsRml = R"(
 )";
 
 ModsWindow::ModsWindow() : Document(kModsRml) {
+    if (!mDocument) return;
+
     mRoot = mDocument->GetElementById("mod-list");
     mModList = mDocument->GetElementById("mod-list");
     mModCount = mDocument->GetElementById("mod-count");
@@ -88,7 +105,8 @@ void ModsWindow::build_mod_list(Rml::Element* parent) {
     }
 
     for (auto& mod : mods) {
-        auto* doc = parent->GetOwnerDocument();
+        auto* doc = parent ? parent->GetOwnerDocument() : nullptr;
+        if (!doc) continue;
         auto row = doc->CreateElement("div");
         if (!row) continue;
         row->SetClass("mod-row", true);
@@ -101,20 +119,20 @@ void ModsWindow::build_mod_list(Rml::Element* parent) {
         if (!mod.version.empty()) title += " v" + mod.version;
         auto nameEl = doc->CreateElement("span");
         nameEl->SetClass("mod-name", true);
-        nameEl->SetInnerRML(title);
+        nameEl->SetInnerRML(escape_rml(title));
         info->AppendChild(std::move(nameEl));
 
         if (!mod.author.empty()) {
             auto authorEl = doc->CreateElement("span");
             authorEl->SetClass("mod-author detail", true);
-            authorEl->SetInnerRML("by " + mod.author);
+            authorEl->SetInnerRML("by " + escape_rml(mod.author));
             info->AppendChild(std::move(authorEl));
         }
 
         if (!mod.description.empty()) {
             auto descEl = doc->CreateElement("span");
             descEl->SetClass("mod-description detail", true);
-            descEl->SetInnerRML(mod.description);
+            descEl->SetInnerRML(escape_rml(mod.description));
             info->AppendChild(std::move(descEl));
         }
 
@@ -149,8 +167,7 @@ void ModsWindow::build_mod_list(Rml::Element* parent) {
 void ModsWindow::refresh_ui() {
     if (!mModList) return;
 
-    // Clear existing children
-    if (mModList) mModList->SetInnerRML("");
+    mModList->SetInnerRML("");
 
     build_mod_list(mModList);
     mNeedsRefresh = false;
@@ -164,7 +181,7 @@ void ModsWindow::update() {
 }
 
 bool ModsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
-    if (!mDocument->IsVisible()) return false;
+    if (!mDocument || !mDocument->IsVisible()) return false;
 
     if (cmd == NavCommand::Cancel) {
         pop();

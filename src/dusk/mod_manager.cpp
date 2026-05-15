@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <SDL3/SDL_misc.h>
 #include <set>
 
 namespace dusk::mod_manager {
@@ -48,19 +49,40 @@ std::set<std::string> load_enabled_mods() {
     catch (const nlohmann::json::parse_error&) {
         DuskLog.warn("Failed to parse enabled mods: {}", path.string());
     }
+    catch (const nlohmann::json::type_error&) {
+        DuskLog.warn("Invalid enabled mods format: {}", path.string());
+    }
+    catch (const std::exception& e) {
+        DuskLog.warn("Error reading enabled mods: {} - {}", path.string(), e.what());
+    }
     return enabled;
 }
 
 void save_enabled_mods(const std::set<std::string>& enabled) {
     auto path = enabled_json_path();
     std::error_code ec;
-    std::filesystem::create_directories(path.parent_path(), ec);
+    if (!std::filesystem::create_directories(path.parent_path(), ec) && ec) {
+        DuskLog.warn("Failed to create mod config dir: {}", ec.message());
+        return;
+    }
 
     nlohmann::json j = nlohmann::json::array();
     for (auto& id : enabled) j.push_back(id);
 
-    std::ofstream ofs(path);
-    if (ofs.is_open()) ofs << j.dump(2);
+    auto tmpPath = path;
+    tmpPath += ".tmp";
+    {
+        std::ofstream ofs(tmpPath);
+        if (!ofs.is_open()) {
+            DuskLog.warn("Failed to write enabled mods: {}", tmpPath.string());
+            return;
+        }
+        ofs << j.dump(2);
+    }
+    std::filesystem::rename(tmpPath, path, ec);
+    if (ec) {
+        DuskLog.warn("Failed to rename enabled mods: {}", ec.message());
+    }
 }
 
 bool read_mod_json(const std::filesystem::path& jsonPath, ModInfo& info) {
@@ -78,6 +100,9 @@ bool read_mod_json(const std::filesystem::path& jsonPath, ModInfo& info) {
         return true;
     }
     catch (const nlohmann::json::parse_error&) {
+        return false;
+    }
+    catch (const std::exception&) {
         return false;
     }
 }
@@ -126,6 +151,9 @@ bool create_mod_links(const ModInfo& mod) {
     std::error_code rootEc;
     std::filesystem::create_directories(targetDir, rootEc);
 
+    auto canonicalSource = std::filesystem::weakly_canonical(sourceDir, rootEc);
+    if (rootEc) return false;
+
     bool anySucceeded = false;
     std::error_code iterEc;
     for (const auto& entry : std::filesystem::recursive_directory_iterator(sourceDir, iterEc)) {
@@ -147,10 +175,18 @@ bool create_mod_links(const ModInfo& mod) {
             std::filesystem::remove(target, rmEc);
         }
 
+        // Resolve source to canonical to prevent symlink path traversal
+        auto canonicalEntry = std::filesystem::weakly_canonical(entry.path(), relEc);
+        if (relEc) continue;
+
+        // Verify the resolved path is under the mod directory
+        auto canonicalStr = canonicalEntry.string();
+        auto sourceStr = canonicalSource.string();
+        if (canonicalStr.find(sourceStr) != 0) continue;
+
         std::error_code symEc;
         std::filesystem::create_symlink(entry.path(), target, symEc);
         if (symEc) {
-            // Fallback: copy
             std::error_code copyEc;
             std::filesystem::copy_file(entry.path(), target,
                 std::filesystem::copy_options::overwrite_existing, copyEc);
@@ -233,19 +269,8 @@ void open_mods_folder() {
     if (!std::filesystem::exists(dir)) {
         std::filesystem::create_directories(dir, ec);
     }
-#ifdef __ANDROID__
-    // On Android, we can't open folders — just log it
-    DuskLog.info("Mods directory: {}", dir.string());
-#elif _WIN32
-    auto cmd = "explorer \"" + dir.string() + "\"";
-    std::system(cmd.c_str());
-#elif __APPLE__
-    auto cmd = "open \"" + dir.string() + "\"";
-    std::system(cmd.c_str());
-#else
-    auto cmd = "xdg-open \"" + dir.string() + "\" &";
-    std::system(cmd.c_str());
-#endif
+    auto url = "file://" + dir.string();
+    SDL_OpenURL(url.c_str());
 }
 
 void refresh_all() {
