@@ -2,9 +2,10 @@
 
 #include "dusk/config.hpp"
 #include "dusk/mod_manager.hpp"
+#include "fmt/format.h"
 #include "m_Do/m_Do_main.h"
+#include "pane.hpp"
 
-#include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Element.h>
 #include <algorithm>
 
@@ -25,186 +26,73 @@ static Rml::String escape_rml(const Rml::String& text) {
     return out;
 }
 
-static constexpr const char* kModsRml = R"(
-<rml>
-<head>
-<link type="text/rcss" href="res/rml/window.rcss" />
-<link type="text/rcss" href="res/rml/tabbing.rcss" />
-</head>
-<body>
-<window>
-<div class="tab-bar" />
-<content class="content">
-<pane>
-<span class="section-heading">Installed Mods</span>
-<span id="mod-count" class="detail">No mods found</span>
-<div id="mod-list" />
-<button id="open-folder-btn">Open Mods Folder</button>
-<button id="refresh-btn">Refresh Mods</button>
-<button id="back-btn">Back</button>
-</pane>
-</content>
-</window>
-</body>
-</rml>
-)";
+ModsWindow::ModsWindow() : Window() {
+    add_tab("Mods", [this](Rml::Element* content) {
+        auto& leftPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+        auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
-ModsWindow::ModsWindow() : Document(kModsRml) {
-    if (!mDocument) return;
+        refresh_mod_list(leftPane, rightPane);
 
-    mRoot = mDocument->GetElementById("mod-list");
-    mModList = mDocument->GetElementById("mod-list");
-    mModCount = mDocument->GetElementById("mod-count");
-
-    if (auto* openBtn = mDocument->GetElementById("open-folder-btn")) {
-        listen(openBtn, Rml::EventId::Click,
-            [](Rml::Event& ev) {
-                mod_manager::open_mods_folder();
-                ev.StopPropagation();
+        leftPane.add_text("");
+        leftPane.register_control(
+            leftPane.add_button("Refresh Mods"),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Refresh the mod list and re-link all enabled mod textures.");
             });
-    }
-
-    if (auto* refreshBtn = mDocument->GetElementById("refresh-btn")) {
-        listen(refreshBtn, Rml::EventId::Click,
-            [this](Rml::Event& ev) {
-                mod_manager::refresh_all();
-                mNeedsRefresh = true;
-                ev.StopPropagation();
-            });
-    }
-
-    if (auto* backBtn = mDocument->GetElementById("back-btn")) {
-        listen(backBtn, Rml::EventId::Click,
-            [this](Rml::Event& ev) {
-                pop();
-                ev.StopPropagation();
-            });
-    }
-
-    refresh_ui();
-}
-
-void ModsWindow::show() {
-    Document::show();
-    if (mRoot) {
-        mRoot->SetAttribute("open", "");
-    }
-}
-
-void ModsWindow::build_mod_list(Rml::Element* parent) {
-    auto mods = mod_manager::scan_mods();
-    mFocusedIndex = 0;
-
-    if (mods.empty()) {
-        if (mModCount) mModCount->SetInnerRML("No mods found. Place mod folders in the mods directory.");
-        return;
-    }
-
-    if (mModCount) {
-        mModCount->SetInnerRML(Rml::String() + std::to_string(mods.size()) + " mod(s) found");
-    }
-
-    for (auto& mod : mods) {
-        auto* doc = parent ? parent->GetOwnerDocument() : nullptr;
-        if (!doc) continue;
-        auto row = doc->CreateElement("div");
-        if (!row) continue;
-        row->SetClass("mod-row", true);
-
-        // Mod name and info
-        auto info = doc->CreateElement("div");
-        info->SetClass("mod-info", true);
-
-        Rml::String title = mod.name;
-        if (!mod.version.empty()) title += " v" + mod.version;
-        auto nameEl = doc->CreateElement("span");
-        nameEl->SetClass("mod-name", true);
-        nameEl->SetInnerRML(escape_rml(title));
-        info->AppendChild(std::move(nameEl));
-
-        if (!mod.author.empty()) {
-            auto authorEl = doc->CreateElement("span");
-            authorEl->SetClass("mod-author detail", true);
-            authorEl->SetInnerRML("by " + escape_rml(mod.author));
-            info->AppendChild(std::move(authorEl));
-        }
-
-        if (!mod.description.empty()) {
-            auto descEl = doc->CreateElement("span");
-            descEl->SetClass("mod-description detail", true);
-            descEl->SetInnerRML(escape_rml(mod.description));
-            info->AppendChild(std::move(descEl));
-        }
-
-        row->AppendChild(std::move(info));
-
-        // Enable/disable toggle
-        auto toggle = doc->CreateElement("button");
-        toggle->SetClass(mod.enabled ? "mod-toggle enabled" : "mod-toggle", true);
-        toggle->SetInnerRML(mod.enabled ? "Enabled" : "Disabled");
-
-        // Capture mod ID for callback
-        std::string modId = mod.id;
-        auto* togglePtr = toggle.get();
-        row->AppendChild(std::move(toggle));
-        parent->AppendChild(std::move(row));
-
-        listen(togglePtr, Rml::EventId::Click,
-            [this, modId](Rml::Event& ev) {
-                auto mods = mod_manager::scan_mods();
-                for (auto& m : mods) {
-                    if (m.id == modId) {
-                        mod_manager::toggle_mod(m);
-                        break;
-                    }
-                }
-                mNeedsRefresh = true;
-                ev.StopPropagation();
-            });
-    }
-}
-
-void ModsWindow::refresh_ui() {
-    if (!mModList) return;
-
-    mModList->SetInnerRML("");
-
-    build_mod_list(mModList);
-    mNeedsRefresh = false;
+    });
 }
 
 void ModsWindow::update() {
-    Document::update();
+    Window::update();
     if (mNeedsRefresh) {
-        refresh_ui();
+        refresh_active_tab();
+        mNeedsRefresh = false;
     }
 }
 
-bool ModsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
-    if (!mDocument || !mDocument->IsVisible()) return false;
+void ModsWindow::refresh_mod_list(Pane& leftPane, Pane& rightPane) {
+    auto mods = mod_manager::scan_mods();
 
-    if (cmd == NavCommand::Cancel) {
-        pop();
-        event.StopPropagation();
-        return true;
+    if (mods.empty()) {
+        leftPane.add_text("No mods found. Place mod folders in the mods directory.");
+        return;
     }
 
-    if (cmd == NavCommand::Confirm) {
-        if (auto* openBtn = mDocument->GetElementById("open-folder-btn")) {
-            openBtn->Click();
-            event.StopPropagation();
-            return true;
-        }
-    }
+    leftPane.add_section(fmt::format("Installed Mods ({})", mods.size()), true);
 
-    // Close on Menu command (same as Cancel)
-    if (cmd == NavCommand::Menu) {
-        pop();
-        event.StopPropagation();
-        return true;
-    }
+    for (const auto& mod : mods) {
+        std::string id = mod.id;
+        bool enabled = mod.enabled;
+        uint32_t textureCount = mod.textureCount;
+        Rml::String displayName = escape_rml(mod.name);
+        if (!mod.version.empty()) displayName += " v" + escape_rml(mod.version);
+        Rml::String author = escape_rml(mod.author);
+        Rml::String desc = escape_rml(mod.description);
 
-    return false;
+        leftPane.register_control(
+            leftPane.add_button(displayName),
+            rightPane, [id, enabled, textureCount, displayName, author, desc, this](Pane& pane) {
+                pane.clear();
+                auto rml = fmt::format("<b>{}</b>", displayName);
+                if (!author.empty()) rml += fmt::format("<br/><br/><i>by {}</i>", author);
+                if (!desc.empty()) rml += fmt::format("<br/><br/>{}", desc);
+                rml += fmt::format("<br/><br/>Textures: {}<br/>Status: {}",
+                    textureCount, enabled ? "Enabled" : "Disabled");
+                pane.add_rml(rml);
+                pane.add_button(enabled ? "Disable" : "Enable").on_pressed([this, id] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    auto mods = mod_manager::scan_mods();
+                    for (auto& m : mods) {
+                        if (m.id == id) {
+                            mod_manager::toggle_mod(m);
+                            mNeedsRefresh = true;
+                            break;
+                        }
+                    }
+                });
+            });
+    }
 }
 
 } // namespace dusk::ui
