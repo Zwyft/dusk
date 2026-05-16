@@ -7,6 +7,7 @@
 #include "aurora/imgui.h"
 #include "d/d_com_inf_game.h"
 #include "dusk/config.hpp"
+#include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
 #include "dusk/touch_controls.hpp"
@@ -485,6 +486,11 @@ static ImU32 with_opacity(ImU32 col) {
 static ImTextureID s_btnTex[CTRL_BTN_START + 1] = {};
 static bool s_texturesLoaded = false;
 
+static void unload_button_textures() {
+    for (auto& tex : s_btnTex) tex = {};
+    s_texturesLoaded = false;
+}
+
 static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
     if (!timg) return {};
     auto* src = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
@@ -572,18 +578,45 @@ static std::vector<uint8_t> composite_rgba(
 
 static void load_game_button_textures() {
     auto* archive = dComIfGp_getMeterButtonArchive();
-    if (!archive) return;
-    auto getRes = [&](const char* name) -> const ResTIMG* {
-        return static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
+    if (!archive) {
+        DuskLog.warn("touch: no button archive available");
+        unload_button_textures();
+        return;
+    }
+
+    // Try multiple possible filenames for each texture
+    auto getRes = [&](const char** names, int count) -> const ResTIMG* {
+        for (int i = 0; i < count; ++i) {
+            auto* r = static_cast<const ResTIMG*>(archive->getResource('TIMG', names[i]));
+            if (r) return r;
+        }
+        return nullptr;
     };
-    auto* abMaru = getRes("tt_zelda_button_ab_maru.bti");
-    auto* aText  = getRes("tt_zelda_button_a_text.bti");
-    auto* bText  = getRes("tt_zelda_button_b_text.bti");
-    auto* xBase  = getRes("tt_zelda_button_x_base.bti");
-    auto* xText  = getRes("tt_zelda_button_x_text.bti");
-    auto* yBase  = getRes("tt_zelda_button_y_base.bti");
-    auto* yText  = getRes("tt_zelda_button_y_text.bti");
-    if (!abMaru || !aText || !bText || !xBase || !xText || !yBase || !yText) return;
+
+    const char* abMaruNames[] = {"tt_zelda_button_ab_maru.bti", "ab_maru.bti", "button_ab_maru.bti", "zelda_button_ab_maru.bti"};
+    const char* aTextNames[]  = {"tt_zelda_button_a_text.bti", "a_text.bti", "button_a_text.bti", "zelda_button_a_text.bti"};
+    const char* bTextNames[]  = {"tt_zelda_button_b_text.bti", "b_text.bti", "button_b_text.bti", "zelda_button_b_text.bti"};
+    const char* xBaseNames[]  = {"tt_zelda_button_x_base.bti", "x_base.bti", "button_x_base.bti", "zelda_button_x_base.bti"};
+    const char* xTextNames[]  = {"tt_zelda_button_x_text.bti", "x_text.bti", "button_x_text.bti", "zelda_button_x_text.bti"};
+    const char* yBaseNames[]  = {"tt_zelda_button_y_base.bti", "y_base.bti", "button_y_base.bti", "zelda_button_y_base.bti"};
+    const char* yTextNames[]  = {"tt_zelda_button_y_text.bti", "y_text.bti", "button_y_text.bti", "zelda_button_y_text.bti"};
+
+    auto* abMaru = getRes(abMaruNames, 4);
+    auto* aText  = getRes(aTextNames, 4);
+    auto* bText  = getRes(bTextNames, 4);
+    auto* xBase  = getRes(xBaseNames, 4);
+    auto* xText  = getRes(xTextNames, 4);
+    auto* yBase  = getRes(yBaseNames, 4);
+    auto* yText  = getRes(yTextNames, 4);
+
+    if (!abMaru) { DuskLog.warn("touch: failed to find ab_maru texture"); return; }
+    if (!aText)  { DuskLog.warn("touch: failed to find a_text texture"); return; }
+    if (!bText)  { DuskLog.warn("touch: failed to find b_text texture"); return; }
+    if (!xBase)  { DuskLog.warn("touch: failed to find x_base texture"); return; }
+    if (!xText)  { DuskLog.warn("touch: failed to find x_text texture"); return; }
+    if (!yBase)  { DuskLog.warn("touch: failed to find y_base texture"); return; }
+    if (!yText)  { DuskLog.warn("touch: failed to find y_text texture"); return; }
+
     auto rgbaA = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(aText),
                                  abMaru->width, abMaru->height, aText->width, aText->height);
     auto rgbaB = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(bText),
@@ -592,11 +625,18 @@ static void load_game_button_textures() {
                                  xBase->width, xBase->height, xText->width, xText->height);
     auto rgbaY = composite_rgba(decode_gx_to_rgba(yBase), decode_gx_to_rgba(yText),
                                  yBase->width, yBase->height, yText->width, yText->height);
+
+    if (rgbaA.empty() || rgbaB.empty() || rgbaX.empty() || rgbaY.empty()) {
+        DuskLog.warn("touch: button texture decode failed");
+        return;
+    }
+
     s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaA.data());
     s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaB.data());
     s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaX.data());
     s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaY.data());
     s_texturesLoaded = true;
+    DuskLog.info("touch: loaded game button textures");
 }
 
 static void draw_controls() {
@@ -732,6 +772,11 @@ static void draw_ui_buttons() {
                 g_dragCtrl   = CTRL_NONE;
                 g_dragFinger = 0;
                 config::Save();
+            }
+            ImGui::SameLine(0.f, gap);
+            if (ImGui::Button("Reload Tex##tc", {editW, btnH})) {
+                unload_button_textures();
+                load_game_button_textures();
             }
         } else {
             if (ImGui::Button("Edit##tc", {editW, btnH})) {
