@@ -16,6 +16,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
+
+#include "gx_decode.h"
 
 namespace dusk::touch_controls {
 namespace {
@@ -493,86 +496,38 @@ static void unload_button_textures() {
 
 static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
     if (!timg) return {};
-    auto* src = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
-    uint32_t w = timg->width;
-    uint32_t h = timg->height;
-    std::vector<uint8_t> out(w * h * 4, 255);
-    auto setpx = [&](uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-        size_t i = (y * w + x) * 4;
-        out[i] = r; out[i+1] = g; out[i+2] = b; out[i+3] = a;
-    };
-    if (timg->format == GX_TF_RGBA8 || timg->format == GX_TF_RGBA8_PC) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; ++x) {
-                size_t si = (y * w + x) * 4;
-                setpx(x, y, src[si+2], src[si+3], src[si], src[si+1]);
-            }
-    } else if (timg->format == GX_TF_RGB5A3) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; ++x) {
-                uint16_t px = (src[(y*w+x)*2] << 8) | src[(y*w+x)*2+1];
-                if (px & 0x8000) {
-                    setpx(x, y,
-                        ((px >> 10) & 0x1F) * 255 / 31,
-                        ((px >> 5) & 0x1F) * 255 / 31,
-                        (px & 0x1F) * 255 / 31, 255);
-                } else {
-                    setpx(x, y,
-                        ((px >> 8) & 0x0F) * 255 / 15,
-                        ((px >> 4) & 0x0F) * 255 / 15,
-                        (px & 0x0F) * 255 / 15,
-                        ((px >> 12) & 0x0F) * 255 / 15);
-                }
-            }
-    } else if (timg->format == GX_TF_RGB565) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; ++x) {
-                uint16_t px = (src[(y*w+x)*2] << 8) | src[(y*w+x)*2+1];
-                setpx(x, y,
-                    ((px >> 11) & 0x1F) * 255 / 31,
-                    ((px >> 5) & 0x3F) * 255 / 63,
-                    (px & 0x1F) * 255 / 31, 255);
-            }
-    } else if (timg->format == GX_TF_IA8) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; ++x) {
-                setpx(x, y, src[(y*w+x)*2], src[(y*w+x)*2], src[(y*w+x)*2], src[(y*w+x)*2+1]);
-            }
-    } else if (timg->format == GX_TF_IA4) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; ++x) {
-                uint8_t p = src[y*w+x];
-                setpx(x, y, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, (p&0xF)*255/15);
-            }
-    } else if (timg->format == GX_TF_I4) {
-        for (uint32_t y = 0; y < h; ++y)
-            for (uint32_t x = 0; x < w; x += 2) {
-                uint8_t p = src[y*w/2 + x/2];
-                setpx(x, y, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, 255);
-                if (x+1 < w) setpx(x+1, y, (p&0xF)*255/15, (p&0xF)*255/15, (p&0xF)*255/15, 255);
-            }
-    }
-    return out;
+    auto* pixelData = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
+    return ::decode_gx_to_rgba(timg->format, timg->width, timg->height, pixelData);
 }
 
 static std::vector<uint8_t> composite_rgba(
     const std::vector<uint8_t>& base, const std::vector<uint8_t>& overlay,
-    uint32_t bw, uint32_t bh, uint32_t ow, uint32_t oh)
+    uint32_t bw, uint32_t bh, uint32_t ow, uint32_t oh,
+    uint32_t& outW, uint32_t& outH)
 {
+    outW = bw;
+    outH = bh;
     auto result = base;
-    uint32_t w = std::min(bw, ow);
-    uint32_t h = std::min(bh, oh);
-    for (uint32_t y = 0; y < h; ++y)
-        for (uint32_t x = 0; x < w; ++x) {
-            size_t i = (y * w + x) * 4;
-            float a = overlay[i + 3] / 255.0f;
+
+    int32_t offX = (static_cast<int32_t>(bw) - static_cast<int32_t>(ow)) / 2;
+    int32_t offY = (static_cast<int32_t>(bh) - static_cast<int32_t>(oh)) / 2;
+
+    for (uint32_t y = 0; y < oh; ++y) {
+        int32_t dy = static_cast<int32_t>(y) + offY;
+        if (dy < 0 || dy >= static_cast<int32_t>(bh)) continue;
+        for (uint32_t x = 0; x < ow; ++x) {
+            int32_t dx = static_cast<int32_t>(x) + offX;
+            if (dx < 0 || dx >= static_cast<int32_t>(bw)) continue;
+            size_t si = (y * ow + x) * 4;
+            size_t di = (static_cast<uint32_t>(dy) * bw + static_cast<uint32_t>(dx)) * 4;
+            float a = overlay[si + 3] / 255.0f;
             if (a > 0.0f) {
-                result[i]     = static_cast<uint8_t>(overlay[i] * a + result[i] * (1.0f - a));
-                result[i + 1] = static_cast<uint8_t>(overlay[i+1] * a + result[i+1] * (1.0f - a));
-                result[i + 2] = static_cast<uint8_t>(overlay[i+2] * a + result[i+2] * (1.0f - a));
-                result[i + 3] = 255;
+                result[di]     = static_cast<uint8_t>(overlay[si] * a + result[di] * (1.0f - a));
+                result[di + 1] = static_cast<uint8_t>(overlay[si + 1] * a + result[di + 1] * (1.0f - a));
+                result[di + 2] = static_cast<uint8_t>(overlay[si + 2] * a + result[di + 2] * (1.0f - a));
             }
         }
+    }
     return result;
 }
 
@@ -617,24 +572,33 @@ static void load_game_button_textures() {
     if (!yBase)  { DuskLog.warn("touch: failed to find y_base texture"); return; }
     if (!yText)  { DuskLog.warn("touch: failed to find y_text texture"); return; }
 
-    auto rgbaA = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(aText),
-                                 abMaru->width, abMaru->height, aText->width, aText->height);
-    auto rgbaB = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(bText),
-                                 abMaru->width, abMaru->height, bText->width, bText->height);
-    auto rgbaX = composite_rgba(decode_gx_to_rgba(xBase), decode_gx_to_rgba(xText),
-                                 xBase->width, xBase->height, xText->width, xText->height);
-    auto rgbaY = composite_rgba(decode_gx_to_rgba(yBase), decode_gx_to_rgba(yText),
-                                 yBase->width, yBase->height, yText->width, yText->height);
+    uint32_t cw, ch;
+
+    auto baseA = decode_gx_to_rgba(abMaru);
+    auto baseB = decode_gx_to_rgba(abMaru);
+    auto baseX = decode_gx_to_rgba(xBase);
+    auto baseY = decode_gx_to_rgba(yBase);
+
+    auto rgbaA = composite_rgba(baseA, decode_gx_to_rgba(aText),
+                                 abMaru->width, abMaru->height, aText->width, aText->height, cw, ch);
+    auto rgbaB = composite_rgba(baseB, decode_gx_to_rgba(bText),
+                                 abMaru->width, abMaru->height, bText->width, bText->height, cw, ch);
+
+    uint32_t cw2, ch2;
+    auto rgbaX = composite_rgba(baseX, decode_gx_to_rgba(xText),
+                                 xBase->width, xBase->height, xText->width, xText->height, cw2, ch2);
+    auto rgbaY = composite_rgba(baseY, decode_gx_to_rgba(yText),
+                                 yBase->width, yBase->height, yText->width, yText->height, cw2, ch2);
 
     if (rgbaA.empty() || rgbaB.empty() || rgbaX.empty() || rgbaY.empty()) {
         DuskLog.warn("touch: button texture decode failed");
         return;
     }
 
-    s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaA.data());
-    s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaB.data());
-    s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaX.data());
-    s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaY.data());
+    s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(cw, ch, rgbaA.data());
+    s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(cw, ch, rgbaB.data());
+    s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(cw2, ch2, rgbaX.data());
+    s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(cw2, ch2, rgbaY.data());
     s_texturesLoaded = true;
     DuskLog.info("touch: loaded game button textures");
 }
@@ -644,6 +608,11 @@ static void draw_controls() {
     auto& io = ImGui::GetIO();
     float w = io.DisplaySize.x;
     float h = io.DisplaySize.y;
+
+    // Auto-load button textures if archive is available
+    if (!s_texturesLoaded && !g_customizeMode) {
+        load_game_button_textures();
+    }
 
     ImU32 borderNormal   = with_opacity(IM_COL32(200, 200, 200, 200));
     ImU32 borderCustomize = with_opacity(IM_COL32(255, 220, 0, 230));
@@ -656,12 +625,22 @@ static void draw_controls() {
         float r  = scaled_radius(i);
         bool  pressed = (g_held & kDefs[i].padBit) != 0;
         ImU32 fill = with_opacity(pressed ? kDefs[i].colorActive : kDefs[i].colorIdle);
-        dl->AddCircleFilled({cx, cy}, r, fill);
-        dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
-        if (kDefs[i].label) {
-            ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
-            dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
-                        with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
+
+        // Use game texture for A/B/X/Y if loaded
+        if (s_texturesLoaded && i <= CTRL_BTN_Y && s_btnTex[i]) {
+            ImVec2 p1 = {cx - r, cy - r};
+            ImVec2 p2 = {cx + r, cy + r};
+            dl->AddImage(s_btnTex[i], p1, p2);
+            if (g_customizeMode)
+                dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
+        } else {
+            dl->AddCircleFilled({cx, cy}, r, fill);
+            dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
+            if (kDefs[i].label) {
+                ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
+                dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
+                            with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
+            }
         }
     }
 
