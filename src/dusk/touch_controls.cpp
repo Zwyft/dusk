@@ -508,33 +508,40 @@ static void load_game_button_textures() {
         return;
     }
 
-    auto getResIdx = [&](u16 idx) -> const ResTIMG* {
-        return static_cast<const ResTIMG*>(archive->getIdxResource(idx));
-    };
-    auto getResName = [&](const char* name) -> const ResTIMG* {
-        return static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
+    auto getRes = [&](const char* name) -> const ResTIMG* {
+        auto* r = static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
+        if (r) DuskLog.info("touch: found '{}' fmt={} wxh={}x{} off={}", name,
+                            (int)r->format, (int)r->width, (int)r->height, (int)r->imageOffset);
+        return r;
     };
 
-    auto* abMaru = getResIdx(0x14);
-    auto* aText  = getResIdx(0x15);
-    auto* bText  = getResIdx(0x16);
-    auto* xBase  = getResIdx(0x18);
-    auto* xText  = getResIdx(0x19);
-    auto* yBase  = getResIdx(0x1A);
-    auto* yText  = getResIdx(0x1B);
+    auto* abMaru = getRes("TT_ZELDA_BUTTON_AB_MARU.bti");
+    if (!abMaru) abMaru = getRes("tt_zelda_button_ab_maru.bti");
+    if (!abMaru) { DuskLog.warn("touch: failed AB_MARU"); return; }
 
-    // Fallback to name-based lookup for any that failed by index
-    auto fallback = [&](const ResTIMG*& tex, const char** n, int c) {
-        if (tex) return;
-        for (int i = 0; i < c; ++i) { tex = getResName(n[i]); if (tex) break; }
-    };
-    { const char* n[] = {"TT_ZELDA_BUTTON_AB_MARU.bti","tt_zelda_button_ab_maru.bti","ab_maru.bti","zelda_button_ab_maru.bti"}; fallback(abMaru, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_A_TEXT.bti","tt_zelda_button_a_text.bti","a_text.bti","zelda_button_a_text.bti"}; fallback(aText, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_B_TEXT.bti","tt_zelda_button_b_text.bti","b_text.bti","zelda_button_b_text.bti"}; fallback(bText, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_X_BASE.bti","tt_zelda_button_x_base.bti","x_base.bti","zelda_button_x_base.bti"}; fallback(xBase, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_X_TEXT.bti","tt_zelda_button_x_text.bti","x_text.bti","zelda_button_x_text.bti"}; fallback(xText, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_Y_BASE.bti","tt_zelda_button_y_base.bti","y_base.bti","zelda_button_y_base.bti"}; fallback(yBase, n, 4); }
-    { const char* n[] = {"TT_ZELDA_BUTTON_Y_TEXT.bti","tt_zelda_button_y_text.bti","y_text.bti","zelda_button_y_text.bti"}; fallback(yText, n, 4); }
+    auto* aText = getRes("TT_ZELDA_BUTTON_A_TEXT.bti");
+    if (!aText) aText = getRes("tt_zelda_button_a_text.bti");
+    if (!aText) { DuskLog.warn("touch: failed A_TEXT"); return; }
+
+    auto* bText = getRes("TT_ZELDA_BUTTON_B_TEXT.bti");
+    if (!bText) bText = getRes("tt_zelda_button_b_text.bti");
+    if (!bText) { DuskLog.warn("touch: failed B_TEXT"); return; }
+
+    auto* xBase = getRes("TT_ZELDA_BUTTON_X_BASE.bti");
+    if (!xBase) xBase = getRes("tt_zelda_button_x_base.bti");
+    if (!xBase) { DuskLog.warn("touch: failed X_BASE"); return; }
+
+    auto* xText = getRes("TT_ZELDA_BUTTON_X_TEXT.bti");
+    if (!xText) xText = getRes("tt_zelda_button_x_text.bti");
+    if (!xText) { DuskLog.warn("touch: failed X_TEXT"); return; }
+
+    auto* yBase = getRes("TT_ZELDA_BUTTON_Y_BASE.bti");
+    if (!yBase) yBase = getRes("tt_zelda_button_y_base.bti");
+    if (!yBase) { DuskLog.warn("touch: failed Y_BASE"); return; }
+
+    auto* yText = getRes("TT_ZELDA_BUTTON_Y_TEXT.bti");
+    if (!yText) yText = getRes("tt_zelda_button_y_text.bti");
+    if (!yText) { DuskLog.warn("touch: failed Y_TEXT"); return; }
 
     if (!abMaru) { DuskLog.warn("touch: failed to find ab_maru texture"); return; }
     if (!aText)  { DuskLog.warn("touch: failed to find a_text texture"); return; }
