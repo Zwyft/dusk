@@ -4,6 +4,8 @@
 #include <SDL3/SDL_events.h>
 #include <dolphin/pad.h>
 #include "SSystem/SComponent/c_API_controller_pad.h"
+#include "aurora/imgui.h"
+#include "d/d_com_inf_game.h"
 #include "dusk/config.hpp"
 #include "dusk/main.h"
 #include "dusk/settings.h"
@@ -474,6 +476,127 @@ static ImU32 with_opacity(ImU32 col) {
     ImVec4 c = ImGui::ColorConvertU32ToFloat4(col);
     c.w *= op;
     return ImGui::ColorConvertFloat4ToU32(c);
+}
+
+
+// ---------------------------------------------------------------------------
+// Game button textures (extracted at runtime from ISO)
+// ---------------------------------------------------------------------------
+static ImTextureID s_btnTex[CTRL_BTN_START + 1] = {};
+static bool s_texturesLoaded = false;
+
+static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
+    if (!timg) return {};
+    auto* src = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
+    uint32_t w = timg->width;
+    uint32_t h = timg->height;
+    std::vector<uint8_t> out(w * h * 4, 255);
+    auto setpx = [&](uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+        size_t i = (y * w + x) * 4;
+        out[i] = r; out[i+1] = g; out[i+2] = b; out[i+3] = a;
+    };
+    if (timg->format == GX_TF_RGBA8 || timg->format == GX_TF_RGBA8_PC) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; ++x) {
+                size_t si = (y * w + x) * 4;
+                setpx(x, y, src[si+2], src[si+3], src[si], src[si+1]);
+            }
+    } else if (timg->format == GX_TF_RGB5A3) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; ++x) {
+                uint16_t px = (src[(y*w+x)*2] << 8) | src[(y*w+x)*2+1];
+                if (px & 0x8000) {
+                    setpx(x, y,
+                        ((px >> 10) & 0x1F) * 255 / 31,
+                        ((px >> 5) & 0x1F) * 255 / 31,
+                        (px & 0x1F) * 255 / 31, 255);
+                } else {
+                    setpx(x, y,
+                        ((px >> 8) & 0x0F) * 255 / 15,
+                        ((px >> 4) & 0x0F) * 255 / 15,
+                        (px & 0x0F) * 255 / 15,
+                        ((px >> 12) & 0x0F) * 255 / 15);
+                }
+            }
+    } else if (timg->format == GX_TF_RGB565) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; ++x) {
+                uint16_t px = (src[(y*w+x)*2] << 8) | src[(y*w+x)*2+1];
+                setpx(x, y,
+                    ((px >> 11) & 0x1F) * 255 / 31,
+                    ((px >> 5) & 0x3F) * 255 / 63,
+                    (px & 0x1F) * 255 / 31, 255);
+            }
+    } else if (timg->format == GX_TF_IA8) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; ++x) {
+                setpx(x, y, src[(y*w+x)*2], src[(y*w+x)*2], src[(y*w+x)*2], src[(y*w+x)*2+1]);
+            }
+    } else if (timg->format == GX_TF_IA4) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; ++x) {
+                uint8_t p = src[y*w+x];
+                setpx(x, y, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, (p&0xF)*255/15);
+            }
+    } else if (timg->format == GX_TF_I4) {
+        for (uint32_t y = 0; y < h; ++y)
+            for (uint32_t x = 0; x < w; x += 2) {
+                uint8_t p = src[y*w/2 + x/2];
+                setpx(x, y, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, ((p>>4)&0xF)*255/15, 255);
+                if (x+1 < w) setpx(x+1, y, (p&0xF)*255/15, (p&0xF)*255/15, (p&0xF)*255/15, 255);
+            }
+    }
+    return out;
+}
+
+static std::vector<uint8_t> composite_rgba(
+    const std::vector<uint8_t>& base, const std::vector<uint8_t>& overlay,
+    uint32_t bw, uint32_t bh, uint32_t ow, uint32_t oh)
+{
+    auto result = base;
+    uint32_t w = std::min(bw, ow);
+    uint32_t h = std::min(bh, oh);
+    for (uint32_t y = 0; y < h; ++y)
+        for (uint32_t x = 0; x < w; ++x) {
+            size_t i = (y * w + x) * 4;
+            float a = overlay[i + 3] / 255.0f;
+            if (a > 0.0f) {
+                result[i]     = static_cast<uint8_t>(overlay[i] * a + result[i] * (1.0f - a));
+                result[i + 1] = static_cast<uint8_t>(overlay[i+1] * a + result[i+1] * (1.0f - a));
+                result[i + 2] = static_cast<uint8_t>(overlay[i+2] * a + result[i+2] * (1.0f - a));
+                result[i + 3] = 255;
+            }
+        }
+    return result;
+}
+
+static void load_game_button_textures() {
+    auto* archive = dComIfGp_getMeterButtonArchive();
+    if (!archive) return;
+    auto getRes = [&](const char* name) -> const ResTIMG* {
+        return static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
+    };
+    auto* abMaru = getRes("tt_zelda_button_ab_maru.bti");
+    auto* aText  = getRes("tt_zelda_button_a_text.bti");
+    auto* bText  = getRes("tt_zelda_button_b_text.bti");
+    auto* xBase  = getRes("tt_zelda_button_x_base.bti");
+    auto* xText  = getRes("tt_zelda_button_x_text.bti");
+    auto* yBase  = getRes("tt_zelda_button_y_base.bti");
+    auto* yText  = getRes("tt_zelda_button_y_text.bti");
+    if (!abMaru || !aText || !bText || !xBase || !xText || !yBase || !yText) return;
+    auto rgbaA = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(aText),
+                                 abMaru->width, abMaru->height, aText->width, aText->height);
+    auto rgbaB = composite_rgba(decode_gx_to_rgba(abMaru), decode_gx_to_rgba(bText),
+                                 abMaru->width, abMaru->height, bText->width, bText->height);
+    auto rgbaX = composite_rgba(decode_gx_to_rgba(xBase), decode_gx_to_rgba(xText),
+                                 xBase->width, xBase->height, xText->width, xText->height);
+    auto rgbaY = composite_rgba(decode_gx_to_rgba(yBase), decode_gx_to_rgba(yText),
+                                 yBase->width, yBase->height, yText->width, yText->height);
+    s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaA.data());
+    s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgbaB.data());
+    s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaX.data());
+    s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(xBase->width, xBase->height, rgbaY.data());
+    s_texturesLoaded = true;
 }
 
 static void draw_controls() {

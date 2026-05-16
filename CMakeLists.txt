@@ -300,7 +300,7 @@ set(GAME_COMPILE_DEFS TARGET_PC WIDESCREEN_SUPPORT=1 AVOID_UB=1 VERSION=0 MTX_US
 set(GAME_INCLUDE_DIRS
     include
     src
-    assets/GZ2E01 # TODO: make this dynamic if needed?
+    assets/GZ2E01
     libs/JSystem/include
     libs
     extern/aurora/include/dolphin
