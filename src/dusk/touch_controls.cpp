@@ -484,7 +484,7 @@ static ImU32 with_opacity(ImU32 col) {
 
 
 // ---------------------------------------------------------------------------
-// Game button textures (extracted at runtime from ISO)
+// Game button texture loading + ImGui-drawn glossy fallback
 // ---------------------------------------------------------------------------
 static ImTextureID s_btnTex[CTRL_BTN_START + 1] = {};
 static bool s_texturesLoaded = false;
@@ -500,37 +500,6 @@ static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
     return ::decode_gx_to_rgba(timg->format, timg->width, timg->height, pixelData);
 }
 
-static std::vector<uint8_t> composite_rgba(
-    const std::vector<uint8_t>& base, const std::vector<uint8_t>& overlay,
-    uint32_t bw, uint32_t bh, uint32_t ow, uint32_t oh,
-    uint32_t& outW, uint32_t& outH)
-{
-    outW = bw;
-    outH = bh;
-    auto result = base;
-
-    int32_t offX = (static_cast<int32_t>(bw) - static_cast<int32_t>(ow)) / 2;
-    int32_t offY = (static_cast<int32_t>(bh) - static_cast<int32_t>(oh)) / 2;
-
-    for (uint32_t y = 0; y < oh; ++y) {
-        int32_t dy = static_cast<int32_t>(y) + offY;
-        if (dy < 0 || dy >= static_cast<int32_t>(bh)) continue;
-        for (uint32_t x = 0; x < ow; ++x) {
-            int32_t dx = static_cast<int32_t>(x) + offX;
-            if (dx < 0 || dx >= static_cast<int32_t>(bw)) continue;
-            size_t si = (y * ow + x) * 4;
-            size_t di = (static_cast<uint32_t>(dy) * bw + static_cast<uint32_t>(dx)) * 4;
-            float a = overlay[si + 3] / 255.0f;
-            if (a > 0.0f) {
-                result[di]     = static_cast<uint8_t>(overlay[si] * a + result[di] * (1.0f - a));
-                result[di + 1] = static_cast<uint8_t>(overlay[si + 1] * a + result[di + 1] * (1.0f - a));
-                result[di + 2] = static_cast<uint8_t>(overlay[si + 2] * a + result[di + 2] * (1.0f - a));
-            }
-        }
-    }
-    return result;
-}
-
 static void load_game_button_textures() {
     auto* archive = dComIfGp_getMeterButtonArchive();
     if (!archive) {
@@ -539,30 +508,33 @@ static void load_game_button_textures() {
         return;
     }
 
-    // Try multiple possible filenames for each texture
-    auto getRes = [&](const char** names, int count) -> const ResTIMG* {
-        for (int i = 0; i < count; ++i) {
-            auto* r = static_cast<const ResTIMG*>(archive->getResource('TIMG', names[i]));
-            if (r) return r;
-        }
-        return nullptr;
+    auto getResIdx = [&](u16 idx) -> const ResTIMG* {
+        return static_cast<const ResTIMG*>(archive->getIdxResource(idx));
+    };
+    auto getResName = [&](const char* name) -> const ResTIMG* {
+        return static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
     };
 
-    const char* abMaruNames[] = {"tt_zelda_button_ab_maru.bti", "ab_maru.bti", "button_ab_maru.bti", "zelda_button_ab_maru.bti"};
-    const char* aTextNames[]  = {"tt_zelda_button_a_text.bti", "a_text.bti", "button_a_text.bti", "zelda_button_a_text.bti"};
-    const char* bTextNames[]  = {"tt_zelda_button_b_text.bti", "b_text.bti", "button_b_text.bti", "zelda_button_b_text.bti"};
-    const char* xBaseNames[]  = {"tt_zelda_button_x_base.bti", "x_base.bti", "button_x_base.bti", "zelda_button_x_base.bti"};
-    const char* xTextNames[]  = {"tt_zelda_button_x_text.bti", "x_text.bti", "button_x_text.bti", "zelda_button_x_text.bti"};
-    const char* yBaseNames[]  = {"tt_zelda_button_y_base.bti", "y_base.bti", "button_y_base.bti", "zelda_button_y_base.bti"};
-    const char* yTextNames[]  = {"tt_zelda_button_y_text.bti", "y_text.bti", "button_y_text.bti", "zelda_button_y_text.bti"};
+    auto* abMaru = getResIdx(0x14);
+    auto* aText  = getResIdx(0x15);
+    auto* bText  = getResIdx(0x16);
+    auto* xBase  = getResIdx(0x18);
+    auto* xText  = getResIdx(0x19);
+    auto* yBase  = getResIdx(0x1A);
+    auto* yText  = getResIdx(0x1B);
 
-    auto* abMaru = getRes(abMaruNames, 4);
-    auto* aText  = getRes(aTextNames, 4);
-    auto* bText  = getRes(bTextNames, 4);
-    auto* xBase  = getRes(xBaseNames, 4);
-    auto* xText  = getRes(xTextNames, 4);
-    auto* yBase  = getRes(yBaseNames, 4);
-    auto* yText  = getRes(yTextNames, 4);
+    // Fallback to name-based lookup for any that failed by index
+    auto fallback = [&](const ResTIMG*& tex, const char** n, int c) {
+        if (tex) return;
+        for (int i = 0; i < c; ++i) { tex = getResName(n[i]); if (tex) break; }
+    };
+    { const char* n[] = {"TT_ZELDA_BUTTON_AB_MARU.bti","tt_zelda_button_ab_maru.bti","ab_maru.bti","zelda_button_ab_maru.bti"}; fallback(abMaru, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_A_TEXT.bti","tt_zelda_button_a_text.bti","a_text.bti","zelda_button_a_text.bti"}; fallback(aText, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_B_TEXT.bti","tt_zelda_button_b_text.bti","b_text.bti","zelda_button_b_text.bti"}; fallback(bText, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_X_BASE.bti","tt_zelda_button_x_base.bti","x_base.bti","zelda_button_x_base.bti"}; fallback(xBase, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_X_TEXT.bti","tt_zelda_button_x_text.bti","x_text.bti","zelda_button_x_text.bti"}; fallback(xText, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_Y_BASE.bti","tt_zelda_button_y_base.bti","y_base.bti","zelda_button_y_base.bti"}; fallback(yBase, n, 4); }
+    { const char* n[] = {"TT_ZELDA_BUTTON_Y_TEXT.bti","tt_zelda_button_y_text.bti","y_text.bti","zelda_button_y_text.bti"}; fallback(yText, n, 4); }
 
     if (!abMaru) { DuskLog.warn("touch: failed to find ab_maru texture"); return; }
     if (!aText)  { DuskLog.warn("touch: failed to find a_text texture"); return; }
@@ -572,33 +544,125 @@ static void load_game_button_textures() {
     if (!yBase)  { DuskLog.warn("touch: failed to find y_base texture"); return; }
     if (!yText)  { DuskLog.warn("touch: failed to find y_text texture"); return; }
 
-    uint32_t cw, ch;
+    // Tint IA4 base: modulate grayscale intensity by target color, preserve alpha
+    auto tint = [](std::vector<uint8_t>& p, uint8_t tr, uint8_t tg, uint8_t tb) {
+        for (size_t i = 0; i + 3 < p.size(); i += 4) {
+            float v = p[i] / 255.0f;    // IA4 intensity (R=G=B after decode)
+            float a = p[i + 3] / 255.0f;
+            p[i]     = static_cast<uint8_t>(tr * v);
+            p[i + 1] = static_cast<uint8_t>(tg * v);
+            p[i + 2] = static_cast<uint8_t>(tb * v);
+            // keep original alpha for transparency
+        }
+    };
 
-    auto baseA = decode_gx_to_rgba(abMaru);
-    auto baseB = decode_gx_to_rgba(abMaru);
-    auto baseX = decode_gx_to_rgba(xBase);
-    auto baseY = decode_gx_to_rgba(yBase);
+    // Composite text (I4, white on transparent) centered on tinted base
+    // (compositing done inline per-button below)
 
-    auto rgbaA = composite_rgba(baseA, decode_gx_to_rgba(aText),
-                                 abMaru->width, abMaru->height, aText->width, aText->height, cw, ch);
-    auto rgbaB = composite_rgba(baseB, decode_gx_to_rgba(bText),
-                                 abMaru->width, abMaru->height, bText->width, bText->height, cw, ch);
-
-    uint32_t cw2, ch2;
-    auto rgbaX = composite_rgba(baseX, decode_gx_to_rgba(xText),
-                                 xBase->width, xBase->height, xText->width, xText->height, cw2, ch2);
-    auto rgbaY = composite_rgba(baseY, decode_gx_to_rgba(yText),
-                                 yBase->width, yBase->height, yText->width, yText->height, cw2, ch2);
-
-    if (rgbaA.empty() || rgbaB.empty() || rgbaX.empty() || rgbaY.empty()) {
-        DuskLog.warn("touch: button texture decode failed");
-        return;
+    // A button
+    {
+        auto rgba = decode_gx_to_rgba(abMaru);
+        tint(rgba, 60, 200, 60);
+        auto txt = decode_gx_to_rgba(aText);
+        int32_t ox = ((int32_t)abMaru->width - (int32_t)aText->width) / 2;
+        int32_t oy = ((int32_t)abMaru->height - (int32_t)aText->height) / 2;
+        for (uint32_t y = 0; y < aText->height; ++y) {
+            int32_t dy = (int32_t)y + oy;
+            if (dy < 0 || dy >= (int32_t)abMaru->height) continue;
+            for (uint32_t x = 0; x < aText->width; ++x) {
+                int32_t dx = (int32_t)x + ox;
+                if (dx < 0 || dx >= (int32_t)abMaru->width) continue;
+                size_t si = ((size_t)y * aText->width + x) * 4;
+                size_t di = ((size_t)dy * abMaru->width + dx) * 4;
+                float a = txt[si + 3] / 255.0f;
+                if (a > 0.0f) {
+                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
+                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
+                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
+                }
+            }
+        }
+        s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgba.data());
     }
 
-    s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(cw, ch, rgbaA.data());
-    s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(cw, ch, rgbaB.data());
-    s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(cw2, ch2, rgbaX.data());
-    s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(cw2, ch2, rgbaY.data());
+    // B button (same base as A)
+    {
+        auto rgba = decode_gx_to_rgba(abMaru);
+        tint(rgba, 200, 40, 40);
+        auto txt = decode_gx_to_rgba(bText);
+        int32_t ox = ((int32_t)abMaru->width - (int32_t)bText->width) / 2;
+        int32_t oy = ((int32_t)abMaru->height - (int32_t)bText->height) / 2;
+        for (uint32_t y = 0; y < bText->height; ++y) {
+            int32_t dy = (int32_t)y + oy;
+            if (dy < 0 || dy >= (int32_t)abMaru->height) continue;
+            for (uint32_t x = 0; x < bText->width; ++x) {
+                int32_t dx = (int32_t)x + ox;
+                if (dx < 0 || dx >= (int32_t)abMaru->width) continue;
+                size_t si = ((size_t)y * bText->width + x) * 4;
+                size_t di = ((size_t)dy * abMaru->width + dx) * 4;
+                float a = txt[si + 3] / 255.0f;
+                if (a > 0.0f) {
+                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
+                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
+                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
+                }
+            }
+        }
+        s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgba.data());
+    }
+
+    // X button
+    {
+        auto rgba = decode_gx_to_rgba(xBase);
+        tint(rgba, 40, 130, 220);
+        auto txt = decode_gx_to_rgba(xText);
+        int32_t ox = ((int32_t)xBase->width - (int32_t)xText->width) / 2;
+        int32_t oy = ((int32_t)xBase->height - (int32_t)xText->height) / 2;
+        for (uint32_t y = 0; y < xText->height; ++y) {
+            int32_t dy = (int32_t)y + oy;
+            if (dy < 0 || dy >= (int32_t)xBase->height) continue;
+            for (uint32_t x = 0; x < xText->width; ++x) {
+                int32_t dx = (int32_t)x + ox;
+                if (dx < 0 || dx >= (int32_t)xBase->width) continue;
+                size_t si = ((size_t)y * xText->width + x) * 4;
+                size_t di = ((size_t)dy * xBase->width + dx) * 4;
+                float a = txt[si + 3] / 255.0f;
+                if (a > 0.0f) {
+                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
+                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
+                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
+                }
+            }
+        }
+        s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(xBase->width, xBase->height, rgba.data());
+    }
+
+    // Y button
+    {
+        auto rgba = decode_gx_to_rgba(yBase);
+        tint(rgba, 200, 50, 130);
+        auto txt = decode_gx_to_rgba(yText);
+        int32_t ox = ((int32_t)yBase->width - (int32_t)yText->width) / 2;
+        int32_t oy = ((int32_t)yBase->height - (int32_t)yText->height) / 2;
+        for (uint32_t y = 0; y < yText->height; ++y) {
+            int32_t dy = (int32_t)y + oy;
+            if (dy < 0 || dy >= (int32_t)yBase->height) continue;
+            for (uint32_t x = 0; x < yText->width; ++x) {
+                int32_t dx = (int32_t)x + ox;
+                if (dx < 0 || dx >= (int32_t)yBase->width) continue;
+                size_t si = ((size_t)y * yText->width + x) * 4;
+                size_t di = ((size_t)dy * yBase->width + dx) * 4;
+                float a = txt[si + 3] / 255.0f;
+                if (a > 0.0f) {
+                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
+                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
+                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
+                }
+            }
+        }
+        s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(yBase->width, yBase->height, rgba.data());
+    }
+
     s_texturesLoaded = true;
     DuskLog.info("touch: loaded game button textures");
 }
@@ -753,7 +817,7 @@ static void draw_ui_buttons() {
                 config::Save();
             }
             ImGui::SameLine(0.f, gap);
-            if (ImGui::Button("Reload Tex##tc", {editW, btnH})) {
+            if (ImGui::Button("Reload##tc", {editW, btnH})) {
                 unload_button_textures();
                 load_game_button_textures();
             }
