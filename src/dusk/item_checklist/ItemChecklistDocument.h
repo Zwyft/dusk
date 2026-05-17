@@ -1,11 +1,10 @@
 #pragma once
 
+#include "ItemChecklist.h"
 #include "dusk/ui/document.hpp"
 
 #include <cstdint>
 #include <unordered_map>
-
-class ItemChecklist;
 
 namespace dusk::ui {
 
@@ -27,7 +26,7 @@ private:
     void refreshSummary();
     void refreshItem(uint8_t itemId);
 
-    CardRefs createCard(const ItemChecklist::ItemInfo& item, Rml::Element* parent);
+    CardRefs createCard(const ::ItemChecklist::ItemInfo& item, Rml::Element* parent);
 
     Rml::Element* mStatusText = nullptr;
     Rml::Element* mSummaryText = nullptr;

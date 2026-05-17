@@ -27,6 +27,7 @@
 #endif
 
 #include <algorithm>
+#include "fmt/format.h"
 
 namespace dusk::ui {
 namespace {

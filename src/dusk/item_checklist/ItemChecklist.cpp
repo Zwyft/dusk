@@ -18,7 +18,6 @@
 #include <fstream>
 #include <string_view>
 
-namespace dusk::ui {
 using json = nlohmann::json;
 
 namespace {
@@ -413,5 +412,3 @@ void ItemChecklist::load() {
         DuskLog.error("ItemChecklist: failed to parse save file: {}", e.what());
     }
 }
-
-}  // namespace dusk::ui

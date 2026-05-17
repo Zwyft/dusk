@@ -25,7 +25,7 @@ const Rml::String kDocumentSource = R"RML(
                     <h1>Emotracker-style checklist</h1>
                     <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
                 </div>
-                <button class="tracker-close" onmousedown="this.blur(); {dusk::ui::ItemChecklist::instance().hideChecklist();}">
+                <button class="tracker-close" onmousedown="this.blur(); {::ItemChecklist::instance().hideChecklist();}">
                     <icon class="material-symbols-rounded">close</icon>
                 </button>
             </div>
@@ -90,7 +90,7 @@ void ItemChecklistDocument::rebuildSections() {
 }
 
 ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
-    const ItemChecklist::ItemInfo& item, Rml::Element* parent) {
+    const ::ItemChecklist::ItemInfo& item, Rml::Element* parent) {
     CardRefs refs;
     if (mDocument == nullptr || parent == nullptr) {
         return refs;
