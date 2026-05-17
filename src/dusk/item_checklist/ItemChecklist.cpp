@@ -1,7 +1,5 @@
 #include "ItemChecklist.h"
 
-#include "ItemChecklistDocument.h"
-
 #include "JSystem/JKernel/JKRArchive.h"
 #include "JSystem/JUtility/JUTTexture.h"
 #include "d/d_com_inf_game.h"
@@ -140,7 +138,6 @@ bool ItemChecklist::initialize() {
 
     loadItemDefinitions();
     mIconCacheDir = dusk::ConfigPath / "item-tracker-icons";
-    createDocument();
     load();
     mInitialized = true;
     refresh();
@@ -149,8 +146,6 @@ bool ItemChecklist::initialize() {
 
 void ItemChecklist::shutdown() {
     save();
-    mDocument.reset();
-    mVisible = false;
     mInitialized = false;
     mIconsReady = false;
     mLiveCollected.clear();
@@ -169,35 +164,11 @@ bool ItemChecklist::isCollected(uint8_t itemId) const {
 
 void ItemChecklist::setCollected(uint8_t itemId, bool collected) {
     mManualOverrides[itemId] = collected;
-    if (mDocument) {
-        mDocument->refresh();
-    }
     save();
 }
 
 void ItemChecklist::toggleCollected(uint8_t itemId) {
     setCollected(itemId, !isCollected(itemId));
-}
-
-void ItemChecklist::showChecklist() {
-    if (!mInitialized) {
-        initialize();
-    }
-    if (mDocument) {
-        mVisible = true;
-        mDocument->show();
-    }
-}
-
-void ItemChecklist::hideChecklist() {
-    mVisible = false;
-    if (mDocument) {
-        mDocument->hide(false);
-    }
-}
-
-bool ItemChecklist::isVisible() const {
-    return mVisible && mDocument != nullptr && mDocument->visible();
 }
 
 void ItemChecklist::onItemCollected(uint8_t itemId) {
@@ -210,9 +181,6 @@ void ItemChecklist::refresh() {
     }
 
     syncItemStateFromGame();
-    if (mDocument) {
-        mDocument->refresh();
-    }
 }
 
 const ItemChecklist::ItemInfo* ItemChecklist::getItemInfo(uint8_t itemId) const {
@@ -293,10 +261,6 @@ void ItemChecklist::loadItemDefinitions() {
     for (size_t i = 0; i < mItemDefinitions.size(); ++i) {
         mItemMap[mItemDefinitions[i].id] = i;
     }
-}
-
-void ItemChecklist::createDocument() {
-    mDocument = std::make_unique<dusk::ui::ItemChecklistDocument>();
 }
 
 bool ItemChecklist::isGameAssetReady() const {

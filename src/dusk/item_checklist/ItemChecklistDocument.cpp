@@ -25,7 +25,7 @@ const Rml::String kDocumentSource = R"RML(
                     <h1>Emotracker-style checklist</h1>
                     <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
                 </div>
-                <button class="tracker-close" onmousedown="this.blur(); {::ItemChecklist::instance().hideChecklist();}">
+                <button id="tracker-close" class="tracker-close">
                     <icon class="material-symbols-rounded">close</icon>
                 </button>
             </div>
@@ -57,6 +57,8 @@ void ItemChecklistDocument::build() {
     mSummaryText = mDocument->GetElementById("tracker-summary");
     mSummaryFill = mDocument->GetElementById("tracker-summary-fill");
     mSectionsRoot = mDocument->GetElementById("tracker-sections");
+    listen(mDocument->GetElementById("tracker-close"), Rml::EventId::Click,
+        [this](Rml::Event&) { hide(false); });
     rebuildSections();
     refresh();
 }
