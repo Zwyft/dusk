@@ -1,7 +1,8 @@
 #pragma once
 
 #include "ItemChecklist.h"
-#include "window.hpp"
+#include "dusk/ui/event.hpp"
+#include "dusk/ui/window.hpp"
 
 #include <cstdint>
 #include <unordered_map>

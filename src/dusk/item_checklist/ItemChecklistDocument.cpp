@@ -2,7 +2,6 @@
 
 #include "ItemChecklist.h"
 
-#include "dusk/ui/event.hpp"
 #include "dusk/ui/ui.hpp"
 
 #include <RmlUi/Core.h>
