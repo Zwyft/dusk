@@ -58,7 +58,7 @@ jobs:
         run: python3 ci/patch-aurora.py
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Configure
         run: cmake --preset x-linux-ci-gcc
@@ -103,7 +103,7 @@ jobs:
           sed -i '' 's/createdPipelines = 0/g_stats.createdPipelines = 0/g' extern/aurora/lib/gfx/pipeline_cache.cpp
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Configure
         run: cmake --preset x-macos-ci-arm64
@@ -141,7 +141,7 @@ jobs:
         run: python3 ci/patch-aurora.py
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Install dependencies
         run: vcpkg install freetype:x64-windows-static zstd:x64-windows-static
