@@ -108,7 +108,9 @@ s8 mDoMain::developmentMode = -1;
 OSTime mDoMain::sPowerOnTime;
 OSTime mDoMain::sHungUpTime;
 u32 mDoMain::memMargin = 0xFFFFFFFF;
-char mDoMain::COPYDATE_STRING[18] = "??/??/?? ??:??:??";
+char mDoMain::COPYDATE_STRING[18] = {
+    '?', '?', '/', '?', '?', '/', '?', '?', ' ', '?', '?', ':', '?', '?', ':', '?', '?', '\0'
+};
 #if TARGET_PC
 const int audioHeapSize = 0x14D800 * 2;
 #else
@@ -215,6 +217,8 @@ bool launchUILoop() {
                 break;
             case AURORA_EXIT:
                 return false;
+            default:
+                break;
             }
 
             event++;
@@ -300,6 +304,8 @@ void main01(void) {
                 break;
             case AURORA_EXIT:
                 goto exit;
+            default:
+                break;
             }
 
             event++;
