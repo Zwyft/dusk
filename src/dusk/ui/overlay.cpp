@@ -26,9 +26,18 @@ const Rml::String kDocumentSource = R"RML(
 </head>
 <body>
     <fps id="fps" />
+    <button class="checklist-button" onmousedown="this.blur(); {dusk::ui::ItemChecklist::instance().showChecklist();}">
+        <icon class="material-symbols-rounded">checklist</icon>
+    </button>
 </body>
 </rml>
-)RML";
+)RML;
+
+constexpr std::array<std::pair<const char*, const char*>, 3> kAutoSaveLayers{{
+    {"inner", "res/org-icon-inner.png"},
+    {"outer", "res/org-icon-outer.png"},
+    {"center", "res/org-icon-center.png"},
+}};
 
 constexpr std::array<std::pair<const char*, const char*>, 3> kAutoSaveLayers{{
     {"inner", "res/org-icon-inner.png"},

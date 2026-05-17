@@ -853,6 +853,7 @@ int game_main(int argc, char* argv[]) {
     dusk::touch_controls::init();
     dusk::ui::push_document(std::make_unique<dusk::ui::Overlay>(), true, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::MenuBar>(), false);
+    dusk::ui::ItemChecklist::instance().initialize();
 
     // Invalidate a bad saved isoPath so that Dusk can't get blocked from starting up.
     // This is only a metadata check; full hash verification is handled by the prelaunch UI.

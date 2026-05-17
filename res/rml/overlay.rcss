@@ -27,6 +27,34 @@ toast {
     background-color: rgba(21, 22, 16, 80%);
 }
 
+.checklist-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.checklist-button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+.checklist-button:active {
+    background-color: #3d8b40;
+}
+
 toast {
     top: 40dp;
     right: 40dp;

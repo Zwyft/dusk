@@ -1531,6 +1531,10 @@ set(DUSK_FILES
         src/dusk/discord.hpp
         src/dusk/discord_presence.cpp
         src/dusk/version.cpp
+        src/dusk/item_checklist/ItemChecklist.cpp
+        src/dusk/item_checklist/ItemChecklist.h
+        src/dusk/item_checklist/ItemChecklistDocument.cpp
+        src/dusk/item_checklist/ItemChecklistDocument.h
 )
 
 set(DUSK_HTTP_BACKEND_FILES
