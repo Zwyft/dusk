@@ -8,6 +8,7 @@
 #include "d/d_item_data.h"
 #include "dusk/gx_decode.h"
 #include "dusk/io.hpp"
+#include "dusk/logging.h"
 #include "dusk/main.h"
 
 #include "fmt/format.h"
@@ -254,7 +255,7 @@ void ItemChecklist::loadItemDefinitions() {
     mItemDefinitions.clear();
     mItemMap.clear();
 
-    if (std::ifstream file(dusk::io::fs_path(kItemDefinitionsFile)); file.is_open()) {
+    if (std::ifstream file(std::filesystem::path(kItemDefinitionsFile)); file.is_open()) {
         try {
             json root;
             file >> root;
@@ -295,7 +296,7 @@ void ItemChecklist::loadItemDefinitions() {
 }
 
 void ItemChecklist::createDocument() {
-    mDocument = std::make_unique<ItemChecklistDocument>();
+    mDocument = std::make_unique<dusk::ui::ItemChecklistDocument>();
 }
 
 bool ItemChecklist::isGameAssetReady() const {
