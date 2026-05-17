@@ -39,12 +39,6 @@ constexpr std::array<std::pair<const char*, const char*>, 3> kAutoSaveLayers{{
     {"center", "res/org-icon-center.png"},
 }};
 
-constexpr std::array<std::pair<const char*, const char*>, 3> kAutoSaveLayers{{
-    {"inner", "res/org-icon-inner.png"},
-    {"outer", "res/org-icon-outer.png"},
-    {"center", "res/org-icon-center.png"},
-}};
-
 constexpr auto kMenuNotificationDuration = std::chrono::milliseconds(2500);
 
 constexpr std::array<const char*, 4> kFpsCorners = {"tl", "tr", "bl", "br"};
