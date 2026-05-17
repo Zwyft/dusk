@@ -2,14 +2,9 @@
 
 #include "ItemChecklist.h"
 
-#include "dusk/io.hpp"
 #include "dusk/ui/ui.hpp"
 
 #include <RmlUi/Core.h>
-
-#include <fstream>
-#include <iterator>
-#include <string>
 
 #include "fmt/format.h"
 
@@ -51,17 +46,9 @@ const Rml::String kDocumentSource = R"RML(
 </rml>
 )RML";
 
-Rml::String load_document_source() {
-    if (std::ifstream file(dusk::io::fs_path("res/rml/item_checklist.rml")); file.is_open()) {
-        return Rml::String{
-            std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>())};
-    }
-    return kDocumentSource;
-}
-
 }  // namespace
 
-ItemChecklistDocument::ItemChecklistDocument() : Document(load_document_source()) {
+ItemChecklistDocument::ItemChecklistDocument() : Document(kDocumentSource) {
     build();
 }
 
@@ -105,30 +92,29 @@ void ItemChecklistDocument::rebuildSections() {
 ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     const ItemChecklist::ItemInfo& item, Rml::Element* parent) {
     CardRefs refs;
-    auto* doc = mDocument;
-    if (doc == nullptr || parent == nullptr) {
+    if (mDocument == nullptr || parent == nullptr) {
         return refs;
     }
 
-    auto* button = doc->CreateElement("button");
+    auto* button = append(parent, "button");
+    if (button == nullptr) {
+        return refs;
+    }
     button->SetClass("tracker-card", true);
     button->SetAttribute("type", "button");
     button->SetAttribute("data-item-id", std::to_string(item.id));
     button->SetAttribute("title", item.name);
 
-    auto* icon = doc->CreateElement("img");
+    auto* icon = append(button, "img");
     icon->SetClass("tracker-card-icon", true);
     icon->SetAttribute("src", ItemChecklist::instance().iconPathFor(item.id));
-    button->AppendChild(std::move(icon));
 
-    auto* label = doc->CreateElement("div");
+    auto* label = append(button, "div");
     label->SetClass("tracker-card-label", true);
     label->SetInnerRML(escape(item.name));
-    button->AppendChild(std::move(label));
 
     refs.root = button;
     refs.icon = icon;
-    parent->AppendChild(std::move(button));
     return refs;
 }
 

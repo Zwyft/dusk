@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <unordered_map>
 
+class ItemChecklist;
+
 namespace dusk::ui {
 
 class ItemChecklistDocument : public Document {
