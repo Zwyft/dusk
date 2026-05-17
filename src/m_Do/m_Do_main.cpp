@@ -30,6 +30,7 @@
 #include "Z2AudioLib/Z2WolfHowlMgr.h"
 #include "c/c_dylink.h"
 #include "d/d_com_inf_game.h"
+#include "dusk/item_checklist/ItemChecklist.h"
 #include "d/d_debug_pad.h"
 #include "d/d_s_logo.h"
 #include "d/d_s_menu.h"

@@ -2,38 +2,36 @@
 
 #include "dusk/ui/document.hpp"
 
+#include <cstdint>
+#include <unordered_map>
+
 namespace dusk::ui {
 
 class ItemChecklistDocument : public Document {
 public:
-    struct ItemElementData {
-        uint8_t itemId;
-        Rml::Element* element;
-    };
-    
     ItemChecklistDocument();
-    
-    void Initialize(const Rml::String& source) override;
+
     void update() override;
-    
     void refresh();
-    void setCollected(uint8_t itemId, bool collected);
-    void updateProgress();
-    
+
 private:
-    void createItemGrid();
-    Rml::Element* createItemElement(uint8_t itemId);
-    void updateItemVisuals(uint8_t itemId);
-    
-    std::unordered_map<uint8_t, Rml::Element*> mItemElements;
-    Rml::Element* mProgressText = nullptr;
-    Rml::Element* mProgressBar = nullptr;
-    Rml::Element* mProgressFill = nullptr;
-    
-    int mTotalItems = 0;
-    int mCollectedItems = 0;
+    struct CardRefs {
+        Rml::Element* root = nullptr;
+        Rml::Element* icon = nullptr;
+    };
+
+    void build();
+    void rebuildSections();
+    void refreshSummary();
+    void refreshItem(uint8_t itemId);
+
+    CardRefs createCard(const ItemChecklist::ItemInfo& item, Rml::Element* parent);
+
+    Rml::Element* mStatusText = nullptr;
+    Rml::Element* mSummaryText = nullptr;
+    Rml::Element* mSummaryFill = nullptr;
+    Rml::Element* mSectionsRoot = nullptr;
+    std::unordered_map<uint8_t, CardRefs> mCards;
 };
 
-} // namespace dusk::ui
-
-#endif // DUSK_ITEM_CHECKLIST_DOCUMENT_H
+}  // namespace dusk::ui

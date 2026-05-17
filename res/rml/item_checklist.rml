@@ -1,40 +1,32 @@
-<window height="600" width="800" min-width="400" min-height="300" style="padding: 20px; overflow-y: auto;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h1 style="margin: 0;">Item Checklist</h1>
-    <button class="close-button" onmousedown="this.blur(); {window.Hide();}">
-      <icon class="material-symbols-rounded">close</icon>
-    </button>
-  </div>
-  
-  <tab-bar style="margin-bottom: 12px;">
-    <tab id="tab-all">All Items</tab>
-    <tab id="tab-overworld">Overworld</tab>
-    <tab id="tab-dungeons">Dungeons</tab>
-    <tab id="tab-upgrades">Upgrades</tab>
-    <tab id="tab-equipment">Equipment</tab>
-  </tab-bar>
-  
-  <div style="display: flex; height: 100%;">
-    <pane id="item-grid" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; overflow-y: auto;"></pane>
-    <pane id="item-details" style="width: 250px; margin-left: 12px; border-left: 1px solid #ccc; padding-left: 12px;" hidden>
-      <h2 id="detail-name" style="margin-top: 0;"></h2>
-      <p id="detail-desc"></p>
-      <div id="detail-acquire" style="margin-top: 12px;"></div>
-    </pane>
-  </div>
-  
-  <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
-    <div class="progress-container" style="flex: 1; max-width: 300px;">
-      <div class="progress-bar" style="height: 20px; border-radius: 10px; background-color: #e0e0e0; overflow: hidden;">
-        <div class="progress-fill" style="height: 100%; width: 0%; background-color: #4caf50;"></div>
-      </div>
-      <div style="text-align: center; margin-top: 4px; font-size: 14px;">
-        <span id="progress-text">0 / 0 (0%)</span>
-      </div>
+<rml>
+<head>
+    <link type="text/rcss" href="res/rcss/item_checklist.rcss" />
+</head>
+<body>
+    <div id="tracker-root" class="tracker-window">
+        <div class="tracker-shell">
+            <div class="tracker-header">
+                <div class="tracker-titleblock">
+                    <div class="tracker-kicker">Item tracker</div>
+                    <h1>Emotracker-style checklist</h1>
+                    <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
+                </div>
+                <button class="tracker-close" onmousedown="this.blur(); {dusk::ui::ItemChecklist::instance().hideChecklist();}">
+                    <icon class="material-symbols-rounded">close</icon>
+                </button>
+            </div>
+
+            <div class="tracker-summary-row">
+                <div class="tracker-summary-meta">
+                    <span id="tracker-summary">0 / 0 collected</span>
+                </div>
+                <div class="tracker-progress">
+                    <div id="tracker-summary-fill" class="tracker-progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="tracker-sections" class="tracker-sections"></div>
+        </div>
     </div>
-    
-    <button class="refresh-button" onmousedown="this.blur(); {ItemChecklist.refresh();}">
-      <icon class="material-symbols-rounded">refresh</icon>
-    </button>
-  </div>
-</window>
+</body>
+</rml>
