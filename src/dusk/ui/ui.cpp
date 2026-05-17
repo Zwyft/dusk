@@ -11,6 +11,8 @@
 #include <ranges>
 
 #include "aurora/lib/window.hpp"
+#include "dusk/dusk.h"
+#include "dusk/config.hpp"
 #include "dusk/io.hpp"
 #include "dusk/touch_controls.hpp"
 #include "input.hpp"
@@ -171,6 +173,18 @@ void handle_event(const SDL_Event& event) noexcept {
             });
         }
         sConnectedGamepads.erase(event.gdevice.which);
+    } else if (event.type == SDL_EVENT_WINDOW_MOVED || event.type == SDL_EVENT_WINDOW_RESIZED) {
+        int x, y;
+        if (SDL_GetWindowPosition(aurora::window::get_sdl_window(), &x, &y)) {
+            getSettings().video.windowPositionX.setValue(x);
+            getSettings().video.windowPositionY.setValue(y);
+        }
+        int width, height;
+        if (SDL_GetWindowSize(aurora::window::get_sdl_window(), &width, &height)) {
+            getSettings().video.windowWidth.setValue(width);
+            getSettings().video.windowHeight.setValue(height);
+        }
+        config::Save();
     }
     input::handle_event(event);
 }
