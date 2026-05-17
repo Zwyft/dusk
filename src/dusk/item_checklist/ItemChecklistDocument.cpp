@@ -11,54 +11,54 @@
 namespace dusk::ui {
 namespace {
 
-const Rml::String kDocumentSource = R"RML(
-<rml>
-<head>
-    <link type="text/rcss" href="res/rcss/item_checklist.rcss" />
-</head>
-<body>
-    <div id="tracker-root" class="tracker-window">
-        <div class="tracker-shell">
-            <div class="tracker-header">
-                <div class="tracker-titleblock">
-                    <div class="tracker-kicker">Item tracker</div>
-                    <h1>Emotracker-style checklist</h1>
-                    <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
-                </div>
-                <button id="tracker-close" class="tracker-close">
-                    <icon class="material-symbols-rounded">close</icon>
-                </button>
+const Rml::String kChecklistContent = R"RML(
+<div id="tracker-root" class="tracker-window">
+    <div class="tracker-shell">
+        <div class="tracker-header">
+            <div class="tracker-titleblock">
+                <div class="tracker-kicker">Item tracker</div>
+                <h1>Emotracker-style checklist</h1>
+                <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
             </div>
-
-            <div class="tracker-summary-row">
-                <div class="tracker-summary-meta">
-                    <span id="tracker-summary">0 / 0 collected</span>
-                </div>
-                <div class="tracker-progress">
-                    <div id="tracker-summary-fill" class="tracker-progress-fill"></div>
-                </div>
-            </div>
-
-            <div id="tracker-sections" class="tracker-sections"></div>
+            <button id="tracker-close" class="tracker-close">
+                <icon class="material-symbols-rounded">close</icon>
+            </button>
         </div>
+
+        <div class="tracker-summary-row">
+            <div class="tracker-summary-meta">
+                <span id="tracker-summary">0 / 0 collected</span>
+            </div>
+            <div class="tracker-progress">
+                <div id="tracker-summary-fill" class="tracker-progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="tracker-sections" class="tracker-sections"></div>
     </div>
-</body>
-</rml>
+</div>
 )RML";
 
 }  // namespace
 
-ItemChecklistDocument::ItemChecklistDocument() : Document(kDocumentSource) {
-    build();
+ItemChecklistDocument::ItemChecklistDocument() {
+    add_tab("Checklist", [this](Rml::Element* content) { build(content); });
 }
 
-void ItemChecklistDocument::build() {
-    mStatusText = mDocument->GetElementById("tracker-status");
-    mSummaryText = mDocument->GetElementById("tracker-summary");
-    mSummaryFill = mDocument->GetElementById("tracker-summary-fill");
-    mSectionsRoot = mDocument->GetElementById("tracker-sections");
-    listen(mDocument->GetElementById("tracker-close"), Rml::EventId::Click,
-        [this](Rml::Event&) { hide(false); });
+void ItemChecklistDocument::build(Rml::Element* content) {
+    if (content == nullptr) {
+        return;
+    }
+
+    content->SetInnerRML(kChecklistContent);
+    mStatusText = content->GetElementById("tracker-status");
+    mSummaryText = content->GetElementById("tracker-summary");
+    mSummaryFill = content->GetElementById("tracker-summary-fill");
+    mSectionsRoot = content->GetElementById("tracker-sections");
+
+    listen(content->GetElementById("tracker-close"), Rml::EventId::Click,
+        [this](Rml::Event&) { request_close(); });
+
     rebuildSections();
     refresh();
 }
@@ -172,8 +172,36 @@ void ItemChecklistDocument::refresh() {
 }
 
 void ItemChecklistDocument::update() {
-    Document::update();
-    ItemChecklist::instance().refresh();
+    if (visible()) {
+        ItemChecklist::instance().refresh();
+
+        const auto& items = ItemChecklist::instance().items();
+        const bool iconsReady = ItemChecklist::instance().iconsReady();
+        bool dirty = iconsReady != mIconsReadySnapshot ||
+                     items.size() != mCollectedSnapshot.size();
+        if (!dirty) {
+            for (size_t i = 0; i < items.size(); ++i) {
+                const bool collected = ItemChecklist::instance().isCollected(items[i].id);
+                if (mCollectedSnapshot[i] != static_cast<uint8_t>(collected)) {
+                    dirty = true;
+                    break;
+                }
+            }
+        }
+
+        if (dirty) {
+            mIconsReadySnapshot = iconsReady;
+            mCollectedSnapshot.clear();
+            mCollectedSnapshot.reserve(items.size());
+            for (const auto& item : items) {
+                mCollectedSnapshot.push_back(static_cast<uint8_t>(
+                    ItemChecklist::instance().isCollected(item.id)));
+            }
+            refresh();
+        }
+    }
+
+    Window::update();
 }
 
 }  // namespace dusk::ui
