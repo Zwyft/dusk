@@ -2,6 +2,7 @@
 
 #include "ItemChecklist.h"
 
+#include "dusk/ui/event.hpp"
 #include "dusk/ui/ui.hpp"
 
 #include <RmlUi/Core.h>
@@ -56,8 +57,11 @@ void ItemChecklistDocument::build(Rml::Element* content) {
     mSummaryFill = content->GetElementById("tracker-summary-fill");
     mSectionsRoot = content->GetElementById("tracker-sections");
 
-    listen(content->GetElementById("tracker-close"), Rml::EventId::Click,
-        [this](Rml::Event&) { request_close(); });
+    mCloseListener.reset();
+    if (auto* closeButton = content->GetElementById("tracker-close"); closeButton != nullptr) {
+        mCloseListener = std::make_unique<ScopedEventListener>(
+            closeButton, Rml::EventId::Click, [this](Rml::Event&) { request_close(); });
+    }
 
     rebuildSections();
     refresh();
@@ -94,7 +98,7 @@ void ItemChecklistDocument::rebuildSections() {
 ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     const ::ItemChecklist::ItemInfo& item, Rml::Element* parent) {
     CardRefs refs;
-    if (mDocument == nullptr || parent == nullptr) {
+    if (parent == nullptr) {
         return refs;
     }
 
@@ -108,10 +112,16 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     button->SetAttribute("title", item.name);
 
     auto* icon = append(button, "img");
+    if (icon == nullptr) {
+        return refs;
+    }
     icon->SetClass("tracker-card-icon", true);
     icon->SetAttribute("src", ItemChecklist::instance().iconPathFor(item.id));
 
     auto* label = append(button, "div");
+    if (label == nullptr) {
+        return refs;
+    }
     label->SetClass("tracker-card-label", true);
     label->SetInnerRML(escape(item.name));
 

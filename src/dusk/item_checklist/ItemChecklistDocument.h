@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <memory>
 #include <vector>
 
 namespace dusk::ui {
@@ -33,6 +34,7 @@ private:
     Rml::Element* mSummaryText = nullptr;
     Rml::Element* mSummaryFill = nullptr;
     Rml::Element* mSectionsRoot = nullptr;
+    std::unique_ptr<ScopedEventListener> mCloseListener;
     std::unordered_map<uint8_t, CardRefs> mCards;
     std::vector<uint8_t> mCollectedSnapshot;
     bool mIconsReadySnapshot = false;
