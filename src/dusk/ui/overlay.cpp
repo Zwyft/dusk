@@ -26,9 +26,6 @@ const Rml::String kDocumentSource = R"RML(
 </head>
 <body>
     <fps id="fps" />
-    <button class="checklist-button" onmousedown="this.blur(); {dusk::ui::ItemChecklist::instance().showChecklist();}">
-        <icon class="material-symbols-rounded">checklist</icon>
-    </button>
 </body>
 </rml>
 )RML";

@@ -8,6 +8,7 @@
 #include "achievements.hpp"
 #include "aurora/rmlui.hpp"
 #include "dusk/main.h"
+#include "dusk/item_checklist/ItemChecklistDocument.h"
 #include "dusk/settings.h"
 #include "editor.hpp"
 #include "f_pc/f_pc_manager.h"
@@ -57,6 +58,9 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     }
 
     mTabBar->add_tab("Achievements", [this] { push(std::make_unique<AchievementsWindow>()); });
+    mTabBar->add_tab("Checklist", [this] {
+        push(std::make_unique<ItemChecklistDocument>());
+    });
     mTabBar->add_tab("Reset", [this] {
         mTabBar->set_active_tab(-1);
         const auto dismiss = [](Modal& modal) { modal.pop(); };
