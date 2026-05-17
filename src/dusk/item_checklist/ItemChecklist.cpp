@@ -216,7 +216,7 @@ std::string ItemChecklist::iconPathFor(uint8_t itemId) const {
     if (const auto* item = getItemInfo(itemId); item != nullptr && !item->iconPath.empty()) {
         return item->iconPath;
     }
-    return "res/icon.png";
+    return {};
 }
 
 void ItemChecklist::loadItemDefinitions() {
@@ -232,7 +232,7 @@ void ItemChecklist::loadItemDefinitions() {
                 info.id = item.value("id", 0);
                 info.name = item.value("name", "");
                 info.category = item.value("category", "Other");
-                info.iconPath = item.value("iconPath", "");
+                info.iconPath.clear();
                 info.isQuestItem = item.value("isQuestItem", false);
                 mItemDefinitions.push_back(std::move(info));
             }
@@ -299,18 +299,12 @@ void ItemChecklist::rebuildIconCache() {
     for (auto& item : mItemDefinitions) {
         const int texIndex = dItem_data::getTexture(item.id);
         if (texIndex < 0) {
-            if (item.iconPath.empty()) {
-                item.iconPath = "res/icon.png";
-            }
             continue;
         }
 
         const auto* timg = static_cast<const ResTIMG*>(archive->getIdxResource(static_cast<u32>(texIndex)));
         const auto rgba = decode_timg(timg);
         if (rgba.empty()) {
-            if (item.iconPath.empty()) {
-                item.iconPath = "res/icon.png";
-            }
             continue;
         }
 
@@ -318,16 +312,12 @@ void ItemChecklist::rebuildIconCache() {
         if (write_bmp(iconPath, rgba, timg->width, timg->height)) {
             item.iconPath = to_rml_path(iconPath);
             wroteAnyIcon = true;
-        } else {
-            if (item.iconPath.empty()) {
-                item.iconPath = "res/icon.png";
-            }
         }
     }
 
     mIconsReady = true;
     if (!wroteAnyIcon) {
-        DuskLog.warn("ItemChecklist: disc icon cache rebuilt with fallbacks only");
+        DuskLog.warn("ItemChecklist: disc icon cache rebuild produced no icons");
     }
 }
 

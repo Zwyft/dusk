@@ -12,216 +12,6 @@
 namespace dusk::ui {
 namespace {
 
-const Rml::String kChecklistStyles = R"RCSS(
-.tracker-window {
-    position: absolute;
-    top: 24dp;
-    right: 24dp;
-    bottom: 24dp;
-    left: 24dp;
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    pointer-events: none;
-}
-
-.tracker-shell {
-    width: 100%;
-    max-width: 1320dp;
-    display: flex;
-    flex-direction: column;
-    gap: 16dp;
-    padding: 20dp 22dp 24dp;
-    border: 1dp solid rgba(255, 255, 255, 0.08);
-    border-radius: 22dp;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(28, 28, 28, 0.96));
-    box-shadow: 0 20dp 60dp rgba(0, 0, 0, 0.45);
-    pointer-events: auto;
-    overflow: hidden;
-}
-
-.tracker-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16dp;
-}
-
-.tracker-titleblock {
-    display: flex;
-    flex-direction: column;
-    gap: 6dp;
-}
-
-.tracker-kicker {
-    font-family: "Fira Sans Condensed";
-    font-size: 12dp;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #8ea6c0;
-}
-
-.tracker-titleblock h1 {
-    margin: 0;
-    font-family: "AlegreyaSC";
-    font-size: 30dp;
-    font-weight: bold;
-    color: #f1efe7;
-}
-
-.tracker-status {
-    font-size: 14dp;
-    color: #a29b8b;
-}
-
-.tracker-close {
-    width: 38dp;
-    height: 38dp;
-    padding: 0;
-    border: 0;
-    border-radius: 10dp;
-    background: rgba(255, 255, 255, 0.06);
-    color: #f1efe7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tracker-close:hover {
-    background: rgba(255, 255, 255, 0.11);
-}
-
-.tracker-summary-row {
-    display: flex;
-    flex-direction: column;
-    gap: 10dp;
-    padding: 14dp 16dp;
-    border-radius: 18dp;
-    background: rgba(255, 255, 255, 0.035);
-}
-
-.tracker-summary-meta {
-    display: flex;
-    align-items: center;
-    gap: 12dp;
-    font-family: "Fira Sans Condensed";
-    font-size: 15dp;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.tracker-progress {
-    height: 6dp;
-    border-radius: 999dp;
-    background: rgba(255, 255, 255, 0.08);
-    overflow: hidden;
-}
-
-.tracker-progress-fill {
-    width: 0%;
-    height: 100%;
-    border-radius: 999dp;
-    background: linear-gradient(90deg, #7bd66b, #cbe56c);
-    box-shadow: 0 0 14dp rgba(138, 220, 105, 0.45);
-}
-
-.tracker-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 18dp;
-    overflow-y: auto;
-    padding-right: 6dp;
-}
-
-.tracker-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10dp;
-}
-
-.tracker-section-title {
-    display: flex;
-    align-items: center;
-    gap: 10dp;
-    font-family: "Fira Sans Condensed";
-    font-size: 17dp;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #ede7d2;
-    letter-spacing: 0.08em;
-}
-
-.tracker-section-title::after {
-    content: "";
-    flex: 1 1 auto;
-    height: 1dp;
-    background: linear-gradient(90deg, rgba(237, 231, 210, 0.45), rgba(237, 231, 210, 0));
-}
-
-.tracker-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(58dp, 58dp));
-    gap: 12dp;
-}
-
-.tracker-card {
-    width: 58dp;
-    height: 70dp;
-    padding: 6dp 4dp 4dp;
-    border: 1dp solid rgba(255, 255, 255, 0.06);
-    border-radius: 14dp;
-    background: rgba(255, 255, 255, 0.035);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 4dp;
-    transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease,
-        opacity 0.12s ease, filter 0.12s ease;
-}
-
-.tracker-card:hover {
-    transform: translateY(-2dp);
-    border-color: rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.tracker-card.locked {
-    opacity: 0.32;
-}
-
-.tracker-card.locked .tracker-card-icon {
-    filter: grayscale(100%) brightness(0.55) contrast(0.9);
-    opacity: 0.75;
-}
-
-.tracker-card.owned {
-    opacity: 1;
-}
-
-.tracker-card.owned .tracker-card-icon {
-    filter: none;
-    opacity: 1;
-}
-
-.tracker-card-icon {
-    width: 42dp;
-    height: 42dp;
-    image-rendering: auto;
-}
-
-.tracker-card-label {
-    display: none;
-}
-
-icon {
-    font-family: "MaterialSymbolsRounded";
-    font-weight: normal;
-    display: inline-block;
-    vertical-align: middle;
-}
-)RCSS";
-
 const Rml::String kChecklistContent = R"RML(
 <div id="tracker-root" class="tracker-window">
     <div class="tracker-shell">
@@ -261,8 +51,7 @@ void ItemChecklistDocument::build(Rml::Element* content) {
         return;
     }
 
-    content->SetInnerRML(R"RML(<style>)RML" + kChecklistStyles + R"RML(</style>)RML" +
-                         kChecklistContent);
+    content->SetInnerRML(kChecklistContent);
     mStatusText = content->GetElementById("tracker-status");
     mSummaryText = content->GetElementById("tracker-summary");
     mSummaryFill = content->GetElementById("tracker-summary-fill");
@@ -327,7 +116,10 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
         return refs;
     }
     icon->SetClass("tracker-card-icon", true);
-    icon->SetAttribute("src", ItemChecklist::instance().iconPathFor(item.id));
+    const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
+    if (!iconPath.empty()) {
+        icon->SetAttribute("src", iconPath);
+    }
 
     auto* label = append(button, "div");
     if (label == nullptr) {
@@ -356,7 +148,12 @@ void ItemChecklistDocument::refreshItem(uint8_t itemId) {
         "title", fmt::format("{} - {}", item->name, collected ? "Unlocked" : "Locked"));
 
     if (it->second.icon != nullptr) {
-        it->second.icon->SetAttribute("src", ItemChecklist::instance().iconPathFor(itemId));
+        const auto iconPath = ItemChecklist::instance().iconPathFor(itemId);
+        if (iconPath.empty()) {
+            it->second.icon->RemoveAttribute("src");
+        } else {
+            it->second.icon->SetAttribute("src", iconPath);
+        }
     }
 }
 

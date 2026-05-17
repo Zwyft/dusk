@@ -2,287 +2,246 @@
     {
         "id": 0,
         "name": "Hero's Clothes",
-        "iconPath": "items/heroes_clothes.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 1,
         "name": "Ordon Sword",
-        "iconPath": "items/ordon_sword.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 2,
         "name": "Ordon Shield",
-        "iconPath": "items/ordon_shield.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 3,
         "name": "Wooden Sword",
-        "iconPath": "items/wooden_sword.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 4,
         "name": "Master Sword",
-        "iconPath": "items/master_sword.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 5,
         "name": "Hylian Shield",
-        "iconPath": "items/hylian_shield.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 6,
         "name": "Green Tunic",
-        "iconPath": "items/green_tunic.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 7,
         "name": "Zora Tunic",
-        "iconPath": "items/zora_tunic.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 8,
         "name": "Goron Tunic",
-        "iconPath": "items/goron_tunic.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 9,
         "name": "Magic Armor",
-        "iconPath": "items/magic_armor.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 10,
         "name": "Hero's Bow",
-        "iconPath": "items/heros_bow.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 11,
         "name": "Bomb Arrow",
-        "iconPath": "items/bomb_arrow.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 12,
         "name": "Hawkeye",
-        "iconPath": "items/hawkeye.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 13,
         "name": "Gale Boomerang",
-        "iconPath": "items/gale_boomerang.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 14,
         "name": "Slingshot",
-        "iconPath": "items/slingshot.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 15,
         "name": "Ball and Chain",
-        "iconPath": "items/ball_and_chain.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 16,
         "name": "Master Sword",
-        "iconPath": "items/master_sword.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 17,
         "name": "Light Sword",
-        "iconPath": "items/light_sword.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 18,
         "name": "Wooden Shield",
-        "iconPath": "items/wooden_shield.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 19,
         "name": "Hylian Shield",
-        "iconPath": "items/hylian_shield.png",
         "category": "Combat",
         "isQuestItem": false
     },
     {
         "id": 20,
         "name": "Lantern",
-        "iconPath": "items/lantern.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 21,
         "name": "Bottle",
-        "iconPath": "items/bottle.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 22,
         "name": "Empty Bottle",
-        "iconPath": "items/empty_bottle.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 23,
         "name": "Ooccoo",
-        "iconPath": "items/ooccoo.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 24,
         "name": "Dungeon Map",
-        "iconPath": "items/dungeon_map.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 25,
         "name": "Compass",
-        "iconPath": "items/compass.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 26,
         "name": "Big Key",
-        "iconPath": "items/big_key.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 27,
         "name": "Small Key",
-        "iconPath": "items/small_key.png",
         "category": "Exploration",
         "isQuestItem": false
     },
     {
         "id": 28,
         "name": "Heart Container",
-        "iconPath": "items/heart_container.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 29,
         "name": "Piece of Heart",
-        "iconPath": "items/heart_piece.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 30,
         "name": "Rupee",
-        "iconPath": "items/rupee.png",
         "category": "Quest",
         "isQuestItem": false
     },
     {
         "id": 31,
         "name": "Poe Soul",
-        "iconPath": "items/poe_soul.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 32,
         "name": "Golden Bug",
-        "iconPath": "items/golden_bug.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 33,
         "name": "Letter",
-        "iconPath": "items/letter.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 34,
         "name": "Mirror Shard",
-        "iconPath": "items/mirror_shard.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 35,
         "name": "Sky Book",
-        "iconPath": "items/sky_book.png",
         "category": "Quest",
         "isQuestItem": true
     },
     {
         "id": 36,
         "name": "Dominion Rod",
-        "iconPath": "items/dominion_rod.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 37,
         "name": "Spinner",
-        "iconPath": "items/spinner.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 38,
         "name": "Iron Boots",
-        "iconPath": "items/iron_boots.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 39,
         "name": "Hover Boots",
-        "iconPath": "items/hover_boots.png",
         "category": "Equipment",
         "isQuestItem": false
     },
     {
         "id": 40,
         "name": "Hero's Charm",
-        "iconPath": "items/heros_charm.png",
         "category": "Equipment",
         "isQuestItem": false
     }
