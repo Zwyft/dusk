@@ -24,7 +24,7 @@ env:
 jobs:
   build-linux:
     name: Build Linux (${{matrix.name}})
-    runs-on: ${{matrix.runner}}
+    runs-on: codeberg-tiny
 
     strategy:
       fail-fast: false
