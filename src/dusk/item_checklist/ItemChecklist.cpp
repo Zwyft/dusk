@@ -255,7 +255,7 @@ void ItemChecklist::loadItemDefinitions() {
     mItemDefinitions.clear();
     mItemMap.clear();
 
-    if (std::ifstream file(std::filesystem::path(kItemDefinitionsFile)); file.is_open()) {
+    if (std::ifstream file{std::filesystem::path(kItemDefinitionsFile)}; file.is_open()) {
         try {
             json root;
             file >> root;
