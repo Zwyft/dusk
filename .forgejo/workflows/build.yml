@@ -214,7 +214,7 @@ jobs:
 
   build-android:
     name: Build Android (arm64-v8a)
-    runs-on: ubuntu-24.04
+    runs-on: windows-latest
     env:
       ANDROID_NDK_VERSION: 29.0.14206865
       RUSTC_WRAPPER:
