@@ -31,7 +31,7 @@ const Rml::String kDocumentSource = R"RML(
     </button>
 </body>
 </rml>
-)RML;
+)RML";
 
 constexpr std::array<std::pair<const char*, const char*>, 3> kAutoSaveLayers{{
     {"inner", "res/org-icon-inner.png"},
