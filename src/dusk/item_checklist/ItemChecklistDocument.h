@@ -1,14 +1,15 @@
 #pragma once
 
 #include "ItemChecklist.h"
-#include "dusk/ui/document.hpp"
+#include "window.hpp"
 
 #include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 namespace dusk::ui {
 
-class ItemChecklistDocument : public Document {
+class ItemChecklistDocument : public Window {
 public:
     ItemChecklistDocument();
 
@@ -21,7 +22,7 @@ private:
         Rml::Element* icon = nullptr;
     };
 
-    void build();
+    void build(Rml::Element* content);
     void rebuildSections();
     void refreshSummary();
     void refreshItem(uint8_t itemId);
@@ -33,6 +34,8 @@ private:
     Rml::Element* mSummaryFill = nullptr;
     Rml::Element* mSectionsRoot = nullptr;
     std::unordered_map<uint8_t, CardRefs> mCards;
+    std::vector<uint8_t> mCollectedSnapshot;
+    bool mIconsReadySnapshot = false;
 };
 
 }  // namespace dusk::ui
