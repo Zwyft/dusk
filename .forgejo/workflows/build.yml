@@ -69,7 +69,7 @@ jobs:
             sccache-linux-
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Configure CMake
         run: cmake --preset x-linux-ci-${{matrix.preset}}
@@ -134,7 +134,7 @@ jobs:
             sccache-macos-
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Configure CMake
         run: cmake --preset ${{matrix.preset}}
@@ -191,7 +191,7 @@ jobs:
             sccache-windows-
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        run: cargo install sccache --locked
 
       - name: Install dependencies
         run: vcpkg install freetype:${{matrix.vcpkg_arch}}-windows-static zstd:${{matrix.vcpkg_arch}}-windows-static
