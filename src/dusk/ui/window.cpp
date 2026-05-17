@@ -29,7 +29,6 @@ const Rml::String kDocumentSource = R"RML(
 <head>
     <link type="text/rcss" href="res/rml/tabbing.rcss" />
     <link type="text/rcss" href="res/rml/window.rcss" />
-    <link type="text/rcss" href="res/rcss/item_checklist.rcss" />
 </head>
 <body>
     <window id="window"></window>
@@ -41,7 +40,6 @@ const Rml::String kDocumentSourceSmall = R"RML(
 <rml>
 <head>
     <link type="text/rcss" href="res/rml/window.rcss" />
-    <link type="text/rcss" href="res/rcss/item_checklist.rcss" />
 </head>
 <body>
     <window id="window" class="small">
