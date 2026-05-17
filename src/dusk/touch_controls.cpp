@@ -482,6 +482,35 @@ static ImU32 with_opacity(ImU32 col) {
     return ImGui::ColorConvertFloat4ToU32(c);
 }
 
+static void draw_glossy_disc(ImDrawList* dl, ImVec2 center, float radius, ImU32 fill, ImU32 border,
+                             bool pressed) {
+    float shadowOffset = radius * (pressed ? 0.05f : 0.08f);
+    float shadowRadius = radius * (pressed ? 1.00f : 1.05f);
+    float highlightRadius = radius * (pressed ? 0.48f : 0.58f);
+    float specularRadius = radius * (pressed ? 0.24f : 0.30f);
+
+    dl->AddCircleFilled({center.x + shadowOffset, center.y + shadowOffset}, shadowRadius,
+                        with_opacity(IM_COL32(0, 0, 0, pressed ? 36 : 52)), 48);
+    dl->AddCircleFilled(center, radius, fill, 48);
+    dl->AddCircleFilled({center.x - radius * 0.26f, center.y - radius * 0.30f}, highlightRadius,
+                        with_opacity(IM_COL32(255, 255, 255, pressed ? 28 : 54)), 32);
+    dl->AddCircleFilled({center.x - radius * 0.10f, center.y - radius * 0.16f}, specularRadius,
+                        with_opacity(IM_COL32(255, 255, 255, pressed ? 12 : 24)), 24);
+    dl->AddCircleFilled({center.x + radius * 0.22f, center.y + radius * 0.24f}, radius * 0.58f,
+                        with_opacity(IM_COL32(0, 0, 0, pressed ? 22 : 36)), 32);
+    dl->AddCircle(center, radius, border, 0, 2.f);
+    dl->AddCircle({center.x, center.y}, radius * 0.72f, with_opacity(IM_COL32(255, 255, 255, 16)), 0,
+                  1.0f);
+}
+
+static void draw_glossy_image_disc(ImDrawList* dl, ImVec2 center, float radius, ImTextureID texture,
+                                   ImU32 border, bool pressed) {
+    ImVec2 p1 = {center.x - radius, center.y - radius};
+    ImVec2 p2 = {center.x + radius, center.y + radius};
+    dl->AddImage(texture, p1, p2);
+    draw_glossy_disc(dl, center, radius, IM_COL32(0, 0, 0, 0), border, pressed);
+}
+
 
 // ---------------------------------------------------------------------------
 // Game button texture loading + ImGui-drawn glossy fallback
@@ -699,16 +728,16 @@ static void draw_controls() {
 
         // Use game texture for A/B/X/Y if loaded
         if (s_texturesLoaded && i <= CTRL_BTN_Y && s_btnTex[i]) {
-            ImVec2 p1 = {cx - r, cy - r};
-            ImVec2 p2 = {cx + r, cy + r};
-            dl->AddImage(s_btnTex[i], p1, p2);
-            if (g_customizeMode)
-                dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
+            draw_glossy_image_disc(dl, {cx, cy}, r, s_btnTex[i], borderCol, pressed);
+            if (g_customizeMode) {
+                dl->AddCircle({cx, cy}, r, borderCol, 0, 2.5f);
+            }
         } else {
-            dl->AddCircleFilled({cx, cy}, r, fill);
-            dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
+            draw_glossy_disc(dl, {cx, cy}, r, fill, borderCol, pressed);
             if (kDefs[i].label) {
                 ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
+                ImVec2 shadowPos = {cx - ts.x * 0.5f + 1.0f, cy - ts.y * 0.5f + 1.0f};
+                dl->AddText(shadowPos, with_opacity(IM_COL32(0, 0, 0, 180)), kDefs[i].label);
                 dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
                             with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
             }
@@ -771,6 +800,8 @@ static void draw_controls() {
         dl->AddCircle({cx, cy}, outerR, borderCol, 0, 2.f);
         dl->AddCircleFilled({tx, ty}, thumbR, thumb);
         dl->AddCircle({tx, ty}, thumbR, borderCol, 0, 1.5f);
+        dl->AddCircleFilled({cx - outerR * 0.24f, cy - outerR * 0.28f}, outerR * 0.48f,
+                            with_opacity(IM_COL32(255, 255, 255, 36)), 32);
     }
 
     // --- "C" label on C-stick (hidden when floating camera enabled) ---
@@ -815,6 +846,14 @@ static void draw_ui_buttons() {
                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
                  ImGuiWindowFlags_NoNav);
 
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, btnH * 0.45f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, 0.16f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.22f, 0.24f, 0.92f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.32f, 0.32f, 0.36f, 0.95f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.16f, 0.16f, 0.18f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.94f));
+
     if (enabled) {
         if (g_customizeMode) {
             if (ImGui::Button("Done##tc", {editW, btnH})) {
@@ -848,6 +887,8 @@ static void draw_ui_buttons() {
         }
     }
 
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(2);
     ImGui::End();
 }
 
