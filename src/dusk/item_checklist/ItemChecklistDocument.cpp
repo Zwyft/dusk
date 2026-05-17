@@ -13,7 +13,6 @@ namespace dusk::ui {
 namespace {
 
 const Rml::String kChecklistContent = R"RML(
-<link type="text/rcss" href="res/rcss/item_checklist.rcss" />
 <div id="tracker-root" class="tracker-window">
     <div class="tracker-shell">
         <div class="tracker-header">
