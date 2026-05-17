@@ -6,6 +6,7 @@
 #include "dusk/ui/ui.hpp"
 
 #include <RmlUi/Core.h>
+#include <SDL3/SDL_timer.h>
 
 #include "fmt/format.h"
 
@@ -63,6 +64,7 @@ void ItemChecklistDocument::build(Rml::Element* content) {
             closeButton, Rml::EventId::Click, [this](Rml::Event&) { request_close(); });
     }
 
+    mLastRefreshTick = 0;
     rebuildSections();
     refresh();
 }
@@ -191,31 +193,36 @@ void ItemChecklistDocument::refresh() {
 
 void ItemChecklistDocument::update() {
     if (visible()) {
-        ItemChecklist::instance().refresh();
+        constexpr Uint64 kRefreshIntervalNs = 250'000'000ULL;
+        const Uint64 now = SDL_GetTicksNS();
+        if (mLastRefreshTick == 0 || now - mLastRefreshTick >= kRefreshIntervalNs) {
+            mLastRefreshTick = now;
+            ItemChecklist::instance().refresh();
 
-        const auto& items = ItemChecklist::instance().items();
-        const bool iconsReady = ItemChecklist::instance().iconsReady();
-        bool dirty = iconsReady != mIconsReadySnapshot ||
-                     items.size() != mCollectedSnapshot.size();
-        if (!dirty) {
-            for (size_t i = 0; i < items.size(); ++i) {
-                const bool collected = ItemChecklist::instance().isCollected(items[i].id);
-                if (mCollectedSnapshot[i] != static_cast<uint8_t>(collected)) {
-                    dirty = true;
-                    break;
+            const auto& items = ItemChecklist::instance().items();
+            const bool iconsReady = ItemChecklist::instance().iconsReady();
+            bool dirty = iconsReady != mIconsReadySnapshot ||
+                         items.size() != mCollectedSnapshot.size();
+            if (!dirty) {
+                for (size_t i = 0; i < items.size(); ++i) {
+                    const bool collected = ItemChecklist::instance().isCollected(items[i].id);
+                    if (mCollectedSnapshot[i] != static_cast<uint8_t>(collected)) {
+                        dirty = true;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (dirty) {
-            mIconsReadySnapshot = iconsReady;
-            mCollectedSnapshot.clear();
-            mCollectedSnapshot.reserve(items.size());
-            for (const auto& item : items) {
-                mCollectedSnapshot.push_back(static_cast<uint8_t>(
-                    ItemChecklist::instance().isCollected(item.id)));
+            if (dirty) {
+                mIconsReadySnapshot = iconsReady;
+                mCollectedSnapshot.clear();
+                mCollectedSnapshot.reserve(items.size());
+                for (const auto& item : items) {
+                    mCollectedSnapshot.push_back(static_cast<uint8_t>(
+                        ItemChecklist::instance().isCollected(item.id)));
+                }
+                refresh();
             }
-            refresh();
         }
     }
 

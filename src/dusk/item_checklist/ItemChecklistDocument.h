@@ -39,6 +39,7 @@ private:
     std::unordered_map<uint8_t, CardRefs> mCards;
     std::vector<uint8_t> mCollectedSnapshot;
     bool mIconsReadySnapshot = false;
+    Uint64 mLastRefreshTick = 0;
 };
 
 }  // namespace dusk::ui
