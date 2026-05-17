@@ -187,14 +187,23 @@ if (DUSK_MOVIE_SUPPORT)
     endif ()
 endif ()
 
+if (NOT MSVC)
+    # These suppressions are required across Clang/GCC-based toolchains.
+    # The codebase intentionally uses these patterns in generated data and
+    # legacy decompilation artifacts, so we keep the build output focused on
+    # actionable diagnostics.
+    add_compile_options(
+        -Wno-multichar
+        -Wno-write-strings
+        -Wno-writable-strings
+        -Wno-trigraphs
+        -Wno-deprecated-declarations
+        -Wno-invalid-offsetof
+        -Wno-inconsistent-missing-override
+    )
+endif ()
+
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
-    # -Wno-multichar: Multi-character constants ('ABCD') are implementation-defined but all compilers
-    #   (CW, GCC, Clang, MSVC) encode them identically in big-endian order.
-    #   For >4-char literals (which GCC/Clang truncate to int), use the MULTI_CHAR() macro.
-    # -Wwrite-strings: Game code relies on implicit const char* -> char* conversions
-    # -Wdeprecated-declarations: JSystem uses std::iterator, deprecated in C++17
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-multichar -Wno-write-strings")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-multichar -Wno-write-strings -Wno-trigraphs -Wno-deprecated-declarations")
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
     set(CMAKE_BUILD_RPATH "$ORIGIN")
 elseif (APPLE)
