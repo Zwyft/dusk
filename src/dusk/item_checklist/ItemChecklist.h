@@ -7,10 +7,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace dusk::ui {
-class ItemChecklistDocument;
-}
-
 class ItemChecklist {
 public:
     struct ItemInfo {
@@ -30,10 +26,6 @@ public:
     void setCollected(uint8_t itemId, bool collected);
     void toggleCollected(uint8_t itemId);
 
-    void showChecklist();
-    void hideChecklist();
-    bool isVisible() const;
-
     void onItemCollected(uint8_t itemId);
     void refresh();
 
@@ -50,7 +42,6 @@ private:
     ~ItemChecklist() = default;
 
     void loadItemDefinitions();
-    void createDocument();
     void save();
     void load();
 
@@ -64,9 +55,7 @@ private:
     std::vector<ItemInfo> mItemDefinitions;
     std::unordered_map<uint8_t, size_t> mItemMap;
 
-    std::unique_ptr<dusk::ui::ItemChecklistDocument> mDocument;
     std::filesystem::path mIconCacheDir;
-    bool mVisible = false;
     bool mInitialized = false;
     bool mIconsReady = false;
 };
