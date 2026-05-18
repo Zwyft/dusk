@@ -70,7 +70,7 @@ jobs:
         run: ci/build-appimage.sh
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: dusk-${{env.DUSK_VERSION}}-linux-gcc-x86_64
           path: |
@@ -112,7 +112,7 @@ jobs:
         run: cmake --build --preset x-macos-ci-arm64
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: dusk-${{env.DUSK_VERSION}}-macos-appleclang-arm64
           path: |
@@ -153,7 +153,7 @@ jobs:
         run: cmake --build --preset x-windows-ci-msvc
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: dusk-${{env.DUSK_VERSION}}-win32-msvc-x86_64
           path: |
@@ -212,7 +212,7 @@ jobs:
           ./gradlew :app:assembleDebug
 
       - name: Upload APK artifacts
-        uses: actions/upload-artifact@v7
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: dusk-${{env.DUSK_VERSION}}-android
           path: platforms/android/app/build/outputs/apk/debug/*.apk
@@ -225,16 +225,84 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: https://code.forgejo.org/forgejo/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ forgejo.ref_name }}
-          name: Dusk ${{ forgejo.ref_name }}
-          draft: true
-          generate_release_notes: true
-          files: |
-            artifacts/**/*
+      - name: Create Forgejo release
+        env:
+          FORGEJO_API_URL: ${{ forgejo.api_url }}
+          FORGEJO_REPOSITORY: ${{ forgejo.repository }}
+          FORGEJO_REF_NAME: ${{ forgejo.ref_name }}
+          FORGEJO_TOKEN: ${{ forgejo.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.parse
+          import urllib.request
+
+          api_url = os.environ["FORGEJO_API_URL"].rstrip("/")
+          repository = os.environ["FORGEJO_REPOSITORY"]
+          ref_name = os.environ["FORGEJO_REF_NAME"]
+          token = os.environ["FORGEJO_TOKEN"]
+
+          headers = {
+              "Authorization": f"token {token}",
+              "Accept": "application/json",
+          }
+
+          release_payload = json.dumps({
+              "tag_name": ref_name,
+              "name": f"Dusk {ref_name}",
+              "draft": True,
+              "prerelease": False,
+          }).encode()
+
+          release_request = urllib.request.Request(
+              f"{api_url}/repos/{repository}/releases",
+              data=release_payload,
+              headers={**headers, "Content-Type": "application/json"},
+              method="POST",
+          )
+
+          try:
+              with urllib.request.urlopen(release_request) as response:
+                  release = json.load(response)
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode()
+              if exc.code != 409:
+                  raise RuntimeError(f"Release creation failed: {exc.code} {body}") from exc
+
+              with urllib.request.urlopen(
+                  urllib.request.Request(
+                      f"{api_url}/repos/{repository}/releases/tags/{urllib.parse.quote(ref_name)}",
+                      headers=headers,
+                  )
+              ) as response:
+                  release = json.load(response)
+
+          release_id = release["id"]
+          artifacts_root = pathlib.Path("artifacts")
+          files = [path for path in artifacts_root.rglob("*") if path.is_file()]
+          for file_path in files:
+              asset_name = file_path.name
+              upload_url = (
+                  f"{api_url}/repos/{repository}/releases/{release_id}/assets"
+                  f"?name={urllib.parse.quote(asset_name)}"
+              )
+              with file_path.open("rb") as handle:
+                  upload_request = urllib.request.Request(
+                      upload_url,
+                      data=handle.read(),
+                      headers={**headers, "Content-Type": "application/octet-stream"},
+                      method="POST",
+                  )
+              try:
+                  with urllib.request.urlopen(upload_request):
+                      pass
+              except urllib.error.HTTPError as exc:
+                  body = exc.read().decode()
+                  raise RuntimeError(f"Asset upload failed for {asset_name}: {exc.code} {body}") from exc
+          PY
