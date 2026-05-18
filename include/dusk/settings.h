@@ -1,6 +1,8 @@
 #ifndef DUSK_CONFIG_H
 #define DUSK_CONFIG_H
 
+#include <array>
+
 #include "dusk/config_var.hpp"
 
 namespace dusk {
@@ -11,6 +13,11 @@ enum class BloomMode : int {
     Off = 0,
     Classic = 1,
     Dusk = 2,
+};
+
+enum class Resampler : int {
+    Bilinear = 0,
+    Area = 1,
 };
 
 enum class GameLanguage : u8 {
@@ -56,6 +63,12 @@ template <>
 struct ConfigEnumRange<BloomMode> {
     static constexpr auto min = BloomMode::Off;
     static constexpr auto max = BloomMode::Dusk;
+};
+
+template <>
+struct ConfigEnumRange<Resampler> {
+    static constexpr auto min = Resampler::Bilinear;
+    static constexpr auto max = Resampler::Area;
 };
 
 template <>
@@ -154,11 +167,14 @@ struct UserSettings {
         ConfigVar<BloomMode> bloomMode;
         ConfigVar<float> bloomMultiplier;
         ConfigVar<bool> disableWaterRefraction;
+        ConfigVar<bool> enableTextureReplacements;
         ConfigVar<bool> enableFrameInterpolation;
         ConfigVar<int> internalResolutionScale;
         ConfigVar<int> shadowResolutionMultiplier;
+        ConfigVar<Resampler> resampler;
         ConfigVar<bool> enableDepthOfField;
         ConfigVar<bool> enableMapBackground;
+        ConfigVar<bool> disableCutscenePillarboxing;
 
         // Audio
         ConfigVar<bool> noLowHpSound;
@@ -220,11 +236,15 @@ struct UserSettings {
 
         // Controls
         ConfigVar<bool> enableTurboKeybind;
+        ConfigVar<bool> enableResetKeybind;
 
         // Tools
         ConfigVar<bool> speedrunMode;
         ConfigVar<bool> liveSplitEnabled;
+        ConfigVar<bool> showSpeedrunRTATimer;
         ConfigVar<bool> recordingMode;
+        ConfigVar<bool> showInputViewer;
+        ConfigVar<bool> showInputViewerGyro;
         ConfigVar<bool> enableSaveStates;
         ConfigVar<bool> removeQuestMapMarkers;
     } game;

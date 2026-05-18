@@ -256,8 +256,8 @@ jobs:
           release_payload = json.dumps({
               "tag_name": ref_name,
               "name": f"Dusk {ref_name}",
-              "draft": True,
-              "prerelease": False,
+              "draft": False,
+              "prerelease": "-" in ref_name,
           }).encode()
 
           release_request = urllib.request.Request(

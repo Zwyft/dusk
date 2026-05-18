@@ -253,8 +253,8 @@ int dMeter2_c::_create() {
 int dMeter2_c::_execute() {
     JKRHeap* heap = mDoExt_setCurrentHeap(mpHeap);
 
-    if (dusk::getSettings().game.ingameHudMode != dusk::IngameHudMode::On) {
-        dusk::IngameHudMode hudMode = dusk::getSettings().game.ingameHudMode;
+    if (dusk::getSettings().game.ingameHudMode.getValue() != dusk::IngameHudMode::On) {
+        dusk::IngameHudMode hudMode = dusk::getSettings().game.ingameHudMode.getValue();
         if (!(static_cast<int>(hudMode) & static_cast<int>(dusk::IngameHudMode::Health))){
             g_drawHIO.mLifeGaugePosX = 1E5;
         }

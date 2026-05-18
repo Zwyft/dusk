@@ -7,6 +7,7 @@
 #include "dusk/audio/DuskDsp.hpp"
 #include "dusk/config.hpp"
 #include "dusk/file_select.hpp"
+#include "dusk/hotkeys.h"
 #include "dusk/imgui/ImGuiEngine.hpp"
 #include "dusk/io.hpp"
 #include "dusk/livesplit.h"
@@ -155,8 +156,8 @@ std::vector<AuroraBackend> available_backends() {
     size_t backendCount = 0;
     const AuroraBackend* raw = aurora_get_available_backends(&backendCount);
     for (size_t i = 0; i < backendCount; ++i) {
-        // Do not expose NULL or D3D11
-        if (raw[i] != BACKEND_NULL && raw[i] != BACKEND_D3D11) {
+        // Do not expose NULL
+        if (raw[i] != BACKEND_NULL) {
             backends.emplace_back(raw[i]);
         }
     }
@@ -175,29 +176,44 @@ AuroraBackend configured_backend() {
 void reset_for_speedrun_mode() {
     mDoMain::developmentMode = -1;
 
-    getSettings().game.damageMultiplier.setValue(1);
-    getSettings().game.instantDeath.setValue(false);
-    getSettings().game.noHeartDrops.setValue(false);
+    getSettings().game.enableTurboKeybind.setSpeedrunValue(false);
+    getSettings().game.enableResetKeybind.setSpeedrunValue(false);
 
-    getSettings().game.infiniteHearts.setValue(false);
-    getSettings().game.infiniteArrows.setValue(false);
-    getSettings().game.infiniteBombs.setValue(false);
-    getSettings().game.infiniteOil.setValue(false);
-    getSettings().game.infiniteOxygen.setValue(false);
-    getSettings().game.infiniteRupees.setValue(false);
-    getSettings().game.enableIndefiniteItemDrops.setValue(false);
+    getSettings().game.damageMultiplier.setSpeedrunValue(1);
+    getSettings().game.instantDeath.setSpeedrunValue(false);
+    getSettings().game.noHeartDrops.setSpeedrunValue(false);
+    getSettings().game.autoSave.setSpeedrunValue(false);
+    getSettings().game.sunsSong.setSpeedrunValue(false);
 
-    getSettings().game.moonJump.setValue(false);
-    getSettings().game.superClawshot.setValue(false);
-    getSettings().game.alwaysGreatspin.setValue(false);
-    getSettings().game.enableFastIronBoots.setValue(false);
-    getSettings().game.canTransformAnywhere.setValue(false);
-    getSettings().game.fastSpinner.setValue(false);
-    getSettings().game.freeMagicArmor.setValue(false);
+    getSettings().game.infiniteHearts.setSpeedrunValue(false);
+    getSettings().game.infiniteArrows.setSpeedrunValue(false);
+    getSettings().game.infiniteSeeds.setSpeedrunValue(false);
+    getSettings().game.infiniteBombs.setSpeedrunValue(false);
+    getSettings().game.infiniteOil.setSpeedrunValue(false);
+    getSettings().game.infiniteOxygen.setSpeedrunValue(false);
+    getSettings().game.infiniteRupees.setSpeedrunValue(false);
+    getSettings().game.enableIndefiniteItemDrops.setSpeedrunValue(false);
 
-    getSettings().game.enableTurboKeybind.setValue(false);
-    getSettings().game.debugFlyCam.setValue(false);
-    getSettings().game.autoSave.setValue(false);
+    getSettings().game.moonJump.setSpeedrunValue(false);
+    getSettings().game.superClawshot.setSpeedrunValue(false);
+    getSettings().game.alwaysGreatspin.setSpeedrunValue(false);
+    getSettings().game.enableFastIronBoots.setSpeedrunValue(false);
+    getSettings().game.canTransformAnywhere.setSpeedrunValue(false);
+    getSettings().game.fastRoll.setSpeedrunValue(false);
+    getSettings().game.fastSpinner.setSpeedrunValue(false);
+    getSettings().game.freeMagicArmor.setSpeedrunValue(false);
+    getSettings().game.invincibleEnemies.setSpeedrunValue(false);
+
+    getSettings().game.pauseOnFocusLost.setSpeedrunValue(false);
+    aurora_set_pause_on_focus_lost(false);
+    getSettings().backend.enableAdvancedSettings.setSpeedrunValue(false);
+    getSettings().game.recordingMode.setSpeedrunValue(false);
+    getSettings().game.debugFlyCam.setSpeedrunValue(false);
+}
+
+void restore_from_speedrun_mode() {
+    config::EnumerateRegistered([](config::ConfigVarBase& cvar) { cvar.clearSpeedrunOverride(); });
+    aurora_set_pause_on_focus_lost(getSettings().game.pauseOnFocusLost.getValue());
 }
 
 const Rml::String kInternalResolutionHelpText =
@@ -206,6 +222,8 @@ const Rml::String kInternalResolutionHelpText =
 const Rml::String kShadowResolutionHelpText =
     "Configure the shadow-map resolution. Higher values improve shadow quality but increase GPU "
     "and memory usage.";
+const Rml::String kResamplerHelpText =
+    "Configure the sampling method used when scaling the internal resolution for final presentation.";
 const Rml::String kBloomHelpText =
     "Configure the post-processing bloom effect. Classic uses the original bloom pass; Dusk uses "
     "a higher-quality bloom pass.";
@@ -529,7 +547,9 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
             {
                 .key = "Pause on Focus Lost",
-                .isDisabled = [] { return IsMobile; },
+                .helpText = "Pause the game when window focus is lost.",
+                .onChange = [](bool value) { aurora_set_pause_on_focus_lost(value); },
+                .isDisabled = [] { return IsMobile || getSettings().game.speedrunMode; },
             });
         leftPane.register_control(
             leftPane.add_select_button({
@@ -604,6 +624,15 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .valueMax = 8,
                 .defaultValue = 1,
             }, mPrelaunch);
+        graphics_tuner_control(*this, leftPane, rightPane, getSettings().game.resampler,
+            GraphicsTunerProps{
+                .option = GraphicsOption::Resampler,
+                .title = "Output Resampling",
+                .helpText = kResamplerHelpText,
+                .valueMin = static_cast<int>(Resampler::Bilinear),
+                .valueMax = static_cast<int>(Resampler::Area),
+                .defaultValue = static_cast<int>(Resampler::Bilinear),
+            }, mPrelaunch);
 
         leftPane.add_section("Post-Processing", true);
         graphics_tuner_control(*this, leftPane, rightPane, getSettings().game.bloomMode,
@@ -623,9 +652,16 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .valueMin = 0,
                 .valueMax = 100,
                 .defaultValue = 100,
+                .step = 10,
             }, mPrelaunch);
 
         leftPane.add_section("Rendering", true);
+        config_bool_select(leftPane, rightPane, getSettings().game.enableTextureReplacements,
+            {
+                .key = "Use Texture Pack",
+                .helpText = "Enable installed texture replacements.",
+                .onChange = [](bool value) { aurora_set_texture_replacements_enabled(value); },
+            });
         config_bool_select(leftPane, rightPane, getSettings().game.enableFrameInterpolation,
             {
                 .key = "Unlock Framerate",
@@ -660,6 +696,11 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         config_bool_select(leftPane, rightPane, getSettings().game.enableMapBackground,
             {
                 .key = "Enable Mini-Map Shadows",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().game.disableCutscenePillarboxing,
+            {
+                .key = "Disable Cutscene Pillarboxing",
+                .helpText = "Keep wide cutscenes pillarboxed instead of cropping them to fill the screen.",
             });
     });
 
@@ -798,6 +839,15 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         addOption("Turbo Key", getSettings().game.enableTurboKeybind,
             "Hold Tab to increase game speed by up to 4x.",
             [] { return getSettings().game.speedrunMode; });
+        addOption("Reset Key (" + Rml::String{hotkeys::DO_RESET} + ")",
+            getSettings().game.enableResetKeybind,
+            "Press " + Rml::String{hotkeys::DO_RESET} + " to reset the game.",
+            [] { return getSettings().game.speedrunMode; });
+        addOption("Show Input Viewer", getSettings().game.showInputViewer,
+            "Show the controller input overlay while playing.");
+        addOption("Show Input Viewer Gyro", getSettings().game.showInputViewerGyro,
+            "Show gyro values in the input viewer overlay.",
+            [] { return !getSettings().game.showInputViewer.getValue(); });
 
         if (IsMobile) {
             leftPane.add_section("Touch Controls", true);
@@ -1159,7 +1209,14 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "Speedrun Mode",
                 .helpText =
                     "Enables speedrunning options while restricting certain gameplay modifiers.",
-                .onChange = [](bool) { reset_for_speedrun_mode(); },
+                .onChange =
+                    [](bool enabled) {
+                        if (enabled) {
+                            reset_for_speedrun_mode();
+                        } else {
+                            restore_from_speedrun_mode();
+                        }
+                    },
             });
         config_bool_select(leftPane, rightPane, getSettings().game.liveSplitEnabled,
             {
@@ -1173,6 +1230,12 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                             speedrun::disconnectLiveSplit();
                         }
                     },
+                .isDisabled = [] { return !getSettings().game.speedrunMode; },
+            });
+        config_bool_select(leftPane, rightPane, getSettings().game.showSpeedrunRTATimer,
+            {
+                .key = "Show RTA Timer",
+                .helpText = "Display the speedrun timer overlay while speedrun mode is enabled.",
                 .isDisabled = [] { return !getSettings().game.speedrunMode; },
             });
     });

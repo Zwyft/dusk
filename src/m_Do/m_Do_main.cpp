@@ -787,7 +787,7 @@ int game_main(int argc, char* argv[]) {
         config.pauseOnFocusLost = dusk::getSettings().game.pauseOnFocusLost;
         config.imGuiInitCallback = &aurora_imgui_init_callback;
         config.maxTextureAnisotropy = static_cast<uint16_t>(dusk::getSettings().game.anisotropicFiltering.getValue());
-        config.allowTextureReplacements = true;
+        config.allowTextureReplacements = dusk::getSettings().game.enableTextureReplacements;
         config.allowTextureDumps = false;
         dusk::mod_manager::initialize();
 
@@ -828,7 +828,7 @@ int game_main(int argc, char* argv[]) {
 
     VISetWindowTitle(
         fmt::format("Dusk {} [{}]", DUSK_WC_DESCRIBE, dusk::backend_name(auroraInfo.backend))
-        .c_str());
+            .c_str());
 
     if (dusk::getSettings().video.lockAspectRatio) {
         AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
@@ -836,6 +836,9 @@ int game_main(int argc, char* argv[]) {
         AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
     }
     VISetFrameBufferScale(dusk::getSettings().game.internalResolutionScale.getValue());
+    aurora_set_resampler(
+        dusk::getSettings().game.resampler.getValue() == dusk::Resampler::Area ? SAMPLER_AREA
+                                                                                : SAMPLER_BILINEAR);
 
     dusk::audio::SetMasterVolume(dusk::getSettings().audio.masterVolume / 100.0f);
     dusk::audio::SetEnableReverb(dusk::getSettings().audio.enableReverb);

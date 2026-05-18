@@ -48,6 +48,12 @@ enum class ConfigVarLayer : u8 {
      * Will not get saved to config.
      */
     Override,
+
+    /**
+     * The CVar is temporarily overridden by speedrun mode.
+     * Will not get saved to config.
+     */
+    Speedrun,
 };
 
 class ConfigImplBase;
@@ -113,6 +119,8 @@ public:
      * This is necessary to make it legal to access.
      */
     void markRegistered();
+
+    virtual void clearSpeedrunOverride() {}
 };
 
 template <typename T>
@@ -162,6 +170,7 @@ class ConfigVar : public ConfigVarBase {
     T defaultValue;
     T value;
     T overrideValue;
+    ConfigVarLayer priorLayer = ConfigVarLayer::Default;
 
 public:
     /**
@@ -189,6 +198,7 @@ public:
         case ConfigVarLayer::Value:
             return value;
         case ConfigVarLayer::Override:
+        case ConfigVarLayer::Speedrun:
             return overrideValue;
         default:
             abort();
@@ -238,6 +248,38 @@ public:
         checkRegistered();
         overrideValue = std::move(newValue);
         layer = ConfigVarLayer::Override;
+    }
+
+    void setSpeedrunValue(T newValue) {
+        checkRegistered();
+        if (layer != ConfigVarLayer::Override) {
+            priorLayer = layer;
+            overrideValue = std::move(newValue);
+            layer = ConfigVarLayer::Speedrun;
+        }
+    }
+
+    void clearOverride() {
+        checkRegistered();
+        if (layer == ConfigVarLayer::Override) {
+            overrideValue = {};
+            layer = ConfigVarLayer::Value;
+        }
+    }
+
+    void clearSpeedrunOverride() override {
+        checkRegistered();
+        if (layer == ConfigVarLayer::Speedrun) {
+            overrideValue = {};
+            layer = priorLayer;
+        }
+    }
+
+    [[nodiscard]] constexpr const T& getValueForSave() const noexcept {
+        checkRegistered();
+        const ConfigVarLayer effectiveLayer =
+            (layer == ConfigVarLayer::Speedrun) ? priorLayer : layer;
+        return effectiveLayer == ConfigVarLayer::Default ? defaultValue : value;
     }
 };
 

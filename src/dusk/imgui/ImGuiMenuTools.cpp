@@ -53,7 +53,11 @@ namespace dusk {
             }
 
             ImGui::Separator();
-            ImGui::Checkbox("Show Input Viewer", &m_showInputViewer);
+            bool showInputViewer = getSettings().game.showInputViewer.getValue();
+            if (ImGui::Checkbox("Show Input Viewer", &showInputViewer)) {
+                getSettings().game.showInputViewer.setValue(showInputViewer);
+                config::Save();
+            }
 
 #if DUSK_CAN_OPEN_DATA_FOLDER
             ImGui::Separator();

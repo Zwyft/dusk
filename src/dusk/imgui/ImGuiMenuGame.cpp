@@ -55,7 +55,7 @@ namespace dusk {
     SpeedrunInfo m_speedrunInfo;
 
     void ImGuiMenuGame::drawSpeedrunTimerOverlay() {
-        if (!getSettings().game.speedrunMode) {
+        if (!getSettings().game.speedrunMode || !getSettings().game.showSpeedrunRTATimer.getValue()) {
             return;
         }
 

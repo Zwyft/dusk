@@ -4,10 +4,7 @@
 #include <SDL3/SDL_events.h>
 #include <dolphin/pad.h>
 #include "SSystem/SComponent/c_API_controller_pad.h"
-#include "aurora/imgui.h"
-#include "d/d_com_inf_game.h"
 #include "dusk/config.hpp"
-#include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
 #include "dusk/touch_controls.hpp"
@@ -17,8 +14,6 @@
 #include <array>
 #include <cmath>
 #include <cstring>
-
-#include "gx_decode.h"
 
 namespace dusk::touch_controls {
 namespace {
@@ -503,172 +498,11 @@ static void draw_glossy_disc(ImDrawList* dl, ImVec2 center, float radius, ImU32 
                   1.0f);
 }
 
-static void draw_game_button_texture(ImDrawList* dl, ImVec2 center, float radius, ImTextureID texture,
-                                     ImU32 border, bool pressed, bool customize) {
-    float scale = pressed ? 0.94f : 1.0f;
-    float drawRadius = radius * scale;
-    ImVec2 p1 = {center.x - drawRadius, center.y - drawRadius};
-    ImVec2 p2 = {center.x + drawRadius, center.y + drawRadius};
-    dl->AddImage(texture, p1, p2);
-    if (customize) {
-        dl->AddCircle(center, radius, border, 0, 2.5f);
-    }
-}
-
-
-// ---------------------------------------------------------------------------
-// Game button texture loading + ImGui-drawn glossy fallback
-// ---------------------------------------------------------------------------
-static ImTextureID s_btnTex[CTRL_BTN_START + 1] = {};
-static bool s_texturesLoaded = false;
-
-static void unload_button_textures() {
-    for (auto& tex : s_btnTex) tex = {};
-    s_texturesLoaded = false;
-}
-
-static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
-    if (!timg) return {};
-    auto* pixelData = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
-    return ::decode_gx_to_rgba(timg->format, timg->width, timg->height, pixelData);
-}
-
-static const ResTIMG* find_button_texture(JKRArchive* archive, const char* upperName, const char* lowerName) {
-    if (auto* texture = static_cast<const ResTIMG*>(archive->getResource('TIMG', upperName))) {
-        DuskLog.info("touch: found '{}' fmt={} wxh={}x{} off={}", upperName, (int)texture->format,
-                     (int)texture->width, (int)texture->height, (int)texture->imageOffset);
-        return texture;
-    }
-    if (!lowerName) {
-        return nullptr;
-    }
-    if (auto* texture = static_cast<const ResTIMG*>(archive->getResource('TIMG', lowerName))) {
-        DuskLog.info("touch: found '{}' fmt={} wxh={}x{} off={}", lowerName, (int)texture->format,
-                     (int)texture->width, (int)texture->height, (int)texture->imageOffset);
-        return texture;
-    }
-    return nullptr;
-}
-
-static void tint_grayscale_rgba(std::vector<uint8_t>& pixels, uint8_t red, uint8_t green, uint8_t blue) {
-    for (size_t i = 0; i + 3 < pixels.size(); i += 4) {
-        float value = pixels[i] / 255.0f;
-        pixels[i] = static_cast<uint8_t>(red * value);
-        pixels[i + 1] = static_cast<uint8_t>(green * value);
-        pixels[i + 2] = static_cast<uint8_t>(blue * value);
-    }
-}
-
-static ImTextureID upload_composited_button(const ResTIMG* baseTexture, const ResTIMG* textTexture,
-                                            uint8_t red, uint8_t green, uint8_t blue) {
-    auto rgba = decode_gx_to_rgba(baseTexture);
-    auto text = decode_gx_to_rgba(textTexture);
-    if (rgba.empty() || text.empty()) {
-        return {};
-    }
-
-    tint_grayscale_rgba(rgba, red, green, blue);
-
-    int32_t offsetX = ((int32_t)baseTexture->width - (int32_t)textTexture->width) / 2;
-    int32_t offsetY = ((int32_t)baseTexture->height - (int32_t)textTexture->height) / 2;
-    for (uint32_t y = 0; y < textTexture->height; ++y) {
-        int32_t dstY = (int32_t)y + offsetY;
-        if (dstY < 0 || dstY >= (int32_t)baseTexture->height) {
-            continue;
-        }
-
-        for (uint32_t x = 0; x < textTexture->width; ++x) {
-            int32_t dstX = (int32_t)x + offsetX;
-            if (dstX < 0 || dstX >= (int32_t)baseTexture->width) {
-                continue;
-            }
-
-            size_t srcIndex = ((size_t)y * textTexture->width + x) * 4;
-            size_t dstIndex = ((size_t)dstY * baseTexture->width + dstX) * 4;
-            float alpha = text[srcIndex + 3] / 255.0f;
-            if (alpha <= 0.0f) {
-                continue;
-            }
-
-            rgba[dstIndex] = (uint8_t)(text[srcIndex] * alpha + rgba[dstIndex] * (1.0f - alpha));
-            rgba[dstIndex + 1] = (uint8_t)(text[srcIndex + 1] * alpha + rgba[dstIndex + 1] * (1.0f - alpha));
-            rgba[dstIndex + 2] = (uint8_t)(text[srcIndex + 2] * alpha + rgba[dstIndex + 2] * (1.0f - alpha));
-        }
-    }
-
-    return aurora_imgui_add_texture(baseTexture->width, baseTexture->height, rgba.data());
-}
-
-static ImTextureID upload_texture(const ResTIMG* texture) {
-    auto rgba = decode_gx_to_rgba(texture);
-    if (rgba.empty()) {
-        return {};
-    }
-    return aurora_imgui_add_texture(texture->width, texture->height, rgba.data());
-}
-
-static void load_game_button_textures() {
-    auto* archive = dComIfGp_getMeterButtonArchive();
-    if (!archive) {
-        DuskLog.warn("touch: no button archive available");
-        unload_button_textures();
-        return;
-    }
-
-    auto* abMaru = find_button_texture(archive, "TT_ZELDA_BUTTON_AB_MARU.bti", "tt_zelda_button_ab_maru.bti");
-    if (!abMaru) { DuskLog.warn("touch: failed AB_MARU"); return; }
-
-    auto* aText = find_button_texture(archive, "TT_ZELDA_BUTTON_A_TEXT.bti", "tt_zelda_button_a_text.bti");
-    if (!aText) { DuskLog.warn("touch: failed A_TEXT"); return; }
-
-    auto* bText = find_button_texture(archive, "TT_ZELDA_BUTTON_B_TEXT.bti", "tt_zelda_button_b_text.bti");
-    if (!bText) { DuskLog.warn("touch: failed B_TEXT"); return; }
-
-    auto* xBase = find_button_texture(archive, "TT_ZELDA_BUTTON_X_BASE.bti", "tt_zelda_button_x_base.bti");
-    if (!xBase) { DuskLog.warn("touch: failed X_BASE"); return; }
-
-    auto* xText = find_button_texture(archive, "TT_ZELDA_BUTTON_X_TEXT.bti", "tt_zelda_button_x_text.bti");
-    if (!xText) { DuskLog.warn("touch: failed X_TEXT"); return; }
-    auto* xFull = find_button_texture(archive, "TT_ZELDA_BUTTON_X.bti", "tt_zelda_button_x.bti");
-
-    auto* yBase = find_button_texture(archive, "TT_ZELDA_BUTTON_Y_BASE.bti", "tt_zelda_button_y_base.bti");
-    if (!yBase) { DuskLog.warn("touch: failed Y_BASE"); return; }
-
-    auto* yText = find_button_texture(archive, "TT_ZELDA_BUTTON_Y_TEXT.bti", "tt_zelda_button_y_text.bti");
-    if (!yText) { DuskLog.warn("touch: failed Y_TEXT"); return; }
-    auto* yFull = find_button_texture(archive, "TT_ZELDA_BUTTON_Y.bti", "tt_zelda_button_y.bti");
-    auto* lBase = find_button_texture(archive, "TT_ZELDA_BUTTON_L_BASE.bti", "tt_zelda_button_l_base.bti");
-    auto* lText = find_button_texture(archive, "TT_ZELDA_BUTTON_L_TEXT.bti", "tt_zelda_button_l_text.bti");
-    auto* rBase = find_button_texture(archive, "TT_ZELDA_BUTTON_R_BASE.bti", "tt_zelda_button_r_base.bti");
-    auto* rText = find_button_texture(archive, "TT_ZELDA_BUTTON_R_TEXT.bti", "tt_zelda_button_r_text.bti");
-
-    s_btnTex[CTRL_BTN_A] = upload_composited_button(abMaru, aText, 58, 204, 74);
-    s_btnTex[CTRL_BTN_B] = upload_composited_button(abMaru, bText, 204, 66, 58);
-    s_btnTex[CTRL_BTN_X] = xFull ? upload_texture(xFull)
-                                 : upload_composited_button(xBase, xText, 70, 125, 214);
-    s_btnTex[CTRL_BTN_Y] = yFull ? upload_texture(yFull)
-                                 : upload_composited_button(yBase, yText, 154, 78, 196);
-    if (lBase && lText) {
-        s_btnTex[CTRL_BTN_L] = upload_composited_button(lBase, lText, 184, 184, 184);
-    }
-    if (rBase && rText) {
-        s_btnTex[CTRL_BTN_R] = upload_composited_button(rBase, rText, 184, 184, 184);
-    }
-
-    s_texturesLoaded = true;
-    DuskLog.info("touch: loaded game button textures");
-}
-
 static void draw_controls() {
     auto* dl = ImGui::GetForegroundDrawList();
     auto& io = ImGui::GetIO();
     float w = io.DisplaySize.x;
     float h = io.DisplaySize.y;
-
-    // Auto-load button textures if archive is available
-    if (!s_texturesLoaded && !g_customizeMode) {
-        load_game_button_textures();
-    }
 
     ImU32 borderNormal   = with_opacity(IM_COL32(200, 200, 200, 200));
     ImU32 borderCustomize = with_opacity(IM_COL32(255, 220, 0, 230));
@@ -681,20 +515,13 @@ static void draw_controls() {
         bool  pressed = (g_held & kDefs[i].padBit) != 0;
         ImU32 fill = with_opacity(pressed ? kDefs[i].colorActive : kDefs[i].colorIdle);
 
-        if (s_texturesLoaded && s_btnTex[i]) {
-            draw_game_button_texture(dl, {cx, cy}, r, s_btnTex[i], borderCol, pressed, g_customizeMode);
-            if (g_customizeMode) {
-                dl->AddCircle({cx, cy}, r, borderCol, 0, 2.5f);
-            }
-        } else {
-            draw_glossy_disc(dl, {cx, cy}, r, fill, borderCol, pressed);
-            if (kDefs[i].label) {
-                ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
-                ImVec2 shadowPos = {cx - ts.x * 0.5f + 1.0f, cy - ts.y * 0.5f + 1.0f};
-                dl->AddText(shadowPos, with_opacity(IM_COL32(0, 0, 0, 180)), kDefs[i].label);
-                dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
-                            with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
-            }
+        draw_glossy_disc(dl, {cx, cy}, r, fill, borderCol, pressed);
+        if (kDefs[i].label) {
+            ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
+            ImVec2 shadowPos = {cx - ts.x * 0.5f + 1.0f, cy - ts.y * 0.5f + 1.0f};
+            dl->AddText(shadowPos, with_opacity(IM_COL32(0, 0, 0, 180)), kDefs[i].label);
+            dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
+                        with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
         }
     }
 
@@ -808,22 +635,17 @@ static void draw_ui_buttons() {
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.16f, 0.16f, 0.18f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.94f));
 
-    if (enabled) {
-        if (g_customizeMode) {
-            if (ImGui::Button("Done##tc", {editW, btnH})) {
-                g_customizeMode = false;
-                g_dragCtrl   = CTRL_NONE;
-                g_dragFinger = 0;
-                config::Save();
-            }
-            ImGui::SameLine(0.f, gap);
-            if (ImGui::Button("Reload##tc", {editW, btnH})) {
-                unload_button_textures();
-                load_game_button_textures();
-            }
-        } else {
-            if (ImGui::Button("Edit##tc", {editW, btnH})) {
-                g_customizeMode = true;
+        if (enabled) {
+            if (g_customizeMode) {
+                if (ImGui::Button("Done##tc", {editW, btnH})) {
+                    g_customizeMode = false;
+                    g_dragCtrl   = CTRL_NONE;
+                    g_dragFinger = 0;
+                    config::Save();
+                }
+            } else {
+                if (ImGui::Button("Edit##tc", {editW, btnH})) {
+                    g_customizeMode = true;
                 clear_virtual_state();
             }
         }
