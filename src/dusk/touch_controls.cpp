@@ -509,8 +509,7 @@ static void draw_game_button_texture(ImDrawList* dl, ImVec2 center, float radius
     float drawRadius = radius * scale;
     ImVec2 p1 = {center.x - drawRadius, center.y - drawRadius};
     ImVec2 p2 = {center.x + drawRadius, center.y + drawRadius};
-    ImU32 tint = with_opacity(pressed ? IM_COL32(210, 210, 210, 235) : IM_COL32(255, 255, 255, 255));
-    dl->AddImage(texture, p1, p2, {0, 0}, {1, 1}, tint);
+    dl->AddImage(texture, p1, p2);
     if (customize) {
         dl->AddCircle(center, radius, border, 0, 2.5f);
     }
@@ -600,6 +599,14 @@ static ImTextureID upload_composited_button(const ResTIMG* baseTexture, const Re
     return aurora_imgui_add_texture(baseTexture->width, baseTexture->height, rgba.data());
 }
 
+static ImTextureID upload_texture(const ResTIMG* texture) {
+    auto rgba = decode_gx_to_rgba(texture);
+    if (rgba.empty()) {
+        return {};
+    }
+    return aurora_imgui_add_texture(texture->width, texture->height, rgba.data());
+}
+
 static void load_game_button_textures() {
     auto* archive = dComIfGp_getMeterButtonArchive();
     if (!archive) {
@@ -622,12 +629,14 @@ static void load_game_button_textures() {
 
     auto* xText = find_button_texture(archive, "TT_ZELDA_BUTTON_X_TEXT.bti", "tt_zelda_button_x_text.bti");
     if (!xText) { DuskLog.warn("touch: failed X_TEXT"); return; }
+    auto* xFull = find_button_texture(archive, "TT_ZELDA_BUTTON_X.bti", "tt_zelda_button_x.bti");
 
     auto* yBase = find_button_texture(archive, "TT_ZELDA_BUTTON_Y_BASE.bti", "tt_zelda_button_y_base.bti");
     if (!yBase) { DuskLog.warn("touch: failed Y_BASE"); return; }
 
     auto* yText = find_button_texture(archive, "TT_ZELDA_BUTTON_Y_TEXT.bti", "tt_zelda_button_y_text.bti");
     if (!yText) { DuskLog.warn("touch: failed Y_TEXT"); return; }
+    auto* yFull = find_button_texture(archive, "TT_ZELDA_BUTTON_Y.bti", "tt_zelda_button_y.bti");
     auto* lBase = find_button_texture(archive, "TT_ZELDA_BUTTON_L_BASE.bti", "tt_zelda_button_l_base.bti");
     auto* lText = find_button_texture(archive, "TT_ZELDA_BUTTON_L_TEXT.bti", "tt_zelda_button_l_text.bti");
     auto* rBase = find_button_texture(archive, "TT_ZELDA_BUTTON_R_BASE.bti", "tt_zelda_button_r_base.bti");
@@ -635,8 +644,10 @@ static void load_game_button_textures() {
 
     s_btnTex[CTRL_BTN_A] = upload_composited_button(abMaru, aText, 58, 204, 74);
     s_btnTex[CTRL_BTN_B] = upload_composited_button(abMaru, bText, 204, 66, 58);
-    s_btnTex[CTRL_BTN_X] = upload_composited_button(xBase, xText, 70, 125, 214);
-    s_btnTex[CTRL_BTN_Y] = upload_composited_button(yBase, yText, 154, 78, 196);
+    s_btnTex[CTRL_BTN_X] = xFull ? upload_texture(xFull)
+                                 : upload_composited_button(xBase, xText, 70, 125, 214);
+    s_btnTex[CTRL_BTN_Y] = yFull ? upload_texture(yFull)
+                                 : upload_composited_button(yBase, yText, 154, 78, 196);
     if (lBase && lText) {
         s_btnTex[CTRL_BTN_L] = upload_composited_button(lBase, lText, 184, 184, 184);
     }
