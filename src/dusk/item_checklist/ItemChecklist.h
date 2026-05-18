@@ -42,7 +42,6 @@ private:
     ~ItemChecklist() = default;
 
     void loadItemDefinitions();
-    void preloadIconFiles();
     void save();
     void load();
 

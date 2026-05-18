@@ -33,7 +33,6 @@ const Rml::String kChecklistContent = R"RML(
 }  // namespace
 
 ItemChecklistDocument::ItemChecklistDocument() {
-    mRoot->SetClass("checklist-window", true);
     add_tab("Checklist", [this](Rml::Element* content) { build(content); });
 }
 

@@ -34,7 +34,6 @@ bool ItemChecklist::initialize() {
 
     loadItemDefinitions();
     load();
-    preloadIconFiles();
     mInitialized = true;
     mIconsReady = true;
     refresh();
@@ -140,15 +139,6 @@ void ItemChecklist::loadItemDefinitions() {
 
     for (size_t i = 0; i < mItemDefinitions.size(); ++i) {
         mItemMap[mItemDefinitions[i].id] = i;
-    }
-}
-
-void ItemChecklist::preloadIconFiles() {
-    for (const auto& item : mItemDefinitions) {
-        if (item.iconPath.empty()) {
-            continue;
-        }
-        (void)dusk::io::FileStream::ReadAllBytes(item.iconPath);
     }
 }
 
