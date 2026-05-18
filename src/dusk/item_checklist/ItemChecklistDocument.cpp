@@ -42,6 +42,22 @@ void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab)
     mSeenRevision = ItemChecklist::instance().revision();
 }
 
+ItemChecklistDocument::LayoutConfig ItemChecklistDocument::chooseLayout(size_t itemCount) const {
+    if (itemCount <= 12) {
+        return {.columns = 4, .densityClass = "dense-normal"};
+    }
+    if (itemCount <= 20) {
+        return {.columns = 5, .densityClass = "dense-normal"};
+    }
+    if (itemCount <= 30) {
+        return {.columns = 6, .densityClass = "dense-medium"};
+    }
+    if (itemCount <= 42) {
+        return {.columns = 7, .densityClass = "dense-medium"};
+    }
+    return {.columns = 8, .densityClass = "dense-compact"};
+}
+
 void ItemChecklistDocument::rebuildSections(const std::string& tab) {
     if (mSectionsRoot == nullptr) {
         return;
@@ -60,13 +76,17 @@ void ItemChecklistDocument::rebuildSections(const std::string& tab) {
     grid->SetClass("tracker-grid", true);
 
     const auto items = ItemChecklist::instance().getItemsByTab(tab);
+    const auto layout = chooseLayout(items.size());
+    grid->SetClass(layout.densityClass, true);
+    grid->SetClass(fmt::format("cols-{}", layout.columns), true);
+
     Rml::Element* row = nullptr;
     int index = 0;
     for (const auto* item : items) {
         if (item == nullptr) {
             continue;
         }
-        if (index % 4 == 0) {
+        if (index % layout.columns == 0) {
             row = append(grid, "div");
             if (row == nullptr) {
                 return;

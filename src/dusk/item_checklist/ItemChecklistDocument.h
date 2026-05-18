@@ -22,6 +22,11 @@ public:
 private:
     static constexpr std::string_view kSpeedrunTab = "Speedrun";
 
+    struct LayoutConfig {
+        int columns = 4;
+        const char* densityClass = "dense-normal";
+    };
+
     struct CardRefs {
         Rml::Element* root = nullptr;
         Rml::Element* icon = nullptr;
@@ -33,6 +38,7 @@ private:
     void build(Rml::Element* content, const std::string& tab);
     void rebuildSections(const std::string& tab);
     void refreshItem(uint8_t itemId);
+    LayoutConfig chooseLayout(size_t itemCount) const;
 
     CardRefs createCard(const ::ItemChecklist::ItemInfo& item, Rml::Element* parent);
 

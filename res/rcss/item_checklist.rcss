@@ -86,21 +86,22 @@
     flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
-    overflow-y: auto;
-    padding: 10dp 6dp 0dp 0dp;
+    overflow-y: hidden;
+    padding: 10dp 2dp 0dp 2dp;
 }
 
 .tracker-grid {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    align-items: center;
     gap: 10dp;
 }
 
 .tracker-row {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     gap: 10dp;
 }
@@ -139,6 +140,44 @@
     height: 56dp;
     display: block;
     image-rendering: auto;
+}
+
+.tracker-grid.dense-medium {
+    gap: 8dp;
+}
+
+.tracker-grid.dense-medium .tracker-row {
+    gap: 8dp;
+}
+
+.tracker-grid.dense-medium .tracker-card {
+    flex: 0 0 50dp;
+    width: 50dp;
+    height: 50dp;
+}
+
+.tracker-grid.dense-medium .tracker-card-icon {
+    width: 50dp;
+    height: 50dp;
+}
+
+.tracker-grid.dense-compact {
+    gap: 7dp;
+}
+
+.tracker-grid.dense-compact .tracker-row {
+    gap: 7dp;
+}
+
+.tracker-grid.dense-compact .tracker-card {
+    flex: 0 0 44dp;
+    width: 44dp;
+    height: 44dp;
+}
+
+.tracker-grid.dense-compact .tracker-card-icon {
+    width: 44dp;
+    height: 44dp;
 }
 
 .tracker-card-label {
