@@ -5,9 +5,8 @@
 #include "dusk/ui/window.hpp"
 
 #include <cstdint>
-#include <unordered_map>
 #include <memory>
-#include <vector>
+#include <unordered_map>
 
 namespace dusk::ui {
 
@@ -23,6 +22,8 @@ private:
         Rml::Element* root = nullptr;
         Rml::Element* icon = nullptr;
         std::string iconSource;
+        bool collected = false;
+        bool stateInitialized = false;
     };
 
     void build(Rml::Element* content);
@@ -34,8 +35,6 @@ private:
     Rml::Element* mSectionsRoot = nullptr;
     std::unique_ptr<ScopedEventListener> mCloseListener;
     std::unordered_map<uint8_t, CardRefs> mCards;
-    std::vector<uint8_t> mCollectedSnapshot;
-    Uint64 mLastRefreshTick = 0;
 };
 
 }  // namespace dusk::ui

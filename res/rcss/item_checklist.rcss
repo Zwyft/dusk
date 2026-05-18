@@ -27,6 +27,12 @@
     overflow: hidden;
 }
 
+window.checklist-window {
+    backdrop-filter: none;
+    box-shadow: 0 0 12dp 3dp rgba(0, 0, 0, 0.35);
+    background-color: rgba(21, 22, 16, 0.97);
+}
+
 .tracker-header {
     display: flex;
     justify-content: space-between;

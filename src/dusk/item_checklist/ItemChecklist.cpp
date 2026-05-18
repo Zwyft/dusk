@@ -4,6 +4,7 @@
 #include "dusk/io.hpp"
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/ui/ui.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -33,6 +34,7 @@ bool ItemChecklist::initialize() {
 
     loadItemDefinitions();
     load();
+    preloadIconFiles();
     mInitialized = true;
     mIconsReady = true;
     refresh();
@@ -119,7 +121,8 @@ void ItemChecklist::loadItemDefinitions() {
     mItemMap.clear();
 
     try {
-        const auto data = io::FileStream::ReadAllBytes(kItemDefinitionsFile);
+        const auto data =
+            dusk::io::FileStream::ReadAllBytes(dusk::ui::resource_path(kItemDefinitionsFile));
         json root = json::parse(data);
         for (const auto& item : root) {
             ItemInfo info;
@@ -137,6 +140,15 @@ void ItemChecklist::loadItemDefinitions() {
 
     for (size_t i = 0; i < mItemDefinitions.size(); ++i) {
         mItemMap[mItemDefinitions[i].id] = i;
+    }
+}
+
+void ItemChecklist::preloadIconFiles() {
+    for (const auto& item : mItemDefinitions) {
+        if (item.iconPath.empty()) {
+            continue;
+        }
+        (void)dusk::io::FileStream::ReadAllBytes(item.iconPath);
     }
 }
 
@@ -166,7 +178,7 @@ void ItemChecklist::save() {
         overrides[std::to_string(itemId)] = collected;
     }
 
-    io::FileStream::WriteAllText(savePath, root.dump(2));
+    dusk::io::FileStream::WriteAllText(savePath, root.dump(2));
 }
 
 void ItemChecklist::load() {
@@ -176,7 +188,7 @@ void ItemChecklist::load() {
     }
 
     try {
-        const auto data = io::FileStream::ReadAllBytes(savePath);
+        const auto data = dusk::io::FileStream::ReadAllBytes(savePath);
         json root = json::parse(data);
         const auto overridesIt = root.find("manualOverrides");
         if (overridesIt != root.end() && overridesIt->is_object()) {

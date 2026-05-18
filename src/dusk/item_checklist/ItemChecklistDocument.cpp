@@ -6,7 +6,6 @@
 #include "dusk/ui/ui.hpp"
 
 #include <RmlUi/Core.h>
-#include <SDL3/SDL_timer.h>
 
 #include "fmt/format.h"
 
@@ -34,6 +33,7 @@ const Rml::String kChecklistContent = R"RML(
 }  // namespace
 
 ItemChecklistDocument::ItemChecklistDocument() {
+    mRoot->SetClass("checklist-window", true);
     add_tab("Checklist", [this](Rml::Element* content) { build(content); });
 }
 
@@ -51,7 +51,6 @@ void ItemChecklistDocument::build(Rml::Element* content) {
             closeButton, Rml::EventId::Click, [this](Rml::Event&) { request_close(); });
     }
 
-    mLastRefreshTick = 0;
     rebuildSections();
     refresh();
 }
@@ -125,10 +124,14 @@ void ItemChecklistDocument::refreshItem(uint8_t itemId) {
 
     const bool collected = ItemChecklist::instance().isCollected(itemId);
     auto* root = it->second.root;
-    root->SetClass("owned", collected);
-    root->SetClass("locked", !collected);
-    root->SetAttribute(
-        "title", fmt::format("{} - {}", item->name, collected ? "Unlocked" : "Locked"));
+    if (!it->second.stateInitialized || it->second.collected != collected) {
+        it->second.collected = collected;
+        it->second.stateInitialized = true;
+        root->SetClass("owned", collected);
+        root->SetClass("locked", !collected);
+        root->SetAttribute(
+            "title", fmt::format("{} - {}", item->name, collected ? "Unlocked" : "Locked"));
+    }
 
     if (it->second.icon != nullptr) {
         const auto iconPath = ItemChecklist::instance().iconPathFor(itemId);
@@ -149,37 +152,6 @@ void ItemChecklistDocument::refresh() {
 }
 
 void ItemChecklistDocument::update() {
-    if (visible()) {
-        constexpr Uint64 kRefreshIntervalNs = 500'000'000ULL;
-        const Uint64 now = SDL_GetTicksNS();
-        if (mLastRefreshTick == 0 || now - mLastRefreshTick >= kRefreshIntervalNs) {
-            mLastRefreshTick = now;
-            ItemChecklist::instance().refresh();
-
-            const auto& items = ItemChecklist::instance().items();
-            bool dirty = items.size() != mCollectedSnapshot.size();
-            if (!dirty) {
-                for (size_t i = 0; i < items.size(); ++i) {
-                    const bool collected = ItemChecklist::instance().isCollected(items[i].id);
-                    if (mCollectedSnapshot[i] != static_cast<uint8_t>(collected)) {
-                        dirty = true;
-                        break;
-                    }
-                }
-            }
-
-            if (dirty) {
-                mCollectedSnapshot.clear();
-                mCollectedSnapshot.reserve(items.size());
-                for (const auto& item : items) {
-                    mCollectedSnapshot.push_back(static_cast<uint8_t>(
-                        ItemChecklist::instance().isCollected(item.id)));
-                }
-                refresh();
-            }
-        }
-    }
-
     Window::update();
 }
 
