@@ -68,6 +68,7 @@ UserSettings g_userSettings = {
         .enableDepthOfField {"game.enableDepthOfField", true},
         .enableMapBackground {"game.enableMapBackground", true},
         .disableCutscenePillarboxing {"game.disableCutscenePillarboxing", false},
+        .displayBrightness {"game.displayBrightness", 100},
 
         // Audio
         .noLowHpSound {"game.noLowHpSound", false},
@@ -257,6 +258,7 @@ void registerSettings() {
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
     Register(g_userSettings.game.disableCutscenePillarboxing);
+    Register(g_userSettings.game.displayBrightness);
     Register(g_userSettings.game.noLowHpSound);
     Register(g_userSettings.game.battleBGM);
     Register(g_userSettings.game.enableLinkDollRotation);

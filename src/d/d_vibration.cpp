@@ -65,6 +65,28 @@ u32 randombit(s32 rounds, s32 length) {
 
     return value;
 }
+
+void startMotorWaveCompat(u8* data, JUTGamePad::CRumble::ERumble rumble, u32 length) {
+#if TARGET_ANDROID
+    for (u32 channel = 0; channel < PAD_CHANMAX; ++channel) {
+        mDoCPd_c::startMotorWave(channel, data, rumble, length);
+    }
+#else
+    mDoCPd_c::startMotorWave(PAD_1, data, rumble, length);
+#endif
+}
+
+void stopMotorCompat() {
+#if TARGET_ANDROID
+    for (u32 channel = 0; channel < PAD_CHANMAX; ++channel) {
+        mDoCPd_c::stopMotorWave(channel);
+        mDoCPd_c::stopMotor(channel);
+    }
+#else
+    mDoCPd_c::stopMotorWave(PAD_1);
+    mDoCPd_c::stopMotor(PAD_1);
+#endif
+}
 };
 
 int dVibration_c::Run() {
@@ -240,7 +262,7 @@ int dVibration_c::Run() {
             pattern = mMotor.mShock.mPattern;
             pattern |= randombit(mMotor.mShock.mRounds, length);
             mMotor.mShock.mStopFrame = length;
-            mDoCPd_c::startMotorWave(PAD_1, (u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_0, 60);
+            startMotorWaveCompat((u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_0, 60);
             
             #if DEBUG
             if (mVibTest.m_displayDbg & 0x8000) {
@@ -256,7 +278,7 @@ int dVibration_c::Run() {
 
             OS_REPORT("d_vibration mDoCPd_c::startMotorWave\n");
 
-            mDoCPd_c::startMotorWave(PAD_1, (u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_1, 60);
+            startMotorWaveCompat((u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_1, 60);
             
             #if DEBUG
             if (mVibTest.m_displayDbg & 0x8000) {
@@ -274,7 +296,7 @@ int dVibration_c::Run() {
             mMotor.mShock.mStopFrame = length;
             mMotor.mShock.mFrame = mMotor.mQuake.mFrame = 0;
 
-            mDoCPd_c::startMotorWave(PAD_1, (u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_0, 60);
+            startMotorWaveCompat((u8*)makedata(data, pattern, length), JUTGamePad::CRumble::VAL_0, 60);
             
             #if DEBUG
             if (mVibTest.m_displayDbg & 0x8000) {
@@ -283,8 +305,7 @@ int dVibration_c::Run() {
             #endif
             break;
         default:
-            mDoCPd_c::stopMotorWave(PAD_1);
-            mDoCPd_c::stopMotor(PAD_1);
+            stopMotorCompat();
             mMotor.mShock.mStopFrame = mMotor.mQuake.mStopFrame = RESET_FRAME;
 
             #if DEBUG
@@ -332,8 +353,7 @@ int dVibration_c::Run() {
         }
         #endif
     } else if (mMotor.mQuake.mFrame >= 900) {
-        mDoCPd_c::stopMotorWave(PAD_1);
-        mDoCPd_c::stopMotor(PAD_1);
+        stopMotorCompat();
 
         #if DEBUG
         if ((mVibTest.m_displayDbg & 0x8000) && mMotor.mQuake.mFrame == 900) {

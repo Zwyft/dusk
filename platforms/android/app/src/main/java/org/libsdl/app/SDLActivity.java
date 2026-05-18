@@ -401,12 +401,24 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         }
 
         if (mBrokenLibraries) {
+            String troubleshootingHint = "";
+            if (errorMsgBrokenLib != null && errorMsgBrokenLib.contains("not found")) {
+                troubleshootingHint =
+                    System.getProperty("line.separator") +
+                    System.getProperty("line.separator") +
+                    "Troubleshooting:" +
+                    System.getProperty("line.separator") +
+                    "- Fully uninstall old Dusk builds, then reinstall this APK." +
+                    System.getProperty("line.separator") +
+                    "- Ensure the device ABI matches the installed build.";
+            }
             mSingleton = this;
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
             dlgAlert.setMessage("An error occurred while trying to start the application. Please try again and/or reinstall."
                   + System.getProperty("line.separator")
                   + System.getProperty("line.separator")
-                  + "Error: " + errorMsgBrokenLib);
+                  + "Error: " + errorMsgBrokenLib
+                  + troubleshootingHint);
             dlgAlert.setTitle("SDL Error");
             dlgAlert.setPositiveButton("Exit",
                 new DialogInterface.OnClickListener() {

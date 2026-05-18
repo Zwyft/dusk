@@ -175,6 +175,7 @@ struct UserSettings {
         ConfigVar<bool> enableDepthOfField;
         ConfigVar<bool> enableMapBackground;
         ConfigVar<bool> disableCutscenePillarboxing;
+        ConfigVar<int> displayBrightness;
 
         // Audio
         ConfigVar<bool> noLowHpSound;

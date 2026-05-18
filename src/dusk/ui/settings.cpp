@@ -1,6 +1,8 @@
 #include "settings.hpp"
 
 #include <aurora/aurora.h>
+#include <aurora/lib/window.hpp>
+#include <SDL3/SDL_video.h>
 #include "aurora/gfx.h"
 #include "bool_button.hpp"
 #include "controller_config.hpp"
@@ -230,6 +232,8 @@ const Rml::String kBloomHelpText =
     "a higher-quality bloom pass.";
 const Rml::String kBloomBrightnessHelpText =
     "Configure bloom intensity. Higher values make bright areas glow more strongly.";
+const Rml::String kDisplayBrightnessHelpText =
+    "Adjust display brightness. 100% is default. Higher values brighten the output.";
 const Rml::String kUnlockFramerateHelpText =
     "Uses inter-frame interpolation to enable higher frame rates.<br/><br/>May introduce minor "
     "visual artifacts or animation glitches.";
@@ -242,6 +246,17 @@ bool gyro_enabled() {
     return getSettings().game.enableGyroAim ||
            (getSettings().game.enableGyroRollgoal &&
             getSettings().game.gyroMode.getValue() != GyroMode::Mouse);
+}
+
+void apply_display_brightness_setting() {
+    SDL_Window* window = aurora::window::get_sdl_window();
+    if (window == nullptr) {
+        return;
+    }
+
+    const float brightness = std::clamp(
+        getSettings().game.displayBrightness.getValue() / 100.0f, 0.5f, 1.5f);
+    SDL_SetWindowBrightness(window, brightness);
 }
 
 struct ConfigBoolProps {
@@ -697,6 +712,30 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         config_bool_select(leftPane, rightPane, getSettings().game.enableMapBackground,
             {
                 .key = "Enable Mini-Map Shadows",
+            });
+        leftPane.register_control(
+            leftPane.add_child<NumberButton>(NumberButton::Props{
+                .key = "Display Brightness",
+                .getValue = [] { return getSettings().game.displayBrightness.getValue(); },
+                .setValue =
+                    [](int value) {
+                        getSettings().game.displayBrightness.setValue(std::clamp(value, 50, 150));
+                        config::Save();
+                        apply_display_brightness_setting();
+                    },
+                .isModified =
+                    [] {
+                        return getSettings().game.displayBrightness.getValue() !=
+                               getSettings().game.displayBrightness.getDefaultValue();
+                    },
+                .min = 50,
+                .max = 150,
+                .step = 5,
+                .suffix = "%",
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text(kDisplayBrightnessHelpText);
             });
         config_bool_select(leftPane, rightPane, getSettings().game.disableCutscenePillarboxing,
             {

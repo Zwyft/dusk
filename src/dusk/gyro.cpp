@@ -20,6 +20,7 @@ constexpr float kMousePixelToRad = 0.0025f;
 
 bool  s_sensor_enabled        = false;
 bool  s_accel_enabled         = false;
+int   s_sensor_channel        = PAD_CHAN0;
 bool  s_was_aiming            = false;
 bool  s_have_gravity_baseline = false;
 bool  s_mouse_enabled         = false;
@@ -57,13 +58,27 @@ float apply_deadband(float v, float deadband_rad_s) {
 
 void disable_pad_sensors() {
     if (s_sensor_enabled) {
-        PADSetSensorEnabled(PAD_CHAN0, PAD_SENSOR_GYRO, FALSE);
+        PADSetSensorEnabled(s_sensor_channel, PAD_SENSOR_GYRO, FALSE);
         s_sensor_enabled = false;
     }
     if (s_accel_enabled) {
-        PADSetSensorEnabled(PAD_CHAN0, PAD_SENSOR_ACCEL, FALSE);
+        PADSetSensorEnabled(s_sensor_channel, PAD_SENSOR_ACCEL, FALSE);
         s_accel_enabled = false;
     }
+}
+
+int find_sensor_channel(u32 sensor_type) {
+    if (PADHasSensor(s_sensor_channel, sensor_type)) {
+        return s_sensor_channel;
+    }
+
+    for (int channel = PAD_CHAN0; channel < PAD_CHANMAX; ++channel) {
+        if (PADHasSensor(channel, sensor_type)) {
+            return channel;
+        }
+    }
+
+    return PAD_CHAN0;
 }
 }  // namespace
 
@@ -152,24 +167,25 @@ void read(float dt) {
     }
 
     if (!s_sensor_enabled) {
-        if (!PADHasSensor(PAD_CHAN0, PAD_SENSOR_GYRO)) {
+        s_sensor_channel = find_sensor_channel(PAD_SENSOR_GYRO);
+        if (!PADHasSensor(s_sensor_channel, PAD_SENSOR_GYRO)) {
             return;
         }
-        if (!PADSetSensorEnabled(PAD_CHAN0, PAD_SENSOR_GYRO, TRUE)) {
+        if (!PADSetSensorEnabled(s_sensor_channel, PAD_SENSOR_GYRO, TRUE)) {
             return;
         }
         s_sensor_enabled = true;
     }
 
-    if (!s_accel_enabled && PADHasSensor(PAD_CHAN0, PAD_SENSOR_ACCEL) &&
-        PADSetSensorEnabled(PAD_CHAN0, PAD_SENSOR_ACCEL, TRUE))
+    if (!s_accel_enabled && PADHasSensor(s_sensor_channel, PAD_SENSOR_ACCEL) &&
+        PADSetSensorEnabled(s_sensor_channel, PAD_SENSOR_ACCEL, TRUE))
     {
         // We only need accel for the gravity-aware yaw/roll mix.
         s_accel_enabled = true;
     }
 
     f32 gyro[3];
-    if (!PADGetSensorData(PAD_CHAN0, PAD_SENSOR_GYRO, gyro, 3)) {
+    if (!PADGetSensorData(s_sensor_channel, PAD_SENSOR_GYRO, gyro, 3)) {
         return;
     }
 
@@ -190,7 +206,7 @@ void read(float dt) {
     float horizontal_rate = yaw_rate;
     if (aim_active && s_accel_enabled) {
         f32 accel[3];
-        if (PADGetSensorData(PAD_CHAN0, PAD_SENSOR_ACCEL, accel, 3)) {
+        if (PADGetSensorData(s_sensor_channel, PAD_SENSOR_ACCEL, accel, 3)) {
             if (!s_have_gravity_baseline) {
                 s_gravity_y = accel[1];
                 s_gravity_z = accel[2];
