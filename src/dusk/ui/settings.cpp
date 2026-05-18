@@ -1,5 +1,6 @@
 #include "settings.hpp"
 
+#include <aurora/aurora.h>
 #include "aurora/gfx.h"
 #include "bool_button.hpp"
 #include "controller_config.hpp"

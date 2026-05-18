@@ -2,9 +2,11 @@
 #define DUSK_CONFIG_VAR_HPP
 
 #include "dolphin/types.h"
-#include <type_traits>
 #include <cstdlib>
+#include <limits>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 /**
  * The configuration system.
