@@ -12,8 +12,11 @@ public:
     struct ItemInfo {
         uint8_t id = 0;
         std::string name;
+        std::string tab;
         std::string category;
         std::string iconPath;
+        uint8_t liveItemId = 0;
+        bool useLiveState = true;
         bool isQuestItem = false;
     };
 
@@ -31,8 +34,10 @@ public:
 
     const ItemInfo* getItemInfo(uint8_t itemId) const;
     std::vector<const ItemInfo*> getItemsByCategory(const std::string& category) const;
+    std::vector<const ItemInfo*> getItemsByTab(const std::string& tab) const;
     const std::vector<ItemInfo>& items() const { return mItemDefinitions; }
     std::vector<std::string> categories() const;
+    std::vector<std::string> tabs() const;
 
     std::string iconPathFor(uint8_t itemId) const;
     bool iconsReady() const { return mIconsReady; }

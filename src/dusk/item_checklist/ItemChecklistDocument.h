@@ -6,7 +6,9 @@
 
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace dusk::ui {
 
@@ -18,6 +20,8 @@ public:
     void refresh();
 
 private:
+    static constexpr std::string_view kSpeedrunTab = "Speedrun";
+
     struct CardRefs {
         Rml::Element* root = nullptr;
         Rml::Element* icon = nullptr;
@@ -26,14 +30,14 @@ private:
         bool stateInitialized = false;
     };
 
-    void build(Rml::Element* content);
-    void rebuildSections();
+    void build(Rml::Element* content, const std::string& tab);
+    void rebuildSections(const std::string& tab);
     void refreshItem(uint8_t itemId);
 
     CardRefs createCard(const ::ItemChecklist::ItemInfo& item, Rml::Element* parent);
 
     Rml::Element* mSectionsRoot = nullptr;
-    std::unique_ptr<ScopedEventListener> mCloseListener;
+    std::vector<std::unique_ptr<ScopedEventListener>> mCardListeners;
     std::unordered_map<uint8_t, CardRefs> mCards;
 };
 

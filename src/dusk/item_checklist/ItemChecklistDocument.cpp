@@ -14,47 +14,34 @@ namespace {
 
 const Rml::String kChecklistContent = R"RML(
 <div id="tracker-root" class="tracker-window">
-    <div class="tracker-shell">
-        <div class="tracker-header">
-            <div class="tracker-titleblock">
-                <div class="tracker-kicker">Item tracker</div>
-                <h1>Emotracker-style checklist</h1>
-            </div>
-            <button id="tracker-close" class="tracker-close">
-                <icon class="material-symbols-rounded">close</icon>
-            </button>
-        </div>
-
-        <div id="tracker-sections" class="tracker-sections"></div>
-    </div>
+    <div id="tracker-sections" class="tracker-sections"></div>
 </div>
 )RML";
 
 }  // namespace
 
 ItemChecklistDocument::ItemChecklistDocument() {
-    add_tab("Checklist", [this](Rml::Element* content) { build(content); });
+    const auto trackerTabs = ItemChecklist::instance().tabs();
+    for (const auto& tab : trackerTabs) {
+        add_tab(tab, [this, tab](Rml::Element* content) { build(content, tab); });
+    }
+    add_tab(kSpeedrunTab.data(), [this](Rml::Element* content) {
+        build(content, std::string{kSpeedrunTab});
+    });
 }
 
-void ItemChecklistDocument::build(Rml::Element* content) {
+void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab) {
     if (content == nullptr) {
         return;
     }
 
     content->SetInnerRML(kChecklistContent);
     mSectionsRoot = content->GetElementById("tracker-sections");
-
-    mCloseListener.reset();
-    if (auto* closeButton = content->GetElementById("tracker-close"); closeButton != nullptr) {
-        mCloseListener = std::make_unique<ScopedEventListener>(
-            closeButton, Rml::EventId::Click, [this](Rml::Event&) { request_close(); });
-    }
-
-    rebuildSections();
+    rebuildSections(tab);
     refresh();
 }
 
-void ItemChecklistDocument::rebuildSections() {
+void ItemChecklistDocument::rebuildSections(const std::string& tab) {
     if (mSectionsRoot == nullptr) {
         return;
     }
@@ -63,6 +50,7 @@ void ItemChecklistDocument::rebuildSections() {
         mSectionsRoot->RemoveChild(mSectionsRoot->GetFirstChild());
     }
     mCards.clear();
+    mCardListeners.clear();
 
     auto* grid = append(mSectionsRoot, "div");
     if (grid == nullptr) {
@@ -70,9 +58,13 @@ void ItemChecklistDocument::rebuildSections() {
     }
     grid->SetClass("tracker-grid", true);
 
+    const auto items = ItemChecklist::instance().getItemsByTab(tab);
     Rml::Element* row = nullptr;
     int index = 0;
-    for (const auto& item : ItemChecklist::instance().items()) {
+    for (const auto* item : items) {
+        if (item == nullptr) {
+            continue;
+        }
         if (index % 4 == 0) {
             row = append(grid, "div");
             if (row == nullptr) {
@@ -80,7 +72,7 @@ void ItemChecklistDocument::rebuildSections() {
             }
             row->SetClass("tracker-row", true);
         }
-        mCards[item.id] = createCard(item, row);
+        mCards[item->id] = createCard(*item, row);
         ++index;
     }
 }
@@ -100,6 +92,11 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     button->SetAttribute("type", "button");
     button->SetAttribute("data-item-id", std::to_string(item.id));
     button->SetAttribute("title", item.name);
+    mCardListeners.emplace_back(std::make_unique<ScopedEventListener>(
+        button, Rml::EventId::Click, [itemId = item.id, this](Rml::Event&) {
+            ItemChecklist::instance().toggleCollected(itemId);
+            refreshItem(itemId);
+        }));
 
     const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
     if (!iconPath.empty()) {

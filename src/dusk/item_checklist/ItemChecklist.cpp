@@ -26,22 +26,26 @@ constexpr auto kOverrideFile = "item_checklist.json";
 struct BundledItemDefinition {
     uint8_t id;
     const char* name;
+    const char* tab;
+    const char* category;
     const char* iconPath;
+    uint8_t liveItemId;
+    bool useLiveState;
 };
 
 constexpr std::array<BundledItemDefinition, 12> kFallbackItems{{
-    {74, "Fishing Rod", "res/item_tracker/rod.png"},
-    {75, "Slingshot", "res/item_tracker/slingshot.png"},
-    {72, "Lantern", "res/item_tracker/lantern.png"},
-    {64, "Boomerang", "res/item_tracker/boomerang.png"},
-    {69, "Iron Boots", "res/item_tracker/iron-boots.png"},
-    {67, "Bow", "res/item_tracker/bow.png"},
-    {62, "Hawkeye", "res/item_tracker/hawkeye.png"},
-    {80, "Bomb Bag", "res/item_tracker/bombbag.png"},
-    {79, "Giant Bomb Bags", "res/item_tracker/giantbombbag.png"},
-    {70, "Clawshot", "res/item_tracker/clawshot.png"},
-    {65, "Spinner", "res/item_tracker/spinner.png"},
-    {66, "Ball and Chain", "res/item_tracker/chainball.png"},
+    {74, "Fishing Rod", "Essentials", "Wheel", "res/item_tracker/rod.png", 74, true},
+    {75, "Slingshot", "Essentials", "Wheel", "res/item_tracker/slingshot.png", 75, true},
+    {72, "Lantern", "Essentials", "Wheel", "res/item_tracker/lantern.png", 72, true},
+    {64, "Boomerang", "Essentials", "Wheel", "res/item_tracker/boomerang.png", 64, true},
+    {69, "Iron Boots", "Essentials", "Wheel", "res/item_tracker/iron-boots.png", 69, true},
+    {67, "Bow", "Essentials", "Wheel", "res/item_tracker/bow.png", 67, true},
+    {62, "Hawkeye", "Essentials", "Wheel", "res/item_tracker/hawkeye.png", 62, true},
+    {80, "Bomb Bag", "Essentials", "Wheel", "res/item_tracker/bombbag.png", 80, true},
+    {79, "Giant Bomb Bags", "Essentials", "Wheel", "res/item_tracker/giantbombbag.png", 79, true},
+    {70, "Clawshot", "Essentials", "Wheel", "res/item_tracker/clawshot.png", 70, true},
+    {65, "Spinner", "Essentials", "Wheel", "res/item_tracker/spinner.png", 65, true},
+    {66, "Ball and Chain", "Essentials", "Wheel", "res/item_tracker/chainball.png", 66, true},
 }};
 
 std::vector<u8> read_io_full(SDL_IOStream* io) {
@@ -165,12 +169,36 @@ std::vector<const ItemChecklist::ItemInfo*> ItemChecklist::getItemsByCategory(
     return result;
 }
 
+std::vector<const ItemChecklist::ItemInfo*> ItemChecklist::getItemsByTab(const std::string& tab) const {
+    std::vector<const ItemInfo*> result;
+    for (const auto& item : mItemDefinitions) {
+        if (tab == "Speedrun" || item.tab == tab) {
+            result.push_back(&item);
+        }
+    }
+    return result;
+}
+
 std::vector<std::string> ItemChecklist::categories() const {
     std::vector<std::string> result;
     result.reserve(mItemDefinitions.size());
     for (const auto& item : mItemDefinitions) {
         if (std::find(result.begin(), result.end(), item.category) == result.end()) {
             result.push_back(item.category);
+        }
+    }
+    return result;
+}
+
+std::vector<std::string> ItemChecklist::tabs() const {
+    std::vector<std::string> result;
+    result.reserve(mItemDefinitions.size());
+    for (const auto& item : mItemDefinitions) {
+        if (item.tab.empty()) {
+            continue;
+        }
+        if (std::find(result.begin(), result.end(), item.tab) == result.end()) {
+            result.push_back(item.tab);
         }
     }
     return result;
@@ -195,8 +223,11 @@ void ItemChecklist::loadItemDefinitions() {
                 ItemInfo info;
                 info.id = item.value("id", 0);
                 info.name = item.value("name", "");
+                info.tab = item.value("tab", "Essentials");
                 info.category = item.value("category", "Wheel");
                 info.iconPath = item.value("iconPath", "");
+                info.liveItemId = item.value("liveItemId", info.id);
+                info.useLiveState = item.value("useLiveState", true);
                 info.isQuestItem = item.value("isQuestItem", false);
                 mItemDefinitions.push_back(std::move(info));
             }
@@ -214,8 +245,11 @@ void ItemChecklist::loadItemDefinitions() {
             ItemInfo info;
             info.id = item.id;
             info.name = item.name;
-            info.category = "Wheel";
+            info.tab = item.tab;
+            info.category = item.category;
             info.iconPath = item.iconPath;
+            info.liveItemId = item.liveItemId;
+            info.useLiveState = item.useLiveState;
             mItemDefinitions.push_back(std::move(info));
         }
     }
@@ -232,7 +266,10 @@ void ItemChecklist::syncItemStateFromGame() {
 }
 
 bool ItemChecklist::collectedFromGame(const ItemInfo& item) const {
-    return dComIfGs_isItemFirstBit(item.id) != 0;
+    if (!item.useLiveState) {
+        return false;
+    }
+    return dComIfGs_isItemFirstBit(item.liveItemId) != 0;
 }
 
 void ItemChecklist::save() {
