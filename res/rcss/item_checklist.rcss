@@ -92,9 +92,16 @@
 
 .tracker-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     justify-content: flex-start;
-    align-content: flex-start;
+    gap: 10dp;
+}
+
+.tracker-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
     gap: 10dp;
 }
 

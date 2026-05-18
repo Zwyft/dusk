@@ -70,8 +70,18 @@ void ItemChecklistDocument::rebuildSections() {
     }
     grid->SetClass("tracker-grid", true);
 
+    Rml::Element* row = nullptr;
+    int index = 0;
     for (const auto& item : ItemChecklist::instance().items()) {
-        mCards[item.id] = createCard(item, grid);
+        if (index % 4 == 0) {
+            row = append(grid, "div");
+            if (row == nullptr) {
+                return;
+            }
+            row->SetClass("tracker-row", true);
+        }
+        mCards[item.id] = createCard(item, row);
+        ++index;
     }
 }
 
