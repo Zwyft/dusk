@@ -1,248 +1,74 @@
 [
     {
-        "id": 0,
-        "name": "Hero's Clothes",
-        "category": "Equipment",
+        "id": 74,
+        "name": "Fishing Rod",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 1,
-        "name": "Ordon Sword",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 2,
-        "name": "Ordon Shield",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 3,
-        "name": "Wooden Sword",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 4,
-        "name": "Master Sword",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 5,
-        "name": "Hylian Shield",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 6,
-        "name": "Green Tunic",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 7,
-        "name": "Zora Tunic",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 8,
-        "name": "Goron Tunic",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 9,
-        "name": "Magic Armor",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 10,
-        "name": "Hero's Bow",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 11,
-        "name": "Bomb Arrow",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 12,
-        "name": "Hawkeye",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 13,
-        "name": "Gale Boomerang",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 14,
+        "id": 75,
         "name": "Slingshot",
-        "category": "Combat",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 15,
-        "name": "Ball and Chain",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 16,
-        "name": "Master Sword",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 17,
-        "name": "Light Sword",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 18,
-        "name": "Wooden Shield",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 19,
-        "name": "Hylian Shield",
-        "category": "Combat",
-        "isQuestItem": false
-    },
-    {
-        "id": 20,
+        "id": 72,
         "name": "Lantern",
-        "category": "Exploration",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 21,
-        "name": "Bottle",
-        "category": "Exploration",
+        "id": 64,
+        "name": "Boomerang",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 22,
-        "name": "Empty Bottle",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 23,
-        "name": "Ooccoo",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 24,
-        "name": "Dungeon Map",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 25,
-        "name": "Compass",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 26,
-        "name": "Big Key",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 27,
-        "name": "Small Key",
-        "category": "Exploration",
-        "isQuestItem": false
-    },
-    {
-        "id": 28,
-        "name": "Heart Container",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 29,
-        "name": "Piece of Heart",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 30,
-        "name": "Rupee",
-        "category": "Quest",
-        "isQuestItem": false
-    },
-    {
-        "id": 31,
-        "name": "Poe Soul",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 32,
-        "name": "Golden Bug",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 33,
-        "name": "Letter",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 34,
-        "name": "Mirror Shard",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 35,
-        "name": "Sky Book",
-        "category": "Quest",
-        "isQuestItem": true
-    },
-    {
-        "id": 36,
-        "name": "Dominion Rod",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 37,
-        "name": "Spinner",
-        "category": "Equipment",
-        "isQuestItem": false
-    },
-    {
-        "id": 38,
+        "id": 69,
         "name": "Iron Boots",
-        "category": "Equipment",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 39,
-        "name": "Hover Boots",
-        "category": "Equipment",
+        "id": 67,
+        "name": "Bow",
+        "category": "Wheel",
         "isQuestItem": false
     },
     {
-        "id": 40,
-        "name": "Hero's Charm",
-        "category": "Equipment",
+        "id": 62,
+        "name": "Hawkeye",
+        "category": "Wheel",
+        "isQuestItem": false
+    },
+    {
+        "id": 80,
+        "name": "Bomb Bag",
+        "category": "Wheel",
+        "isQuestItem": false
+    },
+    {
+        "id": 79,
+        "name": "Giant Bomb Bags",
+        "category": "Wheel",
+        "isQuestItem": false
+    },
+    {
+        "id": 70,
+        "name": "Clawshot",
+        "category": "Wheel",
+        "isQuestItem": false
+    },
+    {
+        "id": 65,
+        "name": "Spinner",
+        "category": "Wheel",
+        "isQuestItem": false
+    },
+    {
+        "id": 66,
+        "name": "Ball and Chain",
+        "category": "Wheel",
         "isQuestItem": false
     }
 ]

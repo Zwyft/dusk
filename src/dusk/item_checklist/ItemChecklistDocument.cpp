@@ -27,15 +27,6 @@ const Rml::String kChecklistContent = R"RML(
             </button>
         </div>
 
-        <div class="tracker-summary-row">
-            <div class="tracker-summary-meta">
-                <span id="tracker-summary">0 / 0 collected</span>
-            </div>
-            <div class="tracker-progress">
-                <div id="tracker-summary-fill" class="tracker-progress-fill"></div>
-            </div>
-        </div>
-
         <div id="tracker-sections" class="tracker-sections"></div>
     </div>
 </div>
@@ -54,8 +45,8 @@ void ItemChecklistDocument::build(Rml::Element* content) {
 
     content->SetInnerRML(kChecklistContent);
     mStatusText = content->GetElementById("tracker-status");
-    mSummaryText = content->GetElementById("tracker-summary");
-    mSummaryFill = content->GetElementById("tracker-summary-fill");
+    mSummaryText = nullptr;
+    mSummaryFill = nullptr;
     mSectionsRoot = content->GetElementById("tracker-sections");
 
     mCloseListener.reset();
@@ -186,7 +177,7 @@ void ItemChecklistDocument::refresh() {
 
 void ItemChecklistDocument::update() {
     if (visible()) {
-        constexpr Uint64 kRefreshIntervalNs = 250'000'000ULL;
+        constexpr Uint64 kRefreshIntervalNs = 500'000'000ULL;
         const Uint64 now = SDL_GetTicksNS();
         if (mLastRefreshTick == 0 || now - mLastRefreshTick >= kRefreshIntervalNs) {
             mLastRefreshTick = now;

@@ -27,11 +27,11 @@ body {
     max-width: 1280dp;
     display: flex;
     flex-direction: column;
-    gap: 10dp;
+    gap: 6dp;
     padding: 16dp 18dp 18dp;
     border: 1dp solid rgba(255, 245, 195, 0.55);
     border-radius: 18dp;
-    background: linear-gradient(180deg, rgba(102, 72, 139, 0.98), rgba(92, 63, 128, 0.98));
+    background: linear-gradient(180deg, rgba(95, 65, 123, 0.98), rgba(82, 56, 108, 0.98));
     box-shadow: 0 18dp 48dp rgba(0, 0, 0, 0.45), inset 0 0 0 1dp rgba(255, 255, 255, 0.05);
     pointer-events: auto;
     overflow: hidden;
@@ -40,40 +40,40 @@ body {
 .tracker-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 16dp;
+    align-items: center;
+    gap: 12dp;
 }
 
 .tracker-titleblock {
     display: flex;
     flex-direction: column;
-    gap: 2dp;
+    gap: 0dp;
 }
 
 .tracker-kicker {
     font-family: "Fira Sans Condensed";
     font-size: 11dp;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: rgba(255, 248, 214, 0.9);
+    letter-spacing: 0.16em;
+    color: rgba(255, 244, 196, 0.95);
     margin-left: 2dp;
 }
 
 .tracker-titleblock h1 {
     margin: 0;
     font-family: "AlegreyaSC";
-    font-size: 28dp;
+    font-size: 26dp;
     font-weight: bold;
-    color: #fff8df;
+    color: #fff7d5;
     text-transform: uppercase;
     line-height: 1;
 }
 
 .tracker-status {
-    font-size: 12dp;
-    color: rgba(255, 243, 214, 0.72);
+    font-size: 11dp;
+    color: rgba(255, 243, 214, 0.78);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
 }
 
 .tracker-close {
@@ -94,48 +94,21 @@ body {
 }
 
 .tracker-summary-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 4dp 8dp 0dp;
-    border-radius: 0;
-    background: transparent;
-}
-
-.tracker-summary-meta {
-    display: flex;
-    align-items: center;
-    font-family: "Fira Sans Condensed";
-    font-size: 14dp;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 247, 224, 0.92);
-}
-
-.tracker-progress {
     display: none;
-}
-
-.tracker-progress-fill {
-    width: 0%;
-    height: 100%;
-    border-radius: 999dp;
-    background: linear-gradient(90deg, #7bd66b, #cbe56c);
-    box-shadow: 0 0 14dp rgba(138, 220, 105, 0.45);
 }
 
 .tracker-sections {
     display: block;
     overflow-y: auto;
-    padding-right: 8dp;
+    padding: 10dp 6dp 0dp 0dp;
 }
 
 .tracker-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(56dp, 56dp));
-    justify-content: start;
+    grid-template-columns: repeat(6, 56dp);
+    justify-content: center;
     align-content: start;
-    gap: 14dp 14dp;
+    gap: 12dp 12dp;
 }
 
 .tracker-card {
@@ -156,8 +129,8 @@ body {
 }
 
 .tracker-card.locked {
-    opacity: 0.5;
-    filter: grayscale(100%);
+    opacity: 0.55;
+    filter: grayscale(100%) brightness(0.72) contrast(0.92);
 }
 
 .tracker-card.owned {
@@ -169,7 +142,6 @@ body {
     width: 56dp;
     height: 56dp;
     image-rendering: auto;
-    object-fit: contain;
 }
 
 .tracker-card-label {
