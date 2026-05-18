@@ -79,21 +79,14 @@ void ItemChecklistDocument::rebuildSections() {
     }
     mCards.clear();
 
-    const auto categories = ItemChecklist::instance().categories();
-    for (const auto& category : categories) {
-        auto* section = append(mSectionsRoot, "div");
-        section->SetClass("tracker-section", true);
+    auto* grid = append(mSectionsRoot, "div");
+    if (grid == nullptr) {
+        return;
+    }
+    grid->SetClass("tracker-grid", true);
 
-        auto* heading = append(section, "div");
-        heading->SetClass("tracker-section-title", true);
-        heading->SetInnerRML(escape(category));
-
-        auto* grid = append(section, "div");
-        grid->SetClass("tracker-grid", true);
-
-        for (const auto* item : ItemChecklist::instance().getItemsByCategory(category)) {
-            mCards[item->id] = createCard(*item, grid);
-        }
+    for (const auto& item : ItemChecklist::instance().items()) {
+        mCards[item.id] = createCard(item, grid);
     }
 }
 

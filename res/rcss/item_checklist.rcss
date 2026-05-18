@@ -24,15 +24,15 @@ body {
 
 .tracker-shell {
     width: 100%;
-    max-width: 1320dp;
+    max-width: 1280dp;
     display: flex;
     flex-direction: column;
-    gap: 16dp;
-    padding: 20dp 22dp 24dp;
-    border: 1dp solid rgba(255, 255, 255, 0.08);
-    border-radius: 22dp;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(28, 28, 28, 0.96));
-    box-shadow: 0 20dp 60dp rgba(0, 0, 0, 0.45);
+    gap: 10dp;
+    padding: 16dp 18dp 18dp;
+    border: 1dp solid rgba(255, 245, 195, 0.55);
+    border-radius: 18dp;
+    background: linear-gradient(180deg, rgba(102, 72, 139, 0.98), rgba(92, 63, 128, 0.98));
+    box-shadow: 0 18dp 48dp rgba(0, 0, 0, 0.45), inset 0 0 0 1dp rgba(255, 255, 255, 0.05);
     pointer-events: auto;
     overflow: hidden;
 }
@@ -47,28 +47,33 @@ body {
 .tracker-titleblock {
     display: flex;
     flex-direction: column;
-    gap: 6dp;
+    gap: 2dp;
 }
 
 .tracker-kicker {
     font-family: "Fira Sans Condensed";
-    font-size: 12dp;
+    font-size: 11dp;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #8ea6c0;
+    letter-spacing: 0.14em;
+    color: rgba(255, 248, 214, 0.9);
+    margin-left: 2dp;
 }
 
 .tracker-titleblock h1 {
     margin: 0;
     font-family: "AlegreyaSC";
-    font-size: 30dp;
+    font-size: 28dp;
     font-weight: bold;
-    color: #f1efe7;
+    color: #fff8df;
+    text-transform: uppercase;
+    line-height: 1;
 }
 
 .tracker-status {
-    font-size: 14dp;
-    color: #a29b8b;
+    font-size: 12dp;
+    color: rgba(255, 243, 214, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .tracker-close {
@@ -77,41 +82,38 @@ body {
     padding: 0;
     border: 0;
     border-radius: 10dp;
-    background: rgba(255, 255, 255, 0.06);
-    color: #f1efe7;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff6da;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .tracker-close:hover {
-    background: rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .tracker-summary-row {
     display: flex;
     flex-direction: column;
-    gap: 10dp;
-    padding: 14dp 16dp;
-    border-radius: 18dp;
-    background: rgba(255, 255, 255, 0.035);
+    gap: 0;
+    padding: 4dp 8dp 0dp;
+    border-radius: 0;
+    background: transparent;
 }
 
 .tracker-summary-meta {
     display: flex;
     align-items: center;
-    gap: 12dp;
     font-family: "Fira Sans Condensed";
-    font-size: 15dp;
-    letter-spacing: 0.04em;
+    font-size: 14dp;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: rgba(255, 247, 224, 0.92);
 }
 
 .tracker-progress {
-    height: 6dp;
-    border-radius: 999dp;
-    background: rgba(255, 255, 255, 0.08);
-    overflow: hidden;
+    display: none;
 }
 
 .tracker-progress-fill {
@@ -123,68 +125,38 @@ body {
 }
 
 .tracker-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 18dp;
+    display: block;
     overflow-y: auto;
-    padding-right: 6dp;
-}
-
-.tracker-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10dp;
-}
-
-.tracker-section-title {
-    display: flex;
-    align-items: center;
-    gap: 10dp;
-    font-family: "Fira Sans Condensed";
-    font-size: 17dp;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #ede7d2;
-    letter-spacing: 0.08em;
-}
-
-.tracker-section-title::after {
-    content: "";
-    flex: 1 1 auto;
-    height: 1dp;
-    background: linear-gradient(90deg, rgba(237, 231, 210, 0.45), rgba(237, 231, 210, 0));
+    padding-right: 8dp;
 }
 
 .tracker-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(58dp, 58dp));
-    gap: 12dp;
+    grid-template-columns: repeat(auto-fill, minmax(56dp, 56dp));
+    justify-content: start;
+    align-content: start;
+    gap: 14dp 14dp;
 }
 
 .tracker-card {
-    width: 58dp;
-    height: 70dp;
-    padding: 6dp 4dp 4dp;
-    border: 1dp solid rgba(255, 255, 255, 0.06);
-    border-radius: 14dp;
-    background: rgba(255, 255, 255, 0.035);
+    width: 56dp;
+    height: 56dp;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 4dp;
-    transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease,
-        opacity 0.12s ease, filter 0.12s ease;
+    justify-content: center;
+    transition: transform 0.08s ease, opacity 0.08s ease, filter 0.08s ease;
 }
 
 .tracker-card:hover {
-    transform: translateY(-2dp);
-    border-color: rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.06);
+    transform: scale(1.04);
 }
 
 .tracker-card.locked {
-    opacity: 0.28;
+    opacity: 0.5;
     filter: grayscale(100%);
 }
 
@@ -194,9 +166,10 @@ body {
 }
 
 .tracker-card-icon {
-    width: 42dp;
-    height: 42dp;
+    width: 56dp;
+    height: 56dp;
     image-rendering: auto;
+    object-fit: contain;
 }
 
 .tracker-card-label {
