@@ -113,14 +113,15 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     button->SetAttribute("data-item-id", std::to_string(item.id));
     button->SetAttribute("title", item.name);
 
-    auto* icon = append(button, "img");
-    if (icon == nullptr) {
-        return refs;
-    }
-    icon->SetClass("tracker-card-icon", true);
     const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
     if (!iconPath.empty()) {
+        auto* icon = append(button, "img");
+        if (icon == nullptr) {
+            return refs;
+        }
+        icon->SetClass("tracker-card-icon", true);
         icon->SetAttribute("src", iconPath);
+        refs.icon = icon;
     }
 
     auto* label = append(button, "div");
@@ -131,7 +132,6 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     label->SetInnerRML(escape(item.name));
 
     refs.root = button;
-    refs.icon = icon;
     return refs;
 }
 
@@ -201,8 +201,8 @@ void ItemChecklistDocument::update() {
 
             const auto& items = ItemChecklist::instance().items();
             const bool iconsReady = ItemChecklist::instance().iconsReady();
-            bool dirty = iconsReady != mIconsReadySnapshot ||
-                         items.size() != mCollectedSnapshot.size();
+            const bool iconsChanged = iconsReady != mIconsReadySnapshot;
+            bool dirty = iconsChanged || items.size() != mCollectedSnapshot.size();
             if (!dirty) {
                 for (size_t i = 0; i < items.size(); ++i) {
                     const bool collected = ItemChecklist::instance().isCollected(items[i].id);
@@ -215,6 +215,9 @@ void ItemChecklistDocument::update() {
 
             if (dirty) {
                 mIconsReadySnapshot = iconsReady;
+                if (iconsChanged) {
+                    rebuildSections();
+                }
                 mCollectedSnapshot.clear();
                 mCollectedSnapshot.reserve(items.size());
                 for (const auto& item : items) {

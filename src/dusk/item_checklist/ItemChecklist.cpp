@@ -52,6 +52,15 @@ std::string to_rml_path(const std::filesystem::path& path) {
     return path.generic_string();
 }
 
+std::string to_rml_url(const std::filesystem::path& path) {
+    const auto absolutePath = path.is_absolute() ? path : std::filesystem::absolute(path);
+#if defined(_WIN32)
+    return "file:///" + absolutePath.generic_string();
+#else
+    return "file://" + absolutePath.generic_string();
+#endif
+}
+
 std::string normalize_name(std::string_view value) {
     std::string result;
     result.reserve(value.size());
@@ -310,7 +319,7 @@ void ItemChecklist::rebuildIconCache() {
 
         const auto iconPath = mIconCacheDir / fmt::format("item_{:03}.bmp", item.id);
         if (write_bmp(iconPath, rgba, timg->width, timg->height)) {
-            item.iconPath = to_rml_path(iconPath);
+            item.iconPath = to_rml_url(iconPath);
             wroteAnyIcon = true;
         }
     }
