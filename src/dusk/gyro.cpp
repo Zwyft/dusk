@@ -67,7 +67,7 @@ void disable_pad_sensors() {
     }
 }
 
-int find_sensor_channel(u32 sensor_type) {
+int find_sensor_channel(PADSensorType sensor_type) {
     if (PADHasSensor(s_sensor_channel, sensor_type)) {
         return s_sensor_channel;
     }
