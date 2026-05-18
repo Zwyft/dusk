@@ -78,7 +78,6 @@
 #include <aurora/event.h>
 #include <aurora/main.h>
 #include <aurora/dvd.h>
-#include <aurora/lib/window.hpp>
 #include <dolphin/dvd.h>
 
 #include "SDL3/SDL_filesystem.h"
@@ -841,11 +840,9 @@ int game_main(int argc, char* argv[]) {
     aurora_set_resampler(
         dusk::getSettings().game.resampler.getValue() == dusk::Resampler::Area ? SAMPLER_AREA
                                                                                 : SAMPLER_BILINEAR);
-    if (SDL_Window* window = aurora::window::get_sdl_window(); window != nullptr) {
-        const float brightness =
-            std::clamp(dusk::getSettings().game.displayBrightness.getValue() / 100.0f, 0.5f, 1.5f);
-        SDL_SetWindowBrightness(window, brightness);
-    }
+    dComIfG_setBrightness(static_cast<u8>(
+        (std::clamp(dusk::getSettings().game.displayBrightness.getValue(), 25, 100) * 255) /
+        100));
 
     dusk::audio::SetMasterVolume(dusk::getSettings().audio.masterVolume / 100.0f);
     dusk::audio::SetEnableReverb(dusk::getSettings().audio.enableReverb);

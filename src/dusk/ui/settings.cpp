@@ -1,11 +1,10 @@
 #include "settings.hpp"
 
 #include <aurora/aurora.h>
-#include <aurora/lib/window.hpp>
-#include <SDL3/SDL_video.h>
 #include "aurora/gfx.h"
 #include "bool_button.hpp"
 #include "controller_config.hpp"
+#include "d/d_com_inf_game.h"
 #include "dusk/audio/DuskAudioSystem.h"
 #include "dusk/audio/DuskDsp.hpp"
 #include "dusk/config.hpp"
@@ -249,14 +248,9 @@ bool gyro_enabled() {
 }
 
 void apply_display_brightness_setting() {
-    SDL_Window* window = aurora::window::get_sdl_window();
-    if (window == nullptr) {
-        return;
-    }
-
-    const float brightness = std::clamp(
-        getSettings().game.displayBrightness.getValue() / 100.0f, 0.5f, 1.5f);
-    SDL_SetWindowBrightness(window, brightness);
+    const int brightnessPercent = std::clamp(getSettings().game.displayBrightness.getValue(), 25, 100);
+    const int brightness = (brightnessPercent * 255) / 100;
+    dComIfG_setBrightness(static_cast<u8>(brightness));
 }
 
 struct ConfigBoolProps {
@@ -719,7 +713,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .getValue = [] { return getSettings().game.displayBrightness.getValue(); },
                 .setValue =
                     [](int value) {
-                        getSettings().game.displayBrightness.setValue(std::clamp(value, 50, 150));
+                        getSettings().game.displayBrightness.setValue(std::clamp(value, 25, 100));
                         config::Save();
                         apply_display_brightness_setting();
                     },
@@ -728,8 +722,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                         return getSettings().game.displayBrightness.getValue() !=
                                getSettings().game.displayBrightness.getDefaultValue();
                     },
-                .min = 50,
-                .max = 150,
+                .min = 25,
+                .max = 100,
                 .step = 5,
                 .suffix = "%",
             }),
