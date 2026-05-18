@@ -20,7 +20,6 @@ const Rml::String kChecklistContent = R"RML(
             <div class="tracker-titleblock">
                 <div class="tracker-kicker">Item tracker</div>
                 <h1>Emotracker-style checklist</h1>
-                <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
             </div>
             <button id="tracker-close" class="tracker-close">
                 <icon class="material-symbols-rounded">close</icon>
@@ -44,9 +43,6 @@ void ItemChecklistDocument::build(Rml::Element* content) {
     }
 
     content->SetInnerRML(kChecklistContent);
-    mStatusText = content->GetElementById("tracker-status");
-    mSummaryText = nullptr;
-    mSummaryFill = nullptr;
     mSectionsRoot = content->GetElementById("tracker-sections");
 
     mCloseListener.reset();
@@ -106,6 +102,7 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
         icon->SetClass("tracker-card-icon", true);
         icon->SetAttribute("src", iconPath);
         refs.icon = icon;
+        refs.iconSource = iconPath;
     }
 
     auto* label = append(button, "div");
@@ -137,34 +134,11 @@ void ItemChecklistDocument::refreshItem(uint8_t itemId) {
         const auto iconPath = ItemChecklist::instance().iconPathFor(itemId);
         if (iconPath.empty()) {
             it->second.icon->RemoveAttribute("src");
-        } else {
+            it->second.iconSource.clear();
+        } else if (iconPath != it->second.iconSource) {
             it->second.icon->SetAttribute("src", iconPath);
+            it->second.iconSource = iconPath;
         }
-    }
-}
-
-void ItemChecklistDocument::refreshSummary() {
-    const auto& items = ItemChecklist::instance().items();
-    const auto total = static_cast<int>(items.size());
-    int collected = 0;
-    for (const auto& item : items) {
-        if (ItemChecklist::instance().isCollected(item.id)) {
-            ++collected;
-        }
-    }
-
-    if (mSummaryText != nullptr) {
-        mSummaryText->SetInnerRML(
-            fmt::format("{} / {} collected", collected, total));
-    }
-    if (mSummaryFill != nullptr) {
-        const float fraction = total > 0 ? static_cast<float>(collected) / total : 0.0f;
-        mSummaryFill->SetAttribute("style", fmt::format("width: {:.2f}%;", fraction * 100.0f));
-    }
-    if (mStatusText != nullptr) {
-        mStatusText->SetInnerRML(ItemChecklist::instance().iconsReady()
-                ? "Icons extracted from the loaded disc"
-                : "Waiting for disc assets");
     }
 }
 
@@ -172,7 +146,6 @@ void ItemChecklistDocument::refresh() {
     for (const auto& item : ItemChecklist::instance().items()) {
         refreshItem(item.id);
     }
-    refreshSummary();
 }
 
 void ItemChecklistDocument::update() {
@@ -184,9 +157,7 @@ void ItemChecklistDocument::update() {
             ItemChecklist::instance().refresh();
 
             const auto& items = ItemChecklist::instance().items();
-            const bool iconsReady = ItemChecklist::instance().iconsReady();
-            const bool iconsChanged = iconsReady != mIconsReadySnapshot;
-            bool dirty = iconsChanged || items.size() != mCollectedSnapshot.size();
+            bool dirty = items.size() != mCollectedSnapshot.size();
             if (!dirty) {
                 for (size_t i = 0; i < items.size(); ++i) {
                     const bool collected = ItemChecklist::instance().isCollected(items[i].id);
@@ -198,10 +169,6 @@ void ItemChecklistDocument::update() {
             }
 
             if (dirty) {
-                mIconsReadySnapshot = iconsReady;
-                if (iconsChanged) {
-                    rebuildSections();
-                }
                 mCollectedSnapshot.clear();
                 mCollectedSnapshot.reserve(items.size());
                 for (const auto& item : items) {

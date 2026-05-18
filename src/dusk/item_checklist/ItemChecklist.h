@@ -46,8 +46,6 @@ private:
     void load();
 
     void syncItemStateFromGame();
-    void rebuildIconCache();
-    bool isGameAssetReady() const;
     bool collectedFromGame(const ItemInfo& item) const;
 
     std::unordered_map<uint8_t, bool> mLiveCollected;
@@ -55,7 +53,6 @@ private:
     std::vector<ItemInfo> mItemDefinitions;
     std::unordered_map<uint8_t, size_t> mItemMap;
 
-    std::filesystem::path mIconCacheDir;
     bool mInitialized = false;
     bool mIconsReady = false;
 };

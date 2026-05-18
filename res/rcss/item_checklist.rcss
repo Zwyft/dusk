@@ -1,15 +1,5 @@
 @namespace url("uric://rcss.org/2.0");
 
-body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    color: #d9d6cc;
-    font-family: "Fira Sans";
-}
-
 .tracker-window {
     position: absolute;
     top: 24dp;
@@ -24,10 +14,10 @@ body {
 
 .tracker-shell {
     width: 100%;
-    max-width: 1280dp;
+    max-width: 960dp;
     display: flex;
     flex-direction: column;
-    gap: 6dp;
+    gap: 4dp;
     padding: 16dp 18dp 18dp;
     border: 1dp solid rgba(255, 245, 195, 0.55);
     border-radius: 18dp;
@@ -105,10 +95,10 @@ body {
 
 .tracker-grid {
     display: grid;
-    grid-template-columns: repeat(6, 56dp);
-    justify-content: center;
+    grid-template-columns: repeat(4, 56dp);
+    justify-content: start;
     align-content: start;
-    gap: 12dp 12dp;
+    gap: 10dp 10dp;
 }
 
 .tracker-card {
@@ -148,7 +138,7 @@ body {
     display: none;
 }
 
-icon {
+.tracker-window icon {
     font-family: "MaterialSymbolsRounded";
     font-weight: normal;
     display: inline-block;

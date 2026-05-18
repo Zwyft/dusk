@@ -2,72 +2,84 @@
     {
         "id": 74,
         "name": "Fishing Rod",
+        "iconPath": "res/item_tracker/rod.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 75,
         "name": "Slingshot",
+        "iconPath": "res/item_tracker/slingshot.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 72,
         "name": "Lantern",
+        "iconPath": "res/item_tracker/lantern.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 64,
         "name": "Boomerang",
+        "iconPath": "res/item_tracker/boomerang.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 69,
         "name": "Iron Boots",
+        "iconPath": "res/item_tracker/iron-boots.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 67,
         "name": "Bow",
+        "iconPath": "res/item_tracker/bow.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 62,
         "name": "Hawkeye",
+        "iconPath": "res/item_tracker/hawkeye.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 80,
         "name": "Bomb Bag",
+        "iconPath": "res/item_tracker/bombbag.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 79,
         "name": "Giant Bomb Bags",
+        "iconPath": "res/item_tracker/giantbombbag.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 70,
         "name": "Clawshot",
+        "iconPath": "res/item_tracker/clawshot.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 65,
         "name": "Spinner",
+        "iconPath": "res/item_tracker/spinner.png",
         "category": "Wheel",
         "isQuestItem": false
     },
     {
         "id": 66,
         "name": "Ball and Chain",
+        "iconPath": "res/item_tracker/chainball.png",
         "category": "Wheel",
         "isQuestItem": false
     }
