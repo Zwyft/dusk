@@ -15,6 +15,7 @@
 #include "global.h"
 #include "m_Do/m_Do_controller_pad.h"
 #include "m_Do/m_Do_graphic.h"
+#include "dusk/item_checklist_hooks.h"
 #include <cstring>
 
 #include "tracy/Tracy.hpp"
@@ -1537,6 +1538,7 @@ inline void dComIfGs_resetLastWarpAcceptStage() {
 
 inline void dComIfGs_setItem(int i_slotNo, u8 i_itemNo) {
     g_dComIfG_gameInfo.info.getPlayer().getItem().setItem(i_slotNo, i_itemNo);
+    dusk::item_checklist::on_item_slot_changed(i_itemNo);
 }
 
 inline u8 dComIfGs_getItem(int i_slotNo, bool i_checkCombo) {
@@ -1622,10 +1624,12 @@ inline void dComIfGs_setBaitItem(u8 i_item) {
 
 inline void dComIfGs_onItemFirstBit(u8 i_itemNo) {
     g_dComIfG_gameInfo.info.getPlayer().getGetItem().onFirstBit(i_itemNo);
+    dusk::item_checklist::on_item_first_bit_changed(i_itemNo, true);
 }
 
 inline void dComIfGs_offItemFirstBit(u8 i_itemNo) {
     g_dComIfG_gameInfo.info.getPlayer().getGetItem().offFirstBit(i_itemNo);
+    dusk::item_checklist::on_item_first_bit_changed(i_itemNo, false);
 }
 
 inline int dComIfGs_isItemFirstBit(u8 i_no) {

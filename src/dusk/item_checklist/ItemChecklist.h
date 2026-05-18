@@ -24,6 +24,7 @@ public:
 
     bool initialize();
     void shutdown();
+    bool isInitialized() const { return mInitialized; }
 
     bool isCollected(uint8_t itemId) const;
     void setCollected(uint8_t itemId, bool collected);
@@ -31,6 +32,9 @@ public:
 
     void onItemCollected(uint8_t itemId);
     void refresh();
+    void onItemSlotChanged(uint8_t itemId);
+    void onItemFirstBitChanged(uint8_t itemId, bool collected);
+    uint64_t revision() const { return mRevision; }
 
     const ItemInfo* getItemInfo(uint8_t itemId) const;
     std::vector<const ItemInfo*> getItemsByCategory(const std::string& category) const;
@@ -51,7 +55,9 @@ private:
     void load();
 
     void syncItemStateFromGame();
+    void syncItemStateFromGame(uint8_t itemId, bool collected);
     bool collectedFromGame(const ItemInfo& item) const;
+    void bumpRevision();
 
     std::unordered_map<uint8_t, bool> mLiveCollected;
     std::unordered_map<uint8_t, bool> mManualOverrides;
@@ -60,4 +66,5 @@ private:
 
     bool mInitialized = false;
     bool mIconsReady = false;
+    uint64_t mRevision = 1;
 };

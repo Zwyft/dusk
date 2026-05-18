@@ -2,6 +2,7 @@
 
 #include "d/d_com_inf_game.h"
 #include "dusk/io.hpp"
+#include "dusk/item_checklist_hooks.h"
 #include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/ui/ui.hpp"
@@ -121,8 +122,14 @@ void ItemChecklist::shutdown() {
 }
 
 bool ItemChecklist::isCollected(uint8_t itemId) const {
-    if (const auto overrideIt = mManualOverrides.find(itemId); overrideIt != mManualOverrides.end()) {
-        return overrideIt->second;
+    const auto* item = getItemInfo(itemId);
+    if (item == nullptr) {
+        return false;
+    }
+    if (!item->useLiveState) {
+        if (const auto overrideIt = mManualOverrides.find(itemId); overrideIt != mManualOverrides.end()) {
+            return overrideIt->second;
+        }
     }
     if (const auto liveIt = mLiveCollected.find(itemId); liveIt != mLiveCollected.end()) {
         return liveIt->second;
@@ -131,7 +138,16 @@ bool ItemChecklist::isCollected(uint8_t itemId) const {
 }
 
 void ItemChecklist::setCollected(uint8_t itemId, bool collected) {
+    const auto* item = getItemInfo(itemId);
+    if (item == nullptr || item->useLiveState) {
+        return;
+    }
+    if (const auto existing = mManualOverrides.find(itemId);
+        existing != mManualOverrides.end() && existing->second == collected) {
+        return;
+    }
     mManualOverrides[itemId] = collected;
+    bumpRevision();
     save();
 }
 
@@ -140,6 +156,14 @@ void ItemChecklist::toggleCollected(uint8_t itemId) {
 }
 
 void ItemChecklist::onItemCollected(uint8_t itemId) {
+    const auto* item = getItemInfo(itemId);
+    if (item == nullptr) {
+        return;
+    }
+    if (item->useLiveState) {
+        syncItemStateFromGame(itemId, true);
+        return;
+    }
     setCollected(itemId, true);
 }
 
@@ -149,6 +173,36 @@ void ItemChecklist::refresh() {
     }
 
     syncItemStateFromGame();
+}
+
+void ItemChecklist::onItemSlotChanged(uint8_t itemId) {
+    if (!mInitialized) {
+        return;
+    }
+
+    bool changed = false;
+    for (const auto& item : mItemDefinitions) {
+        if (!item.useLiveState || item.liveItemId != itemId) {
+            continue;
+        }
+
+        const bool collected = collectedFromGame(item);
+        if (mLiveCollected[item.id] != collected) {
+            mLiveCollected[item.id] = collected;
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        bumpRevision();
+    }
+}
+
+void ItemChecklist::onItemFirstBitChanged(uint8_t itemId, bool collected) {
+    if (!mInitialized) {
+        return;
+    }
+    syncItemStateFromGame(itemId, collected);
 }
 
 const ItemChecklist::ItemInfo* ItemChecklist::getItemInfo(uint8_t itemId) const {
@@ -260,8 +314,32 @@ void ItemChecklist::loadItemDefinitions() {
 }
 
 void ItemChecklist::syncItemStateFromGame() {
+    bool changed = false;
     for (const auto& item : mItemDefinitions) {
-        mLiveCollected[item.id] = collectedFromGame(item);
+        const bool collected = collectedFromGame(item);
+        if (mLiveCollected[item.id] != collected) {
+            mLiveCollected[item.id] = collected;
+            changed = true;
+        }
+    }
+    if (changed) {
+        bumpRevision();
+    }
+}
+
+void ItemChecklist::syncItemStateFromGame(uint8_t itemId, bool collected) {
+    bool changed = false;
+    for (const auto& item : mItemDefinitions) {
+        if (!item.useLiveState || item.liveItemId != itemId) {
+            continue;
+        }
+        if (mLiveCollected[item.id] != collected) {
+            mLiveCollected[item.id] = collected;
+            changed = true;
+        }
+    }
+    if (changed) {
+        bumpRevision();
     }
 }
 
@@ -311,3 +389,27 @@ void ItemChecklist::load() {
         DuskLog.error("ItemChecklist: failed to parse save file: {}", e.what());
     }
 }
+
+void ItemChecklist::bumpRevision() {
+    ++mRevision;
+}
+
+namespace dusk::item_checklist {
+
+void on_item_slot_changed(uint8_t itemId) {
+    auto& checklist = ItemChecklist::instance();
+    if (!checklist.isInitialized()) {
+        return;
+    }
+    checklist.onItemSlotChanged(itemId);
+}
+
+void on_item_first_bit_changed(uint8_t itemId, bool collected) {
+    auto& checklist = ItemChecklist::instance();
+    if (!checklist.isInitialized()) {
+        return;
+    }
+    checklist.onItemFirstBitChanged(itemId, collected);
+}
+
+}  // namespace dusk::item_checklist

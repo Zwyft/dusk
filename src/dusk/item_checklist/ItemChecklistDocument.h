@@ -39,6 +39,7 @@ private:
     Rml::Element* mSectionsRoot = nullptr;
     std::vector<std::unique_ptr<ScopedEventListener>> mCardListeners;
     std::unordered_map<uint8_t, CardRefs> mCards;
+    uint64_t mSeenRevision = 0;
 };
 
 }  // namespace dusk::ui

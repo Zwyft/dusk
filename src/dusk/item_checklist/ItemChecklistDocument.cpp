@@ -39,6 +39,7 @@ void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab)
     mSectionsRoot = content->GetElementById("tracker-sections");
     rebuildSections(tab);
     refresh();
+    mSeenRevision = ItemChecklist::instance().revision();
 }
 
 void ItemChecklistDocument::rebuildSections(const std::string& tab) {
@@ -92,11 +93,14 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
     button->SetAttribute("type", "button");
     button->SetAttribute("data-item-id", std::to_string(item.id));
     button->SetAttribute("title", item.name);
-    mCardListeners.emplace_back(std::make_unique<ScopedEventListener>(
-        button, Rml::EventId::Click, [itemId = item.id, this](Rml::Event&) {
-            ItemChecklist::instance().toggleCollected(itemId);
-            refreshItem(itemId);
-        }));
+    if (!item.useLiveState) {
+        mCardListeners.emplace_back(std::make_unique<ScopedEventListener>(
+            button, Rml::EventId::Click, [itemId = item.id, this](Rml::Event&) {
+                ItemChecklist::instance().toggleCollected(itemId);
+                refreshItem(itemId);
+                mSeenRevision = ItemChecklist::instance().revision();
+            }));
+    }
 
     const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
     if (!iconPath.empty()) {
@@ -159,6 +163,11 @@ void ItemChecklistDocument::refresh() {
 
 void ItemChecklistDocument::update() {
     Window::update();
+    const auto revision = ItemChecklist::instance().revision();
+    if (revision != mSeenRevision) {
+        refresh();
+        mSeenRevision = revision;
+    }
 }
 
 }  // namespace dusk::ui
