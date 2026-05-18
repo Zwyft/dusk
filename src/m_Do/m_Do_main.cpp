@@ -771,7 +771,7 @@ int game_main(int argc, char* argv[]) {
         const auto configPathString = dusk::ConfigPath.u8string();
         AuroraConfig config{};
         config.appName = dusk::AppName;
-        config.configPath = reinterpret_cast<const char*>(configPathString.c_str());
+        config.userPath = reinterpret_cast<const char*>(configPathString.c_str());
         config.vsync = dusk::getSettings().video.enableVsync;
         config.startFullscreen = dusk::getSettings().video.enableFullscreen;
         config.windowPosX = dusk::getSettings().video.windowPositionX;
