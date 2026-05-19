@@ -122,6 +122,17 @@ option(DUSK_ENABLE_SENTRY_NATIVE "Enable sentry-native crash reporting support" 
 set(DUSK_SENTRY_DSN "" CACHE STRING "Sentry DSN")
 set(DUSK_SENTRY_ENVIRONMENT "development" CACHE STRING "Sentry environment")
 
+if (DUSK_EXPERIMENTAL_SWITCH)
+    set(DUSK_MOVIE_SUPPORT OFF CACHE BOOL
+        "Movie playback is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_UPDATE_CHECKER OFF CACHE BOOL
+        "Update checker is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_SENTRY_NATIVE OFF CACHE BOOL
+        "Sentry is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_DISCORD OFF CACHE BOOL
+        "Discord Rich Presence is currently disabled for the experimental Switch target" FORCE)
+endif ()
+
 # Edit & Continue
 if (MSVC)
     if ("${CMAKE_MSVC_DEBUG_INFORMATION_FORMAT}" STREQUAL "" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -381,6 +392,9 @@ set(DUSK_ENABLE_DISCORD_DEFAULT ON)
 if (DEFINED DUSK_ENABLE_DISCORD_RPC AND NOT DEFINED DUSK_ENABLE_DISCORD)
     set(DUSK_ENABLE_DISCORD_DEFAULT ${DUSK_ENABLE_DISCORD_RPC})
 endif ()
+if (DUSK_EXPERIMENTAL_SWITCH)
+    set(DUSK_ENABLE_DISCORD_DEFAULT OFF)
+endif ()
 option(DUSK_ENABLE_DISCORD "Enable Discord Rich Presence support" ${DUSK_ENABLE_DISCORD_DEFAULT})
 if (DUSK_ENABLE_DISCORD AND NOT ANDROID AND NOT IOS AND NOT TVOS)
     list(APPEND GAME_COMPILE_DEFS DUSK_DISCORD=1)
@@ -393,6 +407,7 @@ endif ()
 if (DUSK_EXPERIMENTAL_SWITCH)
     list(APPEND GAME_COMPILE_DEFS TARGET_SWITCH=1)
     message(STATUS "dusk: Nintendo Switch scaffolding enabled (build/runtime support is not complete yet)")
+    message(STATUS "dusk: Switch target forces OFF movie support, update checker, sentry, and discord RPC")
 endif ()
 
 # game_debug is for game code files that we know work when compiled with DEBUG=1

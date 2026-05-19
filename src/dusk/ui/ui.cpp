@@ -14,6 +14,7 @@
 #include "dusk/dusk.h"
 #include "dusk/config.hpp"
 #include "dusk/io.hpp"
+#include "dusk/platform_support.hpp"
 #include "dusk/touch_controls.hpp"
 #include "input.hpp"
 #include "prelaunch.hpp"
@@ -173,7 +174,8 @@ void handle_event(const SDL_Event& event) noexcept {
             });
         }
         sConnectedGamepads.erase(event.gdevice.which);
-    } else if (event.type == SDL_EVENT_WINDOW_MOVED || event.type == SDL_EVENT_WINDOW_RESIZED) {
+    } else if constexpr (dusk::platform::SupportsWindowStatePersistence) {
+        if (event.type == SDL_EVENT_WINDOW_MOVED || event.type == SDL_EVENT_WINDOW_RESIZED) {
         int x, y;
         if (SDL_GetWindowPosition(aurora::window::get_sdl_window(), &x, &y)) {
             getSettings().video.windowPositionX.setValue(x);
@@ -185,6 +187,7 @@ void handle_event(const SDL_Event& event) noexcept {
             getSettings().video.windowHeight.setValue(height);
         }
         config::Save();
+        }
     }
     input::handle_event(event);
 }
@@ -345,6 +348,10 @@ NavCommand map_nav_event(const Rml::Event& event) noexcept {
 
 Insets safe_area_insets(Rml::Context* context) noexcept {
     if (context == nullptr) {
+        return {};
+    }
+
+    if constexpr (!dusk::platform::SupportsWindowSafeAreaQuery) {
         return {};
     }
 

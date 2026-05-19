@@ -5,6 +5,7 @@
 #include "dusk/item_checklist_hooks.h"
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/ui/ui.hpp"
 
 #include <SDL3/SDL_filesystem.h>
@@ -79,15 +80,13 @@ std::vector<u8> read_bundled_bytes(const std::filesystem::path& path) {
         return data;
     }
 
-    if (const char* basePath = SDL_GetBasePath(); basePath != nullptr) {
-        const auto absolutePath = std::filesystem::path(basePath) / path;
-        const std::string absoluteUtf8 = dusk::io::fs_path_to_string(absolutePath);
-        io = SDL_IOFromFile(absoluteUtf8.c_str(), "rb");
-        if (io != nullptr) {
-            auto data = read_io_full(io);
-            SDL_CloseIO(io);
-            return data;
-        }
+    const auto absolutePath = dusk::platform::BundledPath(path);
+    const std::string absoluteUtf8 = dusk::io::fs_path_to_string(absolutePath);
+    io = SDL_IOFromFile(absoluteUtf8.c_str(), "rb");
+    if (io != nullptr) {
+        auto data = read_io_full(io);
+        SDL_CloseIO(io);
+        return data;
     }
 
     return {};

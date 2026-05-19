@@ -357,6 +357,50 @@
       }
     },
     {
+      "name": "switch-libnx",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "inherits": [
+        "relwithdebinfo"
+      ],
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/switch-libnx.cmake",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
+        "DUSK_EXPERIMENTAL_SWITCH": {
+          "type": "BOOL",
+          "value": true
+        },
+        "DUSK_ENABLE_UPDATE_CHECKER": {
+          "type": "BOOL",
+          "value": false
+        },
+        "DUSK_ENABLE_SENTRY_NATIVE": {
+          "type": "BOOL",
+          "value": false
+        },
+        "DUSK_ENABLE_DISCORD": {
+          "type": "BOOL",
+          "value": false
+        },
+        "DUSK_MOVIE_SUPPORT": {
+          "type": "BOOL",
+          "value": false
+        },
+        "BUILD_SHARED_LIBS": {
+          "type": "BOOL",
+          "value": false
+        }
+      }
+    },
+    {
+      "name": "switch-libnx-relwithdebinfo",
+      "displayName": "Nintendo Switch (scaffolding)",
+      "inherits": [
+        "switch-libnx"
+      ]
+    },
+    {
       "name": "x-android-ci",
       "hidden": true,
       "inherits": [

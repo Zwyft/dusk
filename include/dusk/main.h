@@ -7,9 +7,9 @@
 
 #include <filesystem>
 
-#if defined(_WIN32) ||                                                                             \
+#if !TARGET_SWITCH && (defined(_WIN32) ||                                                          \
     (defined(__APPLE__) && !TARGET_OS_IOS && !TARGET_OS_TV && !TARGET_OS_MACCATALYST) ||           \
-    (defined(__linux__) && !defined(__ANDROID__))
+    (defined(__linux__) && !defined(__ANDROID__)))
 #define DUSK_CAN_OPEN_DATA_FOLDER 1
 #else
 #define DUSK_CAN_OPEN_DATA_FOLDER 0
@@ -22,7 +22,7 @@ namespace dusk {
     extern bool RestartRequested;
     extern std::filesystem::path ConfigPath;
 
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || \
+#if TARGET_SWITCH || defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || \
     (defined(TARGET_OS_TV) && TARGET_OS_TV)
     inline constexpr bool SupportsProcessRestart = false;
 #else

@@ -12,6 +12,7 @@
 
 #include "aurora/lib/window.hpp"
 #include "dusk/logging.h"
+#include "dusk/platform_support.hpp"
 
 #ifdef IMGUI_ENABLE_FREETYPE
 #include "misc/freetype/imgui_freetype.h"
@@ -20,11 +21,7 @@
 namespace dusk {
 namespace {
 std::string GetAssetPath(const char* assetName) {
-    const char* basePath = SDL_GetBasePath();
-    if (basePath != nullptr && basePath[0] != '\0') {
-        return std::string(basePath) + "res/" + assetName;
-    }
-    return std::string("res/") + assetName;
+    return dusk::platform::BundledResourcePath(assetName).string();
 }
 
 bool AssetExists(const std::string& path) {
@@ -41,6 +38,10 @@ ImTextureID AddTexture(const char* assetName) {
 }
 
 ImVec2 GetDisplaySafeAreaPadding() {
+    if constexpr (!dusk::platform::SupportsWindowSafeAreaQuery) {
+        return ImVec2(0.0f, 0.0f);
+    }
+
     SDL_Window* window = aurora::window::get_sdl_window();
     if (window == nullptr) {
         return ImVec2(0.0f, 0.0f);

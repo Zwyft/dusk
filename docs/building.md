@@ -97,7 +97,15 @@ Switch support is not buildable from this repository yet.
 Current scaffolding:
 
 - `-DDUSK_EXPERIMENTAL_SWITCH=ON` enables a `TARGET_SWITCH=1` compile-time define
-- no toolchain, preset, or CI pipeline is provided yet
+- `cmake/toolchains/switch-libnx.cmake` provides an experimental libnx toolchain scaffold
+- hidden preset `switch-libnx-relwithdebinfo` exists for early bring-up
+- the experimental Switch path currently forces these subsystems off:
+  - movie playback
+  - update checker
+  - Sentry crash reporting
+  - Discord Rich Presence
+- the toolchain now fails early if `DEVKITPRO`, `DEVKITA64`, `libnx`, or Switch portlibs are missing
+- no CI pipeline is provided yet
 
 See `docs/switch-homebrew.md` for the current bring-up plan.
 

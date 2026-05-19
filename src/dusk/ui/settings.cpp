@@ -14,6 +14,7 @@
 #include "dusk/io.hpp"
 #include "dusk/livesplit.h"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/touch_controls.hpp"
 #include "graphics_tuner.hpp"
 #include "m_Do/m_Do_main.h"
@@ -207,7 +208,9 @@ void reset_for_speedrun_mode() {
     getSettings().game.invincibleEnemies.setSpeedrunValue(false);
 
     getSettings().game.pauseOnFocusLost.setSpeedrunValue(false);
-    aurora_set_pause_on_focus_lost(false);
+    if constexpr (dusk::platform::SupportsFocusLossPause) {
+        aurora_set_pause_on_focus_lost(false);
+    }
     getSettings().backend.enableAdvancedSettings.setSpeedrunValue(false);
     getSettings().game.recordingMode.setSpeedrunValue(false);
     getSettings().game.debugFlyCam.setSpeedrunValue(false);
@@ -215,7 +218,9 @@ void reset_for_speedrun_mode() {
 
 void restore_from_speedrun_mode() {
     config::EnumerateRegistered([](config::ConfigVarBase& cvar) { cvar.clearSpeedrunOverride(); });
-    aurora_set_pause_on_focus_lost(getSettings().game.pauseOnFocusLost.getValue());
+    if constexpr (dusk::platform::SupportsFocusLossPause) {
+        aurora_set_pause_on_focus_lost(getSettings().game.pauseOnFocusLost.getValue());
+    }
 }
 
 const Rml::String kInternalResolutionHelpText =
@@ -554,13 +559,15 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                             value ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
                     },
             });
-        config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
-            {
-                .key = "Pause on Focus Lost",
-                .helpText = "Pause the game when window focus is lost.",
-                .onChange = [](bool value) { aurora_set_pause_on_focus_lost(value); },
-                .isDisabled = [] { return IsMobile || getSettings().game.speedrunMode; },
-            });
+        if constexpr (dusk::platform::SupportsFocusLossPause) {
+            config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
+                {
+                    .key = "Pause on Focus Lost",
+                    .helpText = "Pause the game when window focus is lost.",
+                    .onChange = [](bool value) { aurora_set_pause_on_focus_lost(value); },
+                    .isDisabled = [] { return IsMobile || getSettings().game.speedrunMode; },
+                });
+        }
         leftPane.register_control(
             leftPane.add_select_button({
                 .key = "Show FPS Counter",
@@ -760,12 +767,14 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 pane.clear();
                 pane.add_text("Open input binding configuration.");
             });
-        config_bool_select(leftPane, rightPane, getSettings().game.allowBackgroundInput,
-            {
-                .key = "Allow Background Inputs",
-                .helpText = "Allow inputs even when the game window is not focused.",
-                .onChange = [](bool value) { aurora_set_background_input(value); },
-            });
+        if constexpr (dusk::platform::SupportsBackgroundInputOption) {
+            config_bool_select(leftPane, rightPane, getSettings().game.allowBackgroundInput,
+                {
+                    .key = "Allow Background Inputs",
+                    .helpText = "Allow inputs even when the game window is not focused.",
+                    .onChange = [](bool value) { aurora_set_background_input(value); },
+                });
+        }
 
         leftPane.add_section("Camera", true);
         addOption("Free Camera", getSettings().game.freeCamera,
@@ -1463,31 +1472,39 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .helpText = "Show an overlay when shaders are being compiled for your hardware.",
             });
 
-        config_bool_select(leftPane, rightPane, getSettings().backend.discordEnabled,
-            {
-                .key = "Discord Rich Presence",
-                .helpText = "Show the current game status on your Discord profile. Requires a restart to take effect.",
-                .onChange = [](bool) { config::Save(); },
-                .isDisabled = [] { return IsMobile; },
-            });
-        config_bool_select(leftPane, rightPane, getSettings().backend.portableMode,
-            {
-                .key = "Portable Mode",
-                .helpText = "Store all config, saves, and mods in a 'portable/' folder next to the Dusk executable instead of the system config directory. Requires a restart to take effect.",
-                .onChange = [](bool) { config::Save(); },
-            });
-        config_bool_select(leftPane, rightPane, getSettings().backend.checkForUpdates,
-            {
-                .key = "Check for Updates",
-                .helpText = "Checks GitHub releases for a new Dusk version on startup.<br/><br/>"
-                            "No personal information is transmitted or collected.",
-            });
-        config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
-            {
-                .key = "Pause On Focus Lost",
-                .helpText = "Pause the game when window focus is lost.",
-                .onChange = [](bool value) { aurora_set_pause_on_focus_lost(value); },
-            });
+        if constexpr (dusk::platform::SupportsDiscordRichPresence) {
+            config_bool_select(leftPane, rightPane, getSettings().backend.discordEnabled,
+                {
+                    .key = "Discord Rich Presence",
+                    .helpText = "Show the current game status on your Discord profile. Requires a restart to take effect.",
+                    .onChange = [](bool) { config::Save(); },
+                    .isDisabled = [] { return IsMobile; },
+                });
+        }
+        if constexpr (dusk::platform::SupportsPortableDataPath) {
+            config_bool_select(leftPane, rightPane, getSettings().backend.portableMode,
+                {
+                    .key = "Portable Mode",
+                    .helpText = "Store all config, saves, and mods in a 'portable/' folder next to the Dusk executable instead of the system config directory. Requires a restart to take effect.",
+                    .onChange = [](bool) { config::Save(); },
+                });
+        }
+        if constexpr (dusk::platform::SupportsUpdateChecker) {
+            config_bool_select(leftPane, rightPane, getSettings().backend.checkForUpdates,
+                {
+                    .key = "Check for Updates",
+                    .helpText = "Checks GitHub releases for a new Dusk version on startup.<br/><br/>"
+                                "No personal information is transmitted or collected.",
+                });
+        }
+        if constexpr (dusk::platform::SupportsFocusLossPause) {
+            config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
+                {
+                    .key = "Pause On Focus Lost",
+                    .helpText = "Pause the game when window focus is lost.",
+                    .onChange = [](bool value) { aurora_set_pause_on_focus_lost(value); },
+                });
+        }
         config_bool_select(leftPane, rightPane, getSettings().backend.enableAdvancedSettings,
             {
                 .key = "Enable Advanced Settings",

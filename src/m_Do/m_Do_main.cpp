@@ -66,6 +66,7 @@
 #include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/mod_manager.hpp"
+#include "dusk/platform_support.hpp"
 #include "dusk/ui/menu_bar.hpp"
 #include "dusk/ui/overlay.hpp"
 #include "dusk/ui/prelaunch.hpp"
@@ -90,6 +91,7 @@
 #include "dusk/audio/DuskDsp.hpp"
 #include "dusk/config.hpp"
 #include "dusk/speedrun.h"
+#include "dusk/startup_shell.hpp"
 #include "dusk/settings.h"
 #include "dusk/io.hpp"
 #include "dusk/version.hpp"
@@ -153,7 +155,7 @@ bool dusk::OpenDataFolder() {
 #else
     const std::string url = "file://" + path.generic_string();
 #endif
-    if (!SDL_OpenURL(url.c_str())) {
+    if (!dusk::platform::OpenExternalUrl(url)) {
         DuskLog.warn(
             "Failed to open data folder '{}': {}", io::fs_path_to_string(path), SDL_GetError());
         return false;
@@ -478,84 +480,6 @@ static void ApplyCVarOverrides(const cxxopts::OptionValue& option) {
     }
 }
 
-static void migrate_directory(const std::filesystem::path& from, const std::filesystem::path& to) {
-    std::error_code ec;
-    std::filesystem::create_directories(to, ec);
-    if (ec) {
-        return;
-    }
-
-    for (std::filesystem::recursive_directory_iterator it(
-             from, std::filesystem::directory_options::skip_permission_denied, ec);
-        it != std::filesystem::recursive_directory_iterator(); it.increment(ec))
-    {
-        if (ec) {
-            return;
-        }
-
-        const auto relativePath = std::filesystem::relative(it->path(), from, ec);
-        if (ec) {
-            return;
-        }
-
-        const auto targetPath = to / relativePath;
-        if (it->is_directory(ec)) {
-            std::filesystem::create_directories(targetPath, ec);
-            if (ec) {
-                return;
-            }
-        } else if (it->is_regular_file(ec) && !std::filesystem::exists(targetPath, ec)) {
-            std::filesystem::create_directories(targetPath.parent_path(), ec);
-            if (ec) {
-                return;
-            }
-            std::filesystem::copy_file(
-                it->path(), targetPath, std::filesystem::copy_options::skip_existing, ec);
-            if (ec) {
-                return;
-            }
-        }
-    }
-}
-
-static std::filesystem::path calculate_config_path() {
-    const auto& customPath = dusk::getSettings().backend.customDataPath.getValue();
-    if (!customPath.empty()) {
-        return reinterpret_cast<const char8_t*>(customPath.c_str());
-    }
-
-#ifdef __APPLE__
-#if TARGET_OS_IOS && !TARGET_OS_TV
-    const char* documentsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
-    if (!documentsPath) {
-        DuskLog.fatal("Unable to get iOS Documents path: {}", SDL_GetError());
-    }
-
-    std::filesystem::path configPath = reinterpret_cast<const char8_t*>(documentsPath);
-
-    char* oldPrefPath = SDL_GetPrefPath(dusk::OrgName, dusk::AppName);
-    if (oldPrefPath) {
-        const std::filesystem::path oldConfigPath = reinterpret_cast<const char8_t*>(oldPrefPath);
-        SDL_free(oldPrefPath);
-
-        std::error_code ec;
-        if (oldConfigPath != configPath && std::filesystem::exists(oldConfigPath, ec)) {
-            migrate_directory(oldConfigPath, configPath);
-        }
-    }
-
-    return configPath;
-#endif
-#endif
-
-    const auto result = SDL_GetPrefPath(dusk::OrgName, dusk::AppName);
-    if (!result) {
-        DuskLog.fatal("Unable to get PrefPath: {}", SDL_GetError());
-    }
-
-    return reinterpret_cast<const char8_t*>(result);
-}
-
 static void EnsureInitialPipelineCache(const std::filesystem::path& configDir) {
     if (configDir.empty()) {
         return;
@@ -569,14 +493,9 @@ static void EnsureInitialPipelineCache(const std::filesystem::path& configDir) {
     std::string sourcePathString;
     SDL_IOStream* source = nullptr;
 
-    const char* basePath = SDL_GetBasePath();
-    if (basePath != nullptr) {
-        sourcePathString = dusk::io::fs_path_to_string(
-            std::filesystem::path(basePath) / "initial_pipeline_cache.db");
-        source = SDL_IOFromFile(sourcePathString.c_str(), "rb");
-    }
-    if (source == nullptr) {
-        sourcePathString = "initial_pipeline_cache.db";
+    if (const auto sourcePath =
+            dusk::platform::FindBundledPath("initial_pipeline_cache.db")) {
+        sourcePathString = dusk::io::fs_path_to_string(*sourcePath);
         source = SDL_IOFromFile(sourcePathString.c_str(), "rb");
     }
     if (source == nullptr) {
@@ -702,14 +621,6 @@ static void LanguageInit() {
     selectedLanguage = static_cast<u8>(dusk::getSettings().game.language.getValue());
 }
 
-static std::string asset_path(const char* assetName) {
-    const char* basePath = SDL_GetBasePath();
-    if (basePath != nullptr && basePath[0] != '\0') {
-        return std::string(basePath) + "res/" + assetName;
-    }
-    return std::string("res/") + assetName;
-}
-
 static void log_build_info() {
     DuskLog.info("Build: {} (rev {}, built {}, type {})", DUSK_WC_DESCRIBE, DUSK_WC_REVISION, DUSK_WC_DATE, DUSK_BUILD_TYPE);
     DuskLog.info("Platform: {}", DUSK_PLATFORM_NAME);
@@ -760,19 +671,10 @@ int game_main(int argc, char* argv[]) {
         exit(1);
     }
 
-    dusk::ConfigPath = parsed_arg_options.count("config")
-        ? std::filesystem::path(parsed_arg_options["config"].as<std::string>())
-        : calculate_config_path();
-
-    // Portable mode: override config path if portable.txt exists next to the executable
-    {
-        std::error_code ec;
-        auto exeDir = std::filesystem::current_path(ec);
-        if (!ec && std::filesystem::exists(exeDir / "portable.txt")) {
-            dusk::ConfigPath = exeDir / "portable";
-            std::filesystem::create_directories(dusk::ConfigPath, ec);
-        }
-    }
+    dusk::ConfigPath = dusk::platform::CalculateConfigPath(
+        parsed_arg_options.count("config") ? parsed_arg_options["config"].as<std::string>() : "",
+        dusk::getSettings().backend.customDataPath.getValue(),
+        dusk::getSettings().backend.portableMode.getValue());
     const auto startupLogLevel = static_cast<AuroraLogLevel>(parsed_arg_options["log-level"].as<uint8_t>());
     dusk::InitializeFileLogging(dusk::ConfigPath, startupLogLevel);
 
@@ -783,114 +685,44 @@ int game_main(int argc, char* argv[]) {
         dusk::resetForSpeedrunMode();
     }
     ApplyCVarOverrides(parsed_arg_options["cvar"]);
-    dusk::crash_reporting::initialize();
+    if constexpr (dusk::platform::SupportsExternalCrashReporting) {
+        dusk::crash_reporting::initialize();
+    }
     EnsureInitialPipelineCache(dusk::ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);
 
-    {
+    if constexpr (dusk::platform::SupportsExternalGamepadMappings) {
         // Load mappings from https://github.com/mdqinc/SDL_GameControllerDB
-        const auto mappingsPath = asset_path("gamecontrollerdb.txt");
+        const auto mappingsPath = dusk::io::fs_path_to_string(
+            dusk::platform::BundledResourcePath("gamecontrollerdb.txt"));
         if (SDL_AddGamepadMappingsFromFile(mappingsPath.c_str()) < 0) {
             DuskLog.warn("Failed to load gamecontrollerdb.txt: {}", SDL_GetError());
         }
     }
 
-    // Set SDL metadata for audio mixers and macOS "About" menu
-    SDL_SetAppMetadata("Dusklight", DUSK_VERSION_STRING, "dev.twilitrealm.dusk");
-
-    {
-        const auto configPathString = dusk::ConfigPath.u8string();
-        AuroraConfig config{};
-        config.appName = dusk::AppName;
-        config.userPath = reinterpret_cast<const char*>(configPathString.c_str());
-        config.vsync = dusk::getSettings().video.enableVsync;
-        config.startFullscreen = dusk::getSettings().video.enableFullscreen;
-        config.windowPosX = dusk::getSettings().video.windowPositionX;
-        config.windowPosY = dusk::getSettings().video.windowPositionY;
-        config.windowWidth = dusk::getSettings().video.windowWidth;
-        config.windowHeight = dusk::getSettings().video.windowHeight;
-        config.desiredBackend = ResolveDesiredBackend(parsed_arg_options);
-        config.logCallback = &aurora_log_callback;
-        config.logLevel = startupLogLevel;
-        config.mem1Size = 256 * 1024 * 1024;
-        config.mem2Size = 24 * 1024 * 1024;
-        config.allowJoystickBackgroundEvents = dusk::getSettings().game.allowBackgroundInput;
-        config.pauseOnFocusLost = dusk::getSettings().game.pauseOnFocusLost;
-        config.imGuiInitCallback = &aurora_imgui_init_callback;
-        config.maxTextureAnisotropy = static_cast<uint16_t>(dusk::getSettings().game.anisotropicFiltering.getValue());
-        config.allowTextureReplacements = dusk::getSettings().game.enableTextureReplacements;
-        config.allowTextureDumps = false;
-        dusk::mod_manager::initialize();
-
-        // Enable Android back button trapping so we can detect it in-game
-        if (dusk::IsMobile) {
-            SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
-        }
-
-        // Auto-backup saves on launch
-        if (dusk::getSettings().game.autoBackupSaves.getValue()) {
-            auto backupDir = dusk::ConfigPath / "saves" / "backups";
-            std::error_code ec;
-            if (std::filesystem::exists(dusk::ConfigPath / "saves", ec)) {
-                auto now = std::chrono::system_clock::now();
-                auto time = std::chrono::system_clock::to_time_t(now);
-                std::ostringstream oss;
-                oss << "backup_" << std::put_time(std::localtime(&time), "%Y%m%d_%H%M%S");
-                auto dest = backupDir / oss.str();
-                std::filesystem::create_directories(dest, ec);
-                for (const auto& entry : std::filesystem::directory_iterator(dusk::ConfigPath / "saves", ec)) {
-                    if (ec) break;
-                    if (entry.is_regular_file()) {
-                        std::filesystem::copy_file(entry.path(), dest / entry.path().filename(),
-                            std::filesystem::copy_options::skip_existing, ec);
-                    }
-                }
-            }
-        }
-
-        auroraInfo = aurora_initialize(argc, argv, &config);
-    }
+    PrepareStartupShell();
+    auto startupConfig = BuildAuroraStartupConfig(
+        dusk::ConfigPath,
+        ResolveDesiredBackend(parsed_arg_options),
+        startupLogLevel,
+        &aurora_imgui_init_callback);
+    auroraInfo = aurora_initialize(argc, argv, &startupConfig.config);
 
 #ifdef DUSK_DISCORD
-    if (dusk::getSettings().backend.discordEnabled.getValue()) {
-        dusk::discord::initialize();
+    if constexpr (dusk::platform::SupportsDiscordRichPresence) {
+        if (dusk::getSettings().backend.discordEnabled.getValue()) {
+            dusk::discord::initialize();
+        }
     }
 #endif
 
-    VISetWindowTitle(
-        fmt::format("Dusk {} [{}]", DUSK_WC_DESCRIBE, dusk::backend_name(auroraInfo.backend))
-            .c_str());
-
-    if (dusk::getSettings().video.lockAspectRatio) {
-        AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
-    } else {
-        AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
-    }
-    VISetFrameBufferScale(dusk::getSettings().game.internalResolutionScale.getValue());
-    aurora_set_resampler(
-        dusk::getSettings().game.resampler.getValue() == dusk::Resampler::Area ? SAMPLER_AREA
-                                                                                : SAMPLER_BILINEAR);
-    dComIfG_setBrightness(static_cast<u8>(
-        (std::clamp(dusk::getSettings().game.displayBrightness.getValue(), 25, 100) * 255) /
-        100));
-
-    dusk::audio::SetMasterVolume(dusk::getSettings().audio.masterVolume / 100.0f);
-    dusk::audio::SetEnableReverb(dusk::getSettings().audio.enableReverb);
-    dusk::audio::EnableHrtf = dusk::getSettings().audio.enableHrtf;
+    ApplyRuntimePresentationPolicy(auroraInfo.backend);
 
     // Run ImGui UI loop if Aurora couldn't initialize a backend
     if (auroraInfo.backend == BACKEND_NULL) {
         launchUILoop();
-        dusk::crash_reporting::shutdown();
-        dusk::ShutdownFileLogging();
-        fflush(stdout);
-        fflush(stderr);
-#ifdef DUSK_DISCORD
-        dusk::discord::shutdown();
-#endif
-        dusk::ui::shutdown();
-        aurora_shutdown();
+        ShutdownFrontendShell(true);
         return 0;
     }
 
@@ -962,15 +794,7 @@ int game_main(int argc, char* argv[]) {
 
             // pre game launch ui main loop
             if (!launchUILoop()) {
-                dusk::crash_reporting::shutdown();
-                dusk::ShutdownFileLogging();
-                fflush(stdout);
-                fflush(stderr);
-#ifdef DUSK_DISCORD
-                dusk::discord::shutdown();
-#endif
-                dusk::ui::shutdown();
-                aurora_shutdown();
+                ShutdownFrontendShell(true);
                 return 0;
             }
         }
@@ -994,8 +818,10 @@ int game_main(int argc, char* argv[]) {
     }
 
 #if DUSK_ENABLE_SENTRY_NATIVE
-    if (dusk::crash_reporting::get_consent() == dusk::crash_reporting::Consent::Unknown) {
-        dusk::ui::push_document(std::make_unique<dusk::ui::CrashReportWindow>());
+    if constexpr (dusk::platform::SupportsExternalCrashReporting) {
+        if (dusk::crash_reporting::get_consent() == dusk::crash_reporting::Consent::Unknown) {
+            dusk::ui::push_document(std::make_unique<dusk::ui::CrashReportWindow>());
+        }
     }
 #endif
 
@@ -1030,22 +856,16 @@ int game_main(int argc, char* argv[]) {
 
     dusk::MoviePlayerShutdown();
 
-    dusk::crash_reporting::shutdown();
-    dusk::ShutdownFileLogging();
-    fflush(stdout);
-    fflush(stderr);
-
     mDoMch_Destroy();
 
     // Notifies all CVs and causes threads to exit
     OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
+    ShutdownFrontendDiagnostics();
+    mDoMch_Destroy();
 
-#ifdef DUSK_DISCORD
-    dusk::discord::shutdown();
-#endif
-    dusk::ui::shutdown();
-    aurora_shutdown();
-
+    // Notifies all CVs and causes threads to exit
+    OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
+    ShutdownFrontendShell(true, false);
     return 0;
 }
 

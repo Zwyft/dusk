@@ -2,6 +2,7 @@
 
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -270,7 +271,7 @@ void open_mods_folder() {
         std::filesystem::create_directories(dir, ec);
     }
     auto url = "file://" + dir.string();
-    SDL_OpenURL(url.c_str());
+    dusk::platform::OpenExternalUrl(url);
 }
 
 void refresh_all() {

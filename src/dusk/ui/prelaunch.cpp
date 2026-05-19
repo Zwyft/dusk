@@ -4,6 +4,7 @@
 #include "dusk/file_select.hpp"
 #include "dusk/iso_validate.hpp"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/settings.h"
 #include "dusk/ui/mods.hpp"
 #include "dusk/update_check.hpp"
@@ -274,7 +275,7 @@ void open_update_release() {
         PrelaunchLog.warn("Update is available, but the release did not include a download URL");
         return;
     }
-    if (!SDL_OpenURL(url.c_str())) {
+    if (!dusk::platform::OpenExternalUrl(url)) {
         PrelaunchLog.warn("Failed to open update URL '{}': {}", url, SDL_GetError());
     }
 }

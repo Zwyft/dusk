@@ -191,10 +191,22 @@ UserSettings g_userSettings = {
         .skipPreLaunchUI {"backend.skipPreLaunchUI", false},
         .showPipelineCompilation {"backend.showPipelineCompilation", false},
         .wasPresetChosen {"backend.wasPresetChosen", false},
-        .checkForUpdates {"backend.checkForUpdates", true},
+        .checkForUpdates {"backend.checkForUpdates",
+#if TARGET_SWITCH
+            false
+#else
+            true
+#endif
+        },
         .cardFileType {"backend.cardFileType", static_cast<int>(CARD_GCIFOLDER)},
         .enableAdvancedSettings {"backend.enableAdvancedSettings", false},
-        .discordEnabled {"backend.discordEnabled", true},
+        .discordEnabled {"backend.discordEnabled",
+#if TARGET_SWITCH
+            false
+#else
+            true
+#endif
+        },
         .portableMode {"backend.portableMode", false},
         .customDataPath {"backend.customDataPath", ""},
     },

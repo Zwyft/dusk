@@ -18,6 +18,7 @@
 #include "JSystem/JUtility/JUTConsole.h"
 #include "JSystem/JUtility/JUTDbPrint.h"
 #include "JSystem/JUtility/JUTProcBar.h"
+#include "dusk/platform_support.hpp"
 #include "JSystem/JUtility/JUTTexture.h"
 #include "SSystem/SComponent/c_math.h"
 #include "d/actor/d_a_player.h"
@@ -735,6 +736,10 @@ void mDoGph_gInf_c::updateSafeAreaBounds() {
     m_safeMaxYF = m_maxYF;
     m_safeWidthF = m_widthF;
     m_safeHeightF = m_heightF;
+
+    if constexpr (!dusk::platform::SupportsWindowSafeAreaQuery) {
+        return;
+    }
 
     SDL_Window* window = aurora::window::get_sdl_window();
     if (window == NULL) {
