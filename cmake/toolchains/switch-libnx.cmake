@@ -76,6 +76,10 @@ set(SDL_THREADS_ENABLED_BY_DEFAULT ON CACHE BOOL
     "Default SDL threads subsystem to enabled on Switch" FORCE)
 set(SDL_THREADS ON CACHE BOOL
     "Enable SDL threads subsystem for Switch" FORCE)
+set(HAVE_SDL_THREADS TRUE CACHE BOOL
+    "Force SDL threads subsystem detection on Switch" FORCE)
+set(HAVE_SDL_TIMERS TRUE CACHE BOOL
+    "Force SDL timers subsystem detection on Switch" FORCE)
 set(SDL_PTHREADS TRUE CACHE BOOL
     "Switch build uses POSIX threads" FORCE)
 set(SDL_PTHREADS_SEM TRUE CACHE BOOL
