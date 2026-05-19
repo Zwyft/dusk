@@ -752,7 +752,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 });
         };
 
-        leftPane.add_section("Inputs");
+        leftPane.add_section("Inputs", true);
         leftPane.register_control(leftPane.add_button("Configure Inputs").on_pressed([this] {
             push(std::make_unique<ControllerConfigWindow>(mPrelaunch));
         }),

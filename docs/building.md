@@ -90,6 +90,17 @@ Alternate presets available:
 - `windows-clang-relwithdebinfo`: Clang-cl, RelWithDebInfo
 - `windows-clang-debug`: Clang-cl, Debug
 
+#### Nintendo Switch status
+
+Switch support is not buildable from this repository yet.
+
+Current scaffolding:
+
+- `-DDUSK_EXPERIMENTAL_SWITCH=ON` enables a `TARGET_SWITCH=1` compile-time define
+- no toolchain, preset, or CI pipeline is provided yet
+
+See `docs/switch-homebrew.md` for the current bring-up plan.
+
 #### Running
 Pass the disc image as a positional argument. Supported formats: ISO (GCM), RVZ, WIA, WBFS, CISO, GCZ
 ```sh

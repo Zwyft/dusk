@@ -112,6 +112,7 @@ option(DUSK_BUILD_WARNINGS "Enable compiler warnings (off by default)")
 option(DUSK_SELECTED_OPT "If on, selected parts of the project will be compiled with optimizations on Debug, intending to make the game run at 30 FPS. Note for MSVC: you will need to remove '/RTC1' from your debug flags in CMake.")
 option(DUSK_MOVIE_SUPPORT "If on, compile against libjpeg-turbo to enable THP file decoding" ON)
 option(DUSK_ENABLE_UPDATE_CHECKER "Enable update checking support" ON)
+option(DUSK_EXPERIMENTAL_SWITCH "Enable early Nintendo Switch compile-time scaffolding (not a runnable port yet)" OFF)
 
 if(ANDROID)
     set(DUSK_MOVIE_SUPPORT OFF)
@@ -387,6 +388,11 @@ endif ()
 
 if(ANDROID)
     list(APPEND GAME_COMPILE_DEFS TARGET_ANDROID=1)
+endif ()
+
+if (DUSK_EXPERIMENTAL_SWITCH)
+    list(APPEND GAME_COMPILE_DEFS TARGET_SWITCH=1)
+    message(STATUS "dusk: Nintendo Switch scaffolding enabled (build/runtime support is not complete yet)")
 endif ()
 
 # game_debug is for game code files that we know work when compiled with DEBUG=1

@@ -195,6 +195,7 @@ Touch controls are configured in-game and persist between sessions.
 Desktop build instructions live in:
 
 - `docs/building.md`
+- `docs/switch-homebrew.md`
 
 Android-specific workflow in this repo uses Gradle:
 
@@ -212,6 +213,8 @@ Other useful tasks:
 
 > [!NOTE]
 > `syncDuskAssets` should be run before Android lint/check flows so the generated asset tree is up to date.
+
+Nintendo Switch is currently at the scaffolding stage only. There is no supported runnable build in this branch yet.
 
 ---
 
