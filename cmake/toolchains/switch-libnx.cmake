@@ -72,6 +72,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(THREADS_PREFER_PTHREAD_FLAG TRUE CACHE BOOL
     "Prefer pthread flags when detecting threads" FORCE)
+set(SDL_THREADS_ENABLED_BY_DEFAULT ON CACHE BOOL
+    "Default SDL threads subsystem to enabled on Switch" FORCE)
+set(SDL_THREADS ON CACHE BOOL
+    "Enable SDL threads subsystem for Switch" FORCE)
 set(SDL_PTHREADS TRUE CACHE BOOL
     "Switch build uses POSIX threads" FORCE)
 set(SDL_PTHREADS_SEM TRUE CACHE BOOL
