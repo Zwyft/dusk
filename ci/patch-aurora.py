@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 CARD = ROOT / "extern/aurora/lib/dolphin/card.cpp"
+ABSEIL = ROOT / "extern/aurora/extern/CMakeLists.txt"
 
 
 def apply(path: Path, old: str, new: str, description: str) -> None:
@@ -60,4 +61,22 @@ apply(
     "    }\n"
     "  }",
     "card.cpp: prefer local saves/ folder in CARDInit",
+)
+
+apply(
+    ABSEIL,
+    "  FetchContent_Declare(abseil-cpp\n"
+    "    URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz\n"
+    "    DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "    EXCLUDE_FROM_ALL\n"
+    "  )",
+    "  FetchContent_Declare(abseil-cpp\n"
+    "    URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz\n"
+    "    DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "    EXCLUDE_FROM_ALL\n"
+    "    PATCH_COMMAND ${CMAKE_COMMAND}\n"
+    "      -DPATCH_FILE=<SOURCE_DIR>/absl/base/internal/sysinfo.cc\n"
+    "      -P ${CMAKE_CURRENT_LIST_DIR}/../../../ci/patch_abseil_switch.cmake\n"
+    "  )",
+    "abseil-cpp: patch Switch thread-id fallback",
 )
