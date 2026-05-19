@@ -72,6 +72,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(THREADS_PREFER_PTHREAD_FLAG TRUE CACHE BOOL
     "Prefer pthread flags when detecting threads" FORCE)
+set(SDL_PTHREADS TRUE CACHE BOOL
+    "Switch build uses POSIX threads" FORCE)
+set(SDL_PTHREADS_SEM TRUE CACHE BOOL
+    "Switch build uses pthread semaphores" FORCE)
 set(CMAKE_THREAD_LIBS_INIT "" CACHE STRING "Thread libraries for Switch builds" FORCE)
 set(CMAKE_USE_PTHREADS_INIT TRUE CACHE BOOL "Switch build uses pthread-style threading" FORCE)
 set(CMAKE_HAVE_THREADS_LIBRARY TRUE CACHE BOOL "Switch build has threads support" FORCE)
