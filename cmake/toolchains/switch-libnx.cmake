@@ -95,7 +95,7 @@ set(CMAKE_PREFIX_PATH "${PORTLIBS}" CACHE PATH
     "Search Switch portlibs for packages")
 
 set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS FALSE)
-add_definitions(-DSWITCH -D__SWITCH__)
+add_definitions(-DSWITCH -D__SWITCH__ -DABSL_FORCE_THREAD_IDENTITY_MODE=2)
 
 set(DUSK_SWITCH_ARCH_FLAGS
     "-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE")
