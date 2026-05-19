@@ -295,6 +295,20 @@ jobs:
           Write-Host "DEVKITPRO=$env:DEVKITPRO"
           Write-Host "DEVKITA64=$env:DEVKITA64"
 
+      - name: Install Ninja
+        shell: powershell
+        run: |
+          if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) {
+            if (Get-Command choco -ErrorAction SilentlyContinue) {
+              choco install ninja -y
+            } elseif (Get-Command scoop -ErrorAction SilentlyContinue) {
+              scoop install ninja
+            } else {
+              throw "Neither ninja nor a Windows package manager was found"
+            }
+          }
+          ninja --version
+
       - name: Patch aurora
         shell: powershell
         run: python ci/patch-aurora.py
