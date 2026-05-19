@@ -70,6 +70,13 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
+set(THREADS_PREFER_PTHREAD_FLAG TRUE CACHE BOOL
+    "Prefer pthread flags when detecting threads" FORCE)
+set(CMAKE_THREAD_LIBS_INIT "" CACHE STRING "Thread libraries for Switch builds" FORCE)
+set(CMAKE_USE_PTHREADS_INIT TRUE CACHE BOOL "Switch build uses pthread-style threading" FORCE)
+set(CMAKE_HAVE_THREADS_LIBRARY TRUE CACHE BOOL "Switch build has threads support" FORCE)
+set(CMAKE_HAVE_PTHREAD_H TRUE CACHE BOOL "Switch build has pthread.h available" FORCE)
+
 set(CMAKE_INSTALL_PREFIX "${PORTLIBS}" CACHE PATH
     "Install libraries to the Switch portlibs directory")
 set(CMAKE_PREFIX_PATH "${PORTLIBS}" CACHE PATH
