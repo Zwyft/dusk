@@ -269,9 +269,7 @@ jobs:
 
   build-switch:
     name: Build Switch (experimental)
-    runs-on:
-      - Jake-Windows-Runner
-      - windows-latest
+    runs-on: windows-latest
     env:
       RUSTC_WRAPPER:
 
