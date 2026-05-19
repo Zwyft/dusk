@@ -72,14 +72,22 @@ apply(
     "    DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
     "    EXCLUDE_FROM_ALL\n"
     "  )",
-    "  FetchContent_Declare(abseil-cpp\n"
-    "    URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz\n"
-    "    DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
-    "    EXCLUDE_FROM_ALL\n"
-    "    PATCH_COMMAND ${CMAKE_COMMAND}\n"
-    "      -DPATCH_FILE=<SOURCE_DIR>/absl/base/internal/sysinfo.cc\n"
-    "      -P ${CMAKE_CURRENT_LIST_DIR}/../../../ci/patch_abseil_switch.cmake\n"
-    "  )",
+    "  if (TARGET_SWITCH)\n"
+    "    FetchContent_Declare(abseil-cpp\n"
+    "      URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz\n"
+    "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "      EXCLUDE_FROM_ALL\n"
+    "      PATCH_COMMAND ${CMAKE_COMMAND}\n"
+    "        -DPATCH_FILE=<SOURCE_DIR>/absl/base/internal/sysinfo.cc\n"
+    "        -P ${CMAKE_CURRENT_LIST_DIR}/../../../ci/patch_abseil_switch.cmake\n"
+    "    )\n"
+    "  else ()\n"
+    "    FetchContent_Declare(abseil-cpp\n"
+    "      URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz\n"
+    "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "      EXCLUDE_FROM_ALL\n"
+    "    )\n"
+    "  endif ()",
     "abseil-cpp: patch Switch thread-id fallback",
 )
 
@@ -90,13 +98,21 @@ apply(
     "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
     "      EXCLUDE_FROM_ALL\n"
     "    )",
-    "    FetchContent_Declare(dawn\n"
-    "      URL \"https://github.com/google/dawn/archive/refs/tags/${AURORA_DAWN_VERSION}.tar.gz\"\n"
-    "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
-    "      EXCLUDE_FROM_ALL\n"
-    "      PATCH_COMMAND ${CMAKE_COMMAND}\n"
-    "        -DPATCH_FILE=<SOURCE_DIR>/third_party/CMakeLists.txt\n"
-    f"        -P {DAWN_ABSEIL_PATCH}\n"
-    "    )",
+    "    if (TARGET_SWITCH)\n"
+    "      FetchContent_Declare(dawn\n"
+    "        URL \"https://github.com/google/dawn/archive/refs/tags/${AURORA_DAWN_VERSION}.tar.gz\"\n"
+    "        DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "        EXCLUDE_FROM_ALL\n"
+    "        PATCH_COMMAND ${CMAKE_COMMAND}\n"
+    "          -DPATCH_FILE=<SOURCE_DIR>/third_party/CMakeLists.txt\n"
+    f"          -P {DAWN_ABSEIL_PATCH}\n"
+    "      )\n"
+    "    else ()\n"
+    "      FetchContent_Declare(dawn\n"
+    "        URL \"https://github.com/google/dawn/archive/refs/tags/${AURORA_DAWN_VERSION}.tar.gz\"\n"
+    "        DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "        EXCLUDE_FROM_ALL\n"
+    "      )\n"
+    "    endif ()",
     "dawn: patch Switch thread-id fallback in vendored abseil",
 )
