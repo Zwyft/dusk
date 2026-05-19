@@ -294,7 +294,8 @@ jobs:
           Write-Host "DEVKITA64=$env:DEVKITA64"
 
       - name: Patch aurora
-        run: python3 ci/patch-aurora.py
+        shell: pwsh
+        run: python ci/patch-aurora.py
 
       - name: Configure Switch CMake
         shell: pwsh
