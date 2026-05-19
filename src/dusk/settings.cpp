@@ -224,7 +224,6 @@ UserSettings g_userSettings = {
             ActionBindConfigVar{"actionBindings.turboButton_port2", PAD_NATIVE_BUTTON_INVALID},
             ActionBindConfigVar{"actionBindings.turboButton_port3", PAD_NATIVE_BUTTON_INVALID},
         },
-    }
     },
 };
 
