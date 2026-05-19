@@ -6,7 +6,6 @@
 #include "dusk/touch_controls.hpp"
 #include "controller_config.hpp"
 #include "dusk/livesplit.h"
-#include "dusk/speedrun.h"
 #include "fmt/format.h"
 #include "magic_enum.hpp"
 #include "window.hpp"
