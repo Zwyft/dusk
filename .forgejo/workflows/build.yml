@@ -266,3 +266,49 @@ jobs:
         with:
           name: dusk-${{env.DUSK_VERSION}}-android
           path: platforms/android/app/build/outputs/apk/debug/*.apk
+
+  build-switch:
+    name: Build Switch (experimental)
+    runs-on:
+      - Jake-Windows-Runner
+      - windows-latest
+    env:
+      RUSTC_WRAPPER:
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Validate Switch toolchain environment
+        shell: pwsh
+        run: |
+          if (-not $env:DEVKITPRO) { throw "DEVKITPRO is not set" }
+          if (-not $env:DEVKITA64) { throw "DEVKITA64 is not set" }
+          if (-not (Test-Path "$env:DEVKITPRO\\libnx\\include\\switch.h")) {
+            throw "libnx headers not found at $env:DEVKITPRO\\libnx\\include\\switch.h"
+          }
+          if (-not (Test-Path "$env:DEVKITPRO\\portlibs\\switch")) {
+            throw "Switch portlibs not found at $env:DEVKITPRO\\portlibs\\switch"
+          }
+          Write-Host "DEVKITPRO=$env:DEVKITPRO"
+          Write-Host "DEVKITA64=$env:DEVKITA64"
+
+      - name: Patch aurora
+        run: python3 ci/patch-aurora.py
+
+      - name: Configure Switch CMake
+        shell: pwsh
+        run: cmake --preset switch-libnx-relwithdebinfo
+
+      - name: Build Switch
+        shell: pwsh
+        run: cmake --build --preset switch-libnx-relwithdebinfo
+
+      - name: Upload Switch artifacts
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: dusk-${{env.DUSK_VERSION}}-switch-experimental
+          path: |
+            build/switch-libnx-relwithdebinfo/**
