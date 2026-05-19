@@ -280,7 +280,7 @@ jobs:
           submodules: recursive
 
       - name: Validate Switch toolchain environment
-        shell: pwsh
+        shell: powershell
         run: |
           if (-not $env:DEVKITPRO) { throw "DEVKITPRO is not set" }
           if (-not $env:DEVKITA64) { throw "DEVKITA64 is not set" }
@@ -294,15 +294,15 @@ jobs:
           Write-Host "DEVKITA64=$env:DEVKITA64"
 
       - name: Patch aurora
-        shell: pwsh
+        shell: powershell
         run: python ci/patch-aurora.py
 
       - name: Configure Switch CMake
-        shell: pwsh
+        shell: powershell
         run: cmake --preset switch-libnx-relwithdebinfo
 
       - name: Build Switch
-        shell: pwsh
+        shell: powershell
         run: cmake --build --preset switch-libnx-relwithdebinfo
 
       - name: Upload Switch artifacts
