@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 CARD = ROOT / "extern/aurora/lib/dolphin/card.cpp"
 ABSEIL = ROOT / "extern/aurora/extern/CMakeLists.txt"
+DAWN_PROVIDER = ROOT / "extern/aurora/cmake/AuroraDawnProvider.cmake"
 
 
 def apply(path: Path, old: str, new: str, description: str) -> None:
@@ -79,4 +80,22 @@ apply(
     "      -P ${CMAKE_CURRENT_LIST_DIR}/../../../ci/patch_abseil_switch.cmake\n"
     "  )",
     "abseil-cpp: patch Switch thread-id fallback",
+)
+
+apply(
+    DAWN_PROVIDER,
+    "    FetchContent_Declare(dawn\n"
+    "      URL \"https://github.com/google/dawn/archive/refs/tags/${AURORA_DAWN_VERSION}.tar.gz\"\n"
+    "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "      EXCLUDE_FROM_ALL\n"
+    "    )",
+    "    FetchContent_Declare(dawn\n"
+    "      URL \"https://github.com/google/dawn/archive/refs/tags/${AURORA_DAWN_VERSION}.tar.gz\"\n"
+    "      DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+    "      EXCLUDE_FROM_ALL\n"
+    "      PATCH_COMMAND ${CMAKE_COMMAND}\n"
+    "        -DPATCH_FILE=<SOURCE_DIR>/third_party/abseil/absl/base/internal/sysinfo.cc\n"
+    "        -P ${CMAKE_CURRENT_LIST_DIR}/../../../ci/patch_abseil_switch.cmake\n"
+    "    )",
+    "dawn: patch Switch thread-id fallback in vendored abseil",
 )
