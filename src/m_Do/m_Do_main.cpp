@@ -701,8 +701,8 @@ int game_main(int argc, char* argv[]) {
         }
     }
 
-    PrepareStartupShell();
-    auto startupConfig = BuildAuroraStartupConfig(
+    dusk::PrepareStartupShell();
+    auto startupConfig = dusk::BuildAuroraStartupConfig(
         dusk::ConfigPath,
         ResolveDesiredBackend(parsed_arg_options),
         startupLogLevel,
@@ -717,12 +717,12 @@ int game_main(int argc, char* argv[]) {
     }
 #endif
 
-    ApplyRuntimePresentationPolicy(auroraInfo.backend);
+    dusk::ApplyRuntimePresentationPolicy(auroraInfo.backend);
 
     // Run ImGui UI loop if Aurora couldn't initialize a backend
     if (auroraInfo.backend == BACKEND_NULL) {
         launchUILoop();
-        ShutdownFrontendShell(true);
+        dusk::ShutdownFrontendShell(true);
         return 0;
     }
 
@@ -794,7 +794,7 @@ int game_main(int argc, char* argv[]) {
 
             // pre game launch ui main loop
             if (!launchUILoop()) {
-                ShutdownFrontendShell(true);
+                dusk::ShutdownFrontendShell(true);
                 return 0;
             }
         }
@@ -860,12 +860,12 @@ int game_main(int argc, char* argv[]) {
 
     // Notifies all CVs and causes threads to exit
     OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
-    ShutdownFrontendDiagnostics();
+    dusk::ShutdownFrontendDiagnostics();
     mDoMch_Destroy();
 
     // Notifies all CVs and causes threads to exit
     OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
-    ShutdownFrontendShell(true, false);
+    dusk::ShutdownFrontendShell(true, false);
     return 0;
 }
 
