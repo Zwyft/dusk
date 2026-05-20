@@ -1013,7 +1013,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "Enable Spatial Sound",
                 .helpText =
                     "Emulate surround sound via HRTF. Recommended only for use with headphones!",
-                .onChange = [](bool value) { audio::EnableHrtf = value; },
+                .onChange = [](bool value) { dusk::audio::EnableHrtf = value; },
             });
         config_bool_select(leftPane, rightPane, getSettings().audio.menuSounds,
             {
