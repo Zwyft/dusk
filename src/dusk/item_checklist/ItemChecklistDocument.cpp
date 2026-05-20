@@ -78,6 +78,10 @@ void ItemChecklistDocument::rebuildSections(const std::string& tab) {
         return;
     }
     grid->SetClass("tracker-grid", true);
+    const bool isSpeedrunTab = tab == kSpeedrunTab;
+    if (isSpeedrunTab) {
+        grid->SetClass("speedrun-grid", true);
+    }
 
     const auto items = ItemChecklist::instance().getItemsByTab(tab);
     const auto layout = chooseLayout(tab, items.size());
@@ -99,6 +103,26 @@ void ItemChecklistDocument::rebuildSections(const std::string& tab) {
         }
         mCards[item->id] = createCard(*item, row);
         ++index;
+    }
+
+    if (isSpeedrunTab) {
+        const int targetCells = layout.columns * 7;
+        while (index < targetCells) {
+            if (index % layout.columns == 0) {
+                row = append(grid, "div");
+                if (row == nullptr) {
+                    return;
+                }
+                row->SetClass("tracker-row", true);
+            }
+            auto* placeholder = append(row, "div");
+            if (placeholder == nullptr) {
+                return;
+            }
+            placeholder->SetClass("tracker-card", true);
+            placeholder->SetClass("tracker-card-placeholder", true);
+            ++index;
+        }
     }
 }
 

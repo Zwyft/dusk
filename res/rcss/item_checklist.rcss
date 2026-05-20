@@ -161,6 +161,11 @@
     height: 50dp;
 }
 
+.tracker-grid.speedrun-grid .tracker-card-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .tracker-grid.dense-compact {
     gap: 7dp;
 }
