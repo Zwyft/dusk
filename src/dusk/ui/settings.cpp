@@ -176,7 +176,7 @@ AuroraBackend configured_backend() {
     return configuredBackend;
 }
 
-void reset_for_speedrun_mode() {
+void reset_for_speedrun_mode_impl() {
     mDoMain::developmentMode = -1;
 
     getSettings().game.enableTurboKeybind.setSpeedrunValue(false);
@@ -354,6 +354,10 @@ void graphics_tuner_control(Window& window, Pane& leftPane, Pane& rightPane, Con
 }
 
 }  // namespace
+
+void reset_for_speedrun_mode() {
+    reset_for_speedrun_mode_impl();
+}
 
 SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
     if (prelaunch) {
