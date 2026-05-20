@@ -317,6 +317,10 @@ jobs:
         shell: powershell
         run: cmake --preset switch-libnx-relwithdebinfo
 
+      - name: Patch Dawn Abseil sysinfo
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File ci\patch_dawn_sysinfo_switch.ps1
+
       - name: Patch Dawn Abseil time zone helpers
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File ci\patch_dawn_time_zone_switch.ps1
