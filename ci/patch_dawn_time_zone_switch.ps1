@@ -2,17 +2,20 @@ param(
     [string]$TimeZoneLibc = "build\switch-libnx-relwithdebinfo\_deps\dawn-src\third_party\abseil-cpp\absl\time\internal\cctz\src\time_zone_libc.cc"
 )
 
-if (-not (Test-Path $TimeZoneLibc)) {
-    throw "Dawn Abseil time_zone_libc not found at $TimeZoneLibc"
-}
+function Patch-TimeZoneFile {
+    param([string]$Path)
 
-$text = Get-Content $TimeZoneLibc -Raw
-if ($text -match '#elif defined\(__SWITCH__\)') {
-    Write-Host "Dawn Abseil time_zone_libc already patched"
-    exit 0
-}
+    if (-not (Test-Path $Path)) {
+        return $false
+    }
 
-$anchor = @"
+    $text = Get-Content $Path -Raw
+    if ($text -match '#elif defined\(__SWITCH__\)') {
+        Write-Host "Dawn Abseil time_zone_libc already patched: $Path"
+        return $true
+    }
+
+    $anchor = @"
 #elif defined(__VXWORKS__)
 // Uses the globals: 'timezone' and 'tzname'.
 auto tm_gmtoff(const std::tm& tm) -> decltype(timezone + 0) {
@@ -26,7 +29,7 @@ auto tm_zone(const std::tm& tm) -> decltype(tzname[0]) {
 #else
 "@
 
-$insert = @"
+    $insert = @"
 #elif defined(__VXWORKS__)
 // Uses the globals: 'timezone' and 'tzname'.
 auto tm_gmtoff(const std::tm& tm) -> decltype(timezone + 0) {
@@ -50,13 +53,32 @@ auto tm_zone(const std::tm& tm) -> decltype(tzname[0]) {
 #else
 "@
 
-if (-not $text.Contains($anchor)) {
-    throw "Could not find Dawn time zone helper anchor in $TimeZoneLibc"
+    if (-not $text.Contains($anchor)) {
+        throw "Could not find Dawn time zone helper anchor in $Path"
+    }
+
+    $patched = $text.Replace($anchor, $insert)
+    if ($patched -eq $text) {
+        throw "Failed to patch Dawn Abseil time_zone_libc for Switch: $Path"
+    }
+
+    Set-Content -Path $Path -Value $patched -NoNewline
+    Write-Host "Dawn Abseil time_zone_libc patched: $Path"
+    return $true
 }
 
-$patched = $text.Replace($anchor, $insert)
-if ($patched -eq $text) {
-    throw "Failed to patch Dawn Abseil time_zone_libc for Switch"
+$patchedAny = $false
+$candidatePaths = @(
+    $TimeZoneLibc,
+    "build\switch-libnx-relwithdebinfo\_deps\dawn-build\third_party\abseil\absl\time\internal\cctz\src\time_zone_libc.cc"
+)
+
+foreach ($candidate in $candidatePaths) {
+    if (Patch-TimeZoneFile -Path $candidate) {
+        $patchedAny = $true
+    }
 }
 
-Set-Content -Path $TimeZoneLibc -Value $patched -NoNewline
+if (-not $patchedAny) {
+    throw "Dawn Abseil time_zone_libc not found at any known Switch build path"
+}
