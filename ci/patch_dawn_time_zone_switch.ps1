@@ -41,14 +41,12 @@ auto tm_zone(const std::tm& tm) -> decltype(tzname[0]) {
   return tzname[is_dst];
 }
 #elif defined(__SWITCH__)
-// Uses the globals: 'timezone' and 'tzname' from newlib/libnx.
-auto tm_gmtoff(const std::tm& tm) -> decltype(timezone + 0) {
-  const bool is_dst = tm.tm_isdst > 0;
-  return timezone + (is_dst ? 60 * 60 : 0);
+// Uses newlib's __TM_GMTOFF / __TM_ZONE fields on struct tm.
+auto tm_gmtoff(const std::tm& tm) -> decltype(tm.__TM_GMTOFF) {
+  return tm.__TM_GMTOFF;
 }
-auto tm_zone(const std::tm& tm) -> decltype(tzname[0]) {
-  const bool is_dst = tm.tm_isdst > 0;
-  return tzname[is_dst];
+auto tm_zone(const std::tm& tm) -> decltype(tm.__TM_ZONE) {
+  return tm.__TM_ZONE;
 }
 #else
 "@
