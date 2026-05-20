@@ -246,7 +246,7 @@ scrollbarhorizontal sliderbar {
 }
 
 .section-heading:not(:first-of-type) {
-    padding-top: 12dp;
+    padding-top: 8dp;
 }
 
 /* Collapsible sections */

@@ -38,7 +38,7 @@ private:
     void build(Rml::Element* content, const std::string& tab);
     void rebuildSections(const std::string& tab);
     void refreshItem(uint8_t itemId);
-    LayoutConfig chooseLayout(size_t itemCount) const;
+    LayoutConfig chooseLayout(const std::string& tab, size_t itemCount) const;
 
     CardRefs createCard(const ::ItemChecklist::ItemInfo& item, Rml::Element* parent);
 

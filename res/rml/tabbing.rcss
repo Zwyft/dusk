@@ -45,8 +45,8 @@ tab-bar tab:active {
 
 tab-bar[closable] tab-end-spacer {
     display: block;
-    flex: 0 0 64dp;
-    width: 64dp;
+    flex: 0 0 112dp;
+    width: 112dp;
     pointer-events: none;
 }
 
@@ -54,7 +54,7 @@ tab-bar[closable] close {
     display: block;
     position: fixed;
     top: 8dp;
-    right: 8dp;
+    right: 12dp;
     z-index: 1;
     width: 48dp;
     height: 48dp;

@@ -42,7 +42,11 @@ void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab)
     mSeenRevision = ItemChecklist::instance().revision();
 }
 
-ItemChecklistDocument::LayoutConfig ItemChecklistDocument::chooseLayout(size_t itemCount) const {
+ItemChecklistDocument::LayoutConfig ItemChecklistDocument::chooseLayout(
+    const std::string& tab, size_t itemCount) const {
+    if (tab == kSpeedrunTab) {
+        return {.columns = 12, .densityClass = "dense-medium"};
+    }
     if (itemCount <= 12) {
         return {.columns = 4, .densityClass = "dense-normal"};
     }
@@ -76,7 +80,7 @@ void ItemChecklistDocument::rebuildSections(const std::string& tab) {
     grid->SetClass("tracker-grid", true);
 
     const auto items = ItemChecklist::instance().getItemsByTab(tab);
-    const auto layout = chooseLayout(items.size());
+    const auto layout = chooseLayout(tab, items.size());
     grid->SetClass(layout.densityClass, true);
     grid->SetClass(fmt::format("cols-{}", layout.columns), true);
 
