@@ -104,7 +104,7 @@ apply(
     "        DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
     "        EXCLUDE_FROM_ALL\n"
     "        PATCH_COMMAND ${CMAKE_COMMAND}\n"
-    "          -DPATCH_FILE=<SOURCE_DIR>/third_party/CMakeLists.txt\n"
+    "          -DPATCH_FILE=<SOURCE_DIR>/CMakeLists.txt\n"
     f"          -P {DAWN_ABSEIL_PATCH}\n"
     "      )\n"
     "    else ()\n"
