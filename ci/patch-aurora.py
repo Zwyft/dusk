@@ -104,7 +104,7 @@ apply(
     "        DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
     "        EXCLUDE_FROM_ALL\n"
     "        PATCH_COMMAND ${CMAKE_COMMAND}\n"
-    "          -DPATCH_FILE=<SOURCE_DIR>/CMakeLists.txt\n"
+    "          -DPATCH_FILE=<SOURCE_DIR>/tools/fetch_dawn_dependencies.py\n"
     f"          -P {DAWN_ABSEIL_PATCH}\n"
     "      )\n"
     "    else ()\n"
