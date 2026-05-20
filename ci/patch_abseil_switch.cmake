@@ -3,19 +3,21 @@ if (NOT EXISTS "${PATCH_FILE}")
 endif ()
 
 file(READ "${PATCH_FILE}" _absl_sysinfo)
-set(_old "  return static_cast<pid_t>(pthread_self());")
-set(_new "  return static_cast<pid_t>(reinterpret_cast<intptr_t>(pthread_self()));")
-
-string(FIND "${_absl_sysinfo}" "reinterpret_cast<intptr_t>(pthread_self())" _already_patched)
+set(_needle "reinterpret_cast<intptr_t>(pthread_self())")
+string(FIND "${_absl_sysinfo}" "${_needle}" _already_patched)
 if (_already_patched GREATER -1)
   message(STATUS "aurora: abseil Switch patch already applied")
 else ()
-  string(FIND "${_absl_sysinfo}" "${_old}" _anchor_index)
-  if (_anchor_index GREATER -1)
-    string(REPLACE "${_old}" "${_new}" _absl_sysinfo "${_absl_sysinfo}")
-    file(WRITE "${PATCH_FILE}" "${_absl_sysinfo}")
-    message(STATUS "aurora: applied abseil Switch thread-id patch")
-  else ()
+  set(_patched "${_absl_sysinfo}")
+  string(REGEX REPLACE
+    "static_cast<pid_t>\\(pthread_self\\(\\)\\)"
+    "static_cast<pid_t>(reinterpret_cast<intptr_t>(pthread_self()))"
+    _patched
+    "${_patched}")
+  if (_patched STREQUAL _absl_sysinfo)
     message(FATAL_ERROR "aurora: could not find abseil thread-id fallback in ${PATCH_FILE}")
+  else ()
+    file(WRITE "${PATCH_FILE}" "${_patched}")
+    message(STATUS "aurora: applied abseil Switch thread-id patch")
   endif ()
 endif ()
