@@ -1,5 +1,6 @@
 #include "dusk/startup_shell.hpp"
 
+#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_misc.h>
 
@@ -14,6 +15,7 @@
 #include "d/d_com_inf_game.h"
 #include "dusk/app_info.hpp"
 #include "dusk/audio/DuskAudioSystem.h"
+#include "dusk/audio/DuskDsp.hpp"
 #include "dusk/config.hpp"
 #include "dusk/crash_reporting.h"
 #include "dusk/discord_presence.hpp"
@@ -133,7 +135,7 @@ void ApplyRuntimePresentationPolicy(AuroraBackend activeBackend) {
 
     audio::SetMasterVolume(getSettings().audio.masterVolume / 100.0f);
     audio::SetEnableReverb(getSettings().audio.enableReverb);
-    audio::EnableHrtf = getSettings().audio.enableHrtf;
+    dusk::audio::EnableHrtf = getSettings().audio.enableHrtf;
 }
 
 void ShutdownFrontendDiagnostics() {
