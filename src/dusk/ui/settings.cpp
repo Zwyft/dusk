@@ -1020,6 +1020,9 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                         reset_for_speedrun_mode();
                     } else {
                         restore_from_speedrun_mode();
+                        if (getSettings().game.liveSplitEnabled) {
+                            speedrun::disconnectLiveSplit();
+                        }
                     }
                 },
             });
