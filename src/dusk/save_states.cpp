@@ -287,6 +287,24 @@ std::string SaveStates::encodeCurrentStateSaveOnly() {
     return absl::Base64Escape(compressed);
 }
 
+static std::string EncodeStateSaveOnlyWithStage(const char* stageName, int8_t roomNo, int8_t layer, int16_t startPoint, const dSv_save_c& saveData) {
+    StateSharePacket pkt = {};
+    strncpy(pkt.stageName, stageName, 7);
+    pkt.roomNo = roomNo;
+    pkt.layer = layer;
+    pkt.startPoint = startPoint;
+
+    std::string raw(PACKET_SAVE_ONLY, '\0');
+    memcpy(raw.data(), &pkt, sizeof(pkt));
+    memcpy(raw.data() + sizeof(pkt), &saveData, sizeof(dSv_save_c));
+
+    size_t bound = ZSTD_compressBound(raw.size());
+    std::string compressed(bound, '\0');
+    compressed.resize(ZSTD_compress(compressed.data(), bound, raw.data(), raw.size(), 1));
+
+    return absl::Base64Escape(compressed);
+}
+
 bool SaveStates::applyEncodedState(const std::string& encoded, const std::string& name) {
     std::string decoded;
     if (!absl::Base64Unescape(encoded, &decoded)) {
@@ -496,6 +514,62 @@ void SaveStates::saveNamedState(const std::string& name) {
     if (!dusk::IsGameLaunched || dusk::getTransientSettings().stateShareLoadActive) return;
     auto encoded = encodeCurrentStateSaveOnly();
     addNamedState(name, encoded, false);
+}
+
+void SaveStates::saveNamedStateFull(const std::string& name) {
+    if (!dusk::IsGameLaunched || dusk::getTransientSettings().stateShareLoadActive) return;
+    addNamedState(name, encodeCurrentState(), true);
+}
+
+void SaveStates::captureSessionSnapshot(const std::string& label, bool full) {
+    if (!dusk::IsGameLaunched || dusk::getTransientSettings().stateShareLoadActive) return;
+
+    SessionSnapshotEntry entry;
+    entry.timestamp = std::chrono::system_clock::now();
+    entry.isFullState = full;
+    entry.name = label.empty() ? fmt::format("Snapshot {}", m_sessionSnapshots.size() + 1) : label;
+    entry.encoded = full ? encodeCurrentState() : encodeCurrentStateSaveOnly();
+
+    m_sessionSnapshots.push_back(std::move(entry));
+    if ((int)m_sessionSnapshots.size() > kMaxSessionSnapshots) {
+        m_sessionSnapshots.erase(m_sessionSnapshots.begin());
+    }
+    m_statusMsg = fmt::format("Captured session snapshot '{}'", m_sessionSnapshots.back().name);
+}
+
+bool SaveStates::loadSessionSnapshot(int index) {
+    if (index < 0 || index >= (int)m_sessionSnapshots.size()) {
+        return false;
+    }
+    return applyEncodedState(m_sessionSnapshots[index].encoded, m_sessionSnapshots[index].name);
+}
+
+bool SaveStates::rollbackLastSessionSnapshot() {
+    if (m_sessionSnapshots.empty()) {
+        m_statusMsg = "No session snapshots to roll back to.";
+        return false;
+    }
+    return loadSessionSnapshot((int)m_sessionSnapshots.size() - 1);
+}
+
+void SaveStates::clearSessionSnapshots() {
+    m_sessionSnapshots.clear();
+    m_statusMsg = "Session snapshots cleared.";
+}
+
+void SaveStates::createPracticePresetState(const std::string& name,
+                                           const std::string& stage,
+                                           int8_t roomNo,
+                                           int8_t layer,
+                                           int16_t startPoint) {
+    if (!dusk::IsGameLaunched || dusk::getTransientSettings().stateShareLoadActive) {
+        m_statusMsg = "Launch game first to create practice preset.";
+        return;
+    }
+
+    std::string encoded = EncodeStateSaveOnlyWithStage(stage.c_str(), roomNo, layer, startPoint, g_dComIfG_gameInfo.info.mSavedata);
+    addNamedState(name, encoded, false);
+    m_statusMsg = fmt::format("Practice preset '{}' created.", name);
 }
 
 void SaveStates::clearAllNamedStates() {

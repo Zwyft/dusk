@@ -24,6 +24,13 @@ struct QuickSaveSlot {
     bool isFullState = false;
 };
 
+struct SessionSnapshotEntry {
+    std::string name;
+    std::string encoded;
+    bool isFullState = false;
+    std::chrono::system_clock::time_point timestamp;
+};
+
 class SaveStates {
 public:
     void tick();
@@ -38,6 +45,7 @@ public:
 
     const std::vector<SavedStateEntry>& getNamedStates() const { return m_states; }
     const QuickSaveSlot* getQuickSaves() const { return m_quickSaves; }
+    const std::vector<SessionSnapshotEntry>& getSessionSnapshots() const { return m_sessionSnapshots; }
     std::string getStatusMsg() const { return m_statusMsg; }
 
     void loadStatesFile();
@@ -49,8 +57,20 @@ public:
     void deleteQuickSave(int slot);
     void addNamedState(const std::string& name, const std::string& encoded, bool isFullState = false);
     void saveNamedState(const std::string& name);
+    void saveNamedStateFull(const std::string& name);
     void clearAllNamedStates();
     bool applyEncodedState(const std::string& encoded, const std::string& name = {});
+
+    void captureSessionSnapshot(const std::string& label = {}, bool full = false);
+    bool loadSessionSnapshot(int index);
+    bool rollbackLastSessionSnapshot();
+    void clearSessionSnapshots();
+
+    void createPracticePresetState(const std::string& name,
+                                   const std::string& stage,
+                                   int8_t roomNo,
+                                   int8_t layer,
+                                   int16_t startPoint = -1);
 
     void setStatusMsg(const std::string& msg) { m_statusMsg = msg; }
 
@@ -72,6 +92,8 @@ private:
 
     QuickSaveSlot m_quickSaves[4] = {};
     bool m_quickSavesLoaded = false;
+    std::vector<SessionSnapshotEntry> m_sessionSnapshots;
+    static constexpr int kMaxSessionSnapshots = 24;
 };
 
 SaveStates& getSaveStates();

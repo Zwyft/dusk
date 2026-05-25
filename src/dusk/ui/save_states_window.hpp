@@ -11,6 +11,8 @@ public:
 private:
     void build_quick_saves_tab(Rml::Element* content);
     void build_named_states_tab(Rml::Element* content);
+    void build_practice_mode_tab(Rml::Element* content);
+    void build_session_snapshots_tab(Rml::Element* content);
     void refresh_quick_saves();
     void refresh_named_states();
     void delete_named_state(int index);

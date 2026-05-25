@@ -33,6 +33,12 @@ SaveStatesWindow::SaveStatesWindow() : Window() {
     add_tab("Named States", [this](Rml::Element* content) {
         build_named_states_tab(content);
     });
+    add_tab("Practice Mode", [this](Rml::Element* content) {
+        build_practice_mode_tab(content);
+    });
+    add_tab("Session Snapshots", [this](Rml::Element* content) {
+        build_session_snapshots_tab(content);
+    });
     set_active_tab(0);
 }
 
@@ -266,6 +272,154 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
             rightPane, [](Pane& pane) {
                 pane.clear();
                 pane.add_text("Delete all named states.");
+            });
+    }
+}
+
+void SaveStatesWindow::build_practice_mode_tab(Rml::Element* content) {
+    auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
+    auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+
+    leftPane.add_section("Practice Scenario Launcher");
+    rightPane.add_text("Create premade place snapshots from your current inventory/progression. These act like route-practice checkpoints.");
+
+    struct ScenarioPreset {
+        const char* name;
+        const char* stage;
+        int8_t room;
+        int8_t layer;
+        int16_t spawn;
+        const char* description;
+    };
+
+    static constexpr ScenarioPreset kPresets[] = {
+        {"Practice: Ordon Ranch", "F_SP103", 0, 0, -1, "Early movement and wolf routing drills."},
+        {"Practice: Kakariko Village", "R_SP109", 0, 0, -1, "Mid-game movement, climb, and menuing routes."},
+        {"Practice: Forest Temple Entrance", "D_MN05", 0, 0, -1, "Dungeon opener setups."},
+        {"Practice: Goron Mines Entrance", "D_MN04", 0, 0, -1, "Bomb bag / mine route practice."},
+        {"Practice: Lakebed Temple Entrance", "D_MN07", 0, 0, -1, "Water movement and routing practice."},
+    };
+
+    bool gameRunning = dusk::IsGameLaunched && !dusk::getTransientSettings().stateShareLoadActive;
+    if (!gameRunning) {
+        leftPane.add_text("Launch game to create practice snapshots.");
+        return;
+    }
+
+    for (const auto& preset : kPresets) {
+        leftPane.register_control(
+            leftPane.add_button(fmt::format("Create {}", preset.name)).on_pressed([preset]() {
+                mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().createPracticePresetState(
+                    preset.name,
+                    preset.stage,
+                    preset.room,
+                    preset.layer,
+                    preset.spawn);
+            }),
+            rightPane, [preset](Pane& pane) {
+                pane.clear();
+                pane.add_rml(fmt::format("<b>{}</b><br/>{}<br/>Stage: {} / Room {} / Layer {}",
+                    preset.name,
+                    preset.description,
+                    preset.stage,
+                    (int)preset.room,
+                    (int)preset.layer));
+            });
+    }
+
+    leftPane.add_rml("<br/>");
+    leftPane.add_section("Scenario Snapshot Helpers");
+
+    leftPane.register_control(
+        leftPane.add_button("Save Full Practice Snapshot").on_pressed([] {
+            mDoAud_seStartMenu(kSoundClick);
+            auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            dusk::getSaveStates().saveNamedStateFull(fmt::format("Practice Full {}", now));
+        }),
+        rightPane, [](Pane& pane) {
+            pane.clear();
+            pane.add_text("Capture a full snapshot for instant retry practice.");
+        });
+}
+
+void SaveStatesWindow::build_session_snapshots_tab(Rml::Element* content) {
+    auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
+    auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+
+    dusk::SaveStates& states = dusk::getSaveStates();
+    leftPane.add_section("Session Snapshots + Rollback");
+    rightPane.add_text("Timeline-like snapshots for this session. Capture, load any point, or rollback to latest.");
+
+    bool gameRunning = dusk::IsGameLaunched && !dusk::getTransientSettings().stateShareLoadActive;
+    if (gameRunning) {
+        leftPane.register_control(
+            leftPane.add_button("Capture Snapshot (Stage Reload)").on_pressed([] {
+                mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().captureSessionSnapshot({}, false);
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Capture a lightweight rollback point.");
+            });
+
+        leftPane.register_control(
+            leftPane.add_button("Capture Snapshot (Full)").on_pressed([] {
+                mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().captureSessionSnapshot({}, true);
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Capture a full actor snapshot (more exact, potentially less stable). ");
+            });
+
+        leftPane.register_control(
+            leftPane.add_button("Rollback to Latest Snapshot").on_pressed([] {
+                mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().rollbackLastSessionSnapshot();
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Load the newest session snapshot.");
+            });
+    }
+
+    const auto& snaps = states.getSessionSnapshots();
+    if (snaps.empty()) {
+        leftPane.add_rml("<br/><center><i>No session snapshots yet.</i></center>");
+    } else {
+        for (int i = (int)snaps.size() - 1; i >= 0; --i) {
+            const auto& snap = snaps[i];
+            leftPane.register_control(
+                leftPane.add_button(fmt::format("{}: {}", i + 1, snap.name)).on_pressed([i]() {
+                    mDoAud_seStartMenu(kSoundClick);
+                    dusk::getSaveStates().loadSessionSnapshot(i);
+                }),
+                rightPane, [i](Pane& pane) {
+                    const auto& local = dusk::getSaveStates().getSessionSnapshots();
+                    if (i < 0 || i >= (int)local.size()) {
+                        pane.clear();
+                        pane.add_text("Snapshot missing.");
+                        return;
+                    }
+                    const auto& s = local[i];
+                    pane.clear();
+                    pane.add_rml(fmt::format("<b>{}</b><br/>Type: {}<br/>Saved: {}",
+                        s.name,
+                        s.isFullState ? "Full" : "Stage Reload",
+                        formatTimeAgo(s.timestamp)));
+                });
+        }
+
+        leftPane.register_control(
+            leftPane.add_button("Clear Session Snapshots").on_pressed([] {
+                mDoAud_seStartMenu(kSoundClick);
+                dusk::getSaveStates().clearSessionSnapshots();
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Delete current session timeline snapshots.");
             });
     }
 }
