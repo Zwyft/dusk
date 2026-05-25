@@ -194,14 +194,9 @@ void reset_for_speedrun_mode() {
     getSettings().game.autoSave.setValue(false);
 }
 
-void clear_speedrun_overrides() {
-    config::EnumerateRegistered([](config::ConfigVarBase& cvar) {
-        cvar.clearSpeedrunOverride();
-    });
-}
-
 void restore_from_speedrun_mode() {
-    clear_speedrun_overrides();
+    // This branch does not expose config override enumeration APIs present in v1.3.0.
+    // Keep restoration minimal and safe for parity on available interfaces.
     aurora_set_pause_on_focus_lost(getSettings().game.pauseOnFocusLost.getValue());
 }
 
