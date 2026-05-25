@@ -259,7 +259,7 @@ jobs:
         working-directory: platforms/android
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug
+          ./gradlew syncDuskAssets :app:assembleDebug
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v7
