@@ -9,11 +9,20 @@ namespace dusk {
 static std::array<std::array<ActionBindPressData, static_cast<int>(ActionBinds::COUNT)>, PAD_CHANMAX> actionPressData{};
 
 ActionBindsMap& getActionBinds() {
+    static std::array<int, 4> firstPersonCamera = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+        PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
+    static std::array<int, 4> callMidna = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+        PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
+    static std::array<int, 4> openDusklightMenu = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+        PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
+    static std::array<int, 4> turboSpeedButton = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+        PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
+
     static ActionBindsMap actionBinds = {
-        {ActionBinds::FIRST_PERSON_CAMERA, {&getSettings().actionBindings.firstPersonCamera, "First Person Camera"}},
-        {ActionBinds::CALL_MIDNA,          {&getSettings().actionBindings.callMidna,         "Call Midna"}},
-        {ActionBinds::OPEN_DUSKLIGHT_MENU, {&getSettings().actionBindings.openDusklightMenu, "Open Dusklight Menu"}},
-        {ActionBinds::TURBO_SPEED_BUTTON,  {&getSettings().actionBindings.turboSpeedButton,  "Turbo Speed Button"}},
+        {ActionBinds::FIRST_PERSON_CAMERA, {&firstPersonCamera, "First Person Camera"}},
+        {ActionBinds::CALL_MIDNA,          {&callMidna,         "Call Midna"}},
+        {ActionBinds::OPEN_DUSKLIGHT_MENU, {&openDusklightMenu, "Open Dusklight Menu"}},
+        {ActionBinds::TURBO_SPEED_BUTTON,  {&turboSpeedButton,  "Turbo Speed Button"}},
     };
     return actionBinds;
 }

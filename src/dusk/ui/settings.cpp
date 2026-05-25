@@ -1128,16 +1128,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 pane.add_rml("<br/>Choose which notifications can be displayed.");
             });
 #if DUSK_ENABLE_SENTRY_NATIVE
-        config_bool_select(leftPane, rightPane, getSettings().backend.enableCrashReporting,
-            {.key = "Crash Reporting",
-                .helpText = "Enable automatic reporting of crashes to the developers.<br/><br/>"
-                            "Submissions include logs which may contain sensitive information. "
-                            "Refrain from "
-                            "enabling reporting if you do not agree with the following "
-                            "inclusions:<br/><br/> "
-                            "- Operating System<br/>- CPU Architecture<br/>- GPU Model & Driver "
-                            "Version<br/>"
-                            "- Account Username"});
+        // Crash-reporting config has been removed from backend settings in this branch.
+        // Keep this block intentionally disabled until the setting is reintroduced.
 #endif
         config_bool_select(leftPane, rightPane, getSettings().backend.skipPreLaunchUI,
             {
