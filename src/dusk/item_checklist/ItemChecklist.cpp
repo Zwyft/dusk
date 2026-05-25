@@ -1,6 +1,7 @@
 #include "ItemChecklist.h"
 
 #include "d/d_com_inf_game.h"
+#include "d/d_item_data.h"
 #include "dusk/io.hpp"
 #include "dusk/item_checklist_hooks.h"
 #include "dusk/logging.h"
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <filesystem>
+#include <initializer_list>
 #include <string>
 #include <system_error>
 
@@ -92,6 +94,75 @@ std::vector<u8> read_bundled_bytes(const std::filesystem::path& path) {
     return {};
 }
 
+bool has_item_first_bit(std::initializer_list<u8> itemIds) {
+    for (u8 itemId : itemIds) {
+        if (dComIfGs_isItemFirstBit(itemId) != 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool collected_from_auto_rule(u8 checklistId, bool& outCollected) {
+    switch (checklistId) {
+    case 100:  // Wallet
+        outCollected = dComIfGs_getWalletSize() > 0;
+        return true;
+    case 101:  // Bottle
+        outCollected = has_item_first_bit({dItemNo_EMPTY_BOTTLE_e, dItemNo_RED_BOTTLE_e,
+            dItemNo_GREEN_BOTTLE_e, dItemNo_BLUE_BOTTLE_e, dItemNo_MILK_BOTTLE_e,
+            dItemNo_HALF_MILK_BOTTLE_e, dItemNo_OIL_BOTTLE_e, dItemNo_WATER_BOTTLE_e,
+            dItemNo_DROP_BOTTLE_e});
+        return true;
+    case 102:  // Dominion Rod
+        outCollected = has_item_first_bit({dItemNo_COPY_ROD_e, dItemNo_COPY_ROD_2_e});
+        return true;
+    case 103:  // Master Sword
+        outCollected = dComIfGs_isCollectSword(COLLECT_MASTER_SWORD) != 0;
+        return true;
+    case 104:  // Ordon Shield
+        outCollected = dComIfGs_isCollectShield(0) != 0;
+        return true;
+    case 105:  // Hylian Shield
+        outCollected = dComIfGs_isCollectShield(COLLECT_HYLIAN_SHIELD) != 0;
+        return true;
+    case 111:  // Golden Bugs
+        outCollected = dComIfGs_checkGetInsectNum() > 0;
+        return true;
+    case 112:  // Poe Souls
+        outCollected = dComIfGs_getPohSpiritNum() > 0;
+        return true;
+    case 121:  // Horse Call
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_HORSE_FLUTE_e) != 0;
+        return true;
+    case 130:  // Youth Scent
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_SMELL_CHILDREN_e) != 0;
+        return true;
+    case 131:  // Ilia Scent
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_SMELL_YELIA_POUCH_e) != 0;
+        return true;
+    case 132:  // Poe Scent
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_SMELL_POH_e) != 0;
+        return true;
+    case 133:  // Reekfish Scent
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_SMELL_FISH_e) != 0;
+        return true;
+    case 134:  // Medicine Scent
+        outCollected = dComIfGs_isItemFirstBit(dItemNo_SMELL_MEDICINE_e) != 0;
+        return true;
+    case 140:  // Fused Shadows
+        outCollected = dComIfGs_isCollectCrystal(0) || dComIfGs_isCollectCrystal(1)
+                       || dComIfGs_isCollectCrystal(2) || dComIfGs_isCollectCrystal(3);
+        return true;
+    case 141:  // Mirror Shards
+        outCollected = dComIfGs_isCollectMirror(0) || dComIfGs_isCollectMirror(1)
+                       || dComIfGs_isCollectMirror(2);
+        return true;
+    default:
+        return false;
+    }
+}
+
 }  // namespace
 
 ItemChecklist& ItemChecklist::instance() {
@@ -125,13 +196,13 @@ bool ItemChecklist::isCollected(uint8_t itemId) const {
     if (item == nullptr) {
         return false;
     }
+    if (const auto liveIt = mLiveCollected.find(itemId); liveIt != mLiveCollected.end()) {
+        return liveIt->second;
+    }
     if (!item->useLiveState) {
         if (const auto overrideIt = mManualOverrides.find(itemId); overrideIt != mManualOverrides.end()) {
             return overrideIt->second;
         }
-    }
-    if (const auto liveIt = mLiveCollected.find(itemId); liveIt != mLiveCollected.end()) {
-        return liveIt->second;
     }
     return false;
 }
@@ -343,6 +414,11 @@ void ItemChecklist::syncItemStateFromGame(uint8_t itemId, bool collected) {
 }
 
 bool ItemChecklist::collectedFromGame(const ItemInfo& item) const {
+    bool autoCollected = false;
+    if (collected_from_auto_rule(item.id, autoCollected)) {
+        return autoCollected;
+    }
+
     if (!item.useLiveState) {
         return false;
     }
