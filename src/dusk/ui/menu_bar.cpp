@@ -7,6 +7,7 @@
 
 #include "achievements.hpp"
 #include "aurora/rmlui.hpp"
+#include "dusk/item_checklist/ItemChecklistDocument.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
 #include "editor.hpp"
@@ -56,11 +57,14 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     mTabBar->add_tab("Save States", [this] { push(std::make_unique<SaveStatesWindow>()); });
     mTabBar->add_tab("Mods", [this] { push(std::make_unique<ModsWindow>()); });
 
-    mTabBar->add_tab("Editor", [this] { push(std::make_unique<EditorWindow>()); });
-    mTabBar->add_tab("Item Tracker", [this] { push(std::make_unique<EditorWindow>()); });
-    mTabBar->add_tab("Check Items", [this] { push(std::make_unique<EditorWindow>()); });
+    if (getSettings().backend.enableAdvancedSettings) {
+        mTabBar->add_tab("Editor", [this] { push(std::make_unique<EditorWindow>()); });
+    }
 
     mTabBar->add_tab("Achievements", [this] { push(std::make_unique<AchievementsWindow>()); });
+    mTabBar->add_tab("Checklist", [this] {
+        push(std::make_unique<ItemChecklistDocument>());
+    });
     mTabBar->add_tab("Reset", [this] {
         mTabBar->set_active_tab(-1);
         const auto dismiss = [](Modal& modal) { modal.pop(); };

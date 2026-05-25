@@ -1,0 +1,197 @@
+@namespace url("uric://rcss.org/2.0");
+
+.tracker-window {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    gap: 8dp;
+    padding: 0dp;
+    align-items: stretch;
+}
+
+.tracker-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    gap: 8dp;
+}
+
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12dp;
+}
+
+.tracker-titleblock {
+    display: flex;
+    flex-direction: column;
+    gap: 0dp;
+}
+
+.tracker-kicker {
+    font-family: "Fira Sans Condensed";
+    font-size: 11dp;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(255, 244, 196, 0.95);
+    margin-left: 2dp;
+}
+
+.tracker-titleblock h1 {
+    margin: 0;
+    font-family: "AlegreyaSC";
+    font-size: 26dp;
+    font-weight: bold;
+    color: #fff7d5;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.tracker-status {
+    font-size: 11dp;
+    color: rgba(255, 243, 214, 0.78);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.tracker-close {
+    width: 38dp;
+    height: 38dp;
+    padding: 0;
+    border: 0;
+    border-radius: 10dp;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff6da;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tracker-close:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.tracker-summary-row {
+    display: none;
+}
+
+.tracker-sections {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-y: hidden;
+    padding: 10dp 2dp 0dp 2dp;
+}
+
+.tracker-grid {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10dp;
+}
+
+.tracker-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10dp;
+}
+
+.tracker-card {
+    flex: 0 0 56dp;
+    width: 56dp;
+    height: 56dp;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    transition: transform 0.08s ease, opacity 0.08s ease, filter 0.08s ease;
+}
+
+.tracker-card:hover {
+    transform: scale(1.04);
+}
+
+.tracker-card.locked {
+    opacity: 0.55;
+    filter: grayscale(100%) brightness(0.72) contrast(0.92);
+}
+
+.tracker-card.owned {
+    opacity: 1;
+    filter: none;
+}
+
+.tracker-card-icon {
+    width: 56dp;
+    height: 56dp;
+    display: block;
+    image-rendering: auto;
+}
+
+.tracker-grid.dense-medium {
+    gap: 8dp;
+}
+
+.tracker-grid.dense-medium .tracker-row {
+    gap: 8dp;
+}
+
+.tracker-grid.dense-medium .tracker-card {
+    flex: 0 0 50dp;
+    width: 50dp;
+    height: 50dp;
+}
+
+.tracker-grid.dense-medium .tracker-card-icon {
+    width: 50dp;
+    height: 50dp;
+}
+
+.tracker-grid.speedrun-grid .tracker-card-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.tracker-grid.dense-compact {
+    gap: 7dp;
+}
+
+.tracker-grid.dense-compact .tracker-row {
+    gap: 7dp;
+}
+
+.tracker-grid.dense-compact .tracker-card {
+    flex: 0 0 44dp;
+    width: 44dp;
+    height: 44dp;
+}
+
+.tracker-grid.dense-compact .tracker-card-icon {
+    width: 44dp;
+    height: 44dp;
+}
+
+.tracker-card-label {
+    display: none;
+}
+
+.tracker-window icon {
+    font-family: "MaterialSymbolsRounded";
+    font-weight: normal;
+    display: inline-block;
+    vertical-align: middle;
+}

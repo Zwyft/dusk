@@ -4,10 +4,7 @@
 #include <SDL3/SDL_events.h>
 #include <dolphin/pad.h>
 #include "SSystem/SComponent/c_API_controller_pad.h"
-#include "aurora/imgui.h"
-#include "d/d_com_inf_game.h"
 #include "dusk/config.hpp"
-#include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
 #include "dusk/touch_controls.hpp"
@@ -17,8 +14,6 @@
 #include <array>
 #include <cmath>
 #include <cstring>
-
-#include "gx_decode.h"
 
 namespace dusk::touch_controls {
 namespace {
@@ -482,196 +477,25 @@ static ImU32 with_opacity(ImU32 col) {
     return ImGui::ColorConvertFloat4ToU32(c);
 }
 
+static void draw_glossy_disc(ImDrawList* dl, ImVec2 center, float radius, ImU32 fill, ImU32 border,
+                             bool pressed) {
+    float shadowOffset = radius * (pressed ? 0.05f : 0.08f);
+    float shadowRadius = radius * (pressed ? 1.00f : 1.05f);
+    float highlightRadius = radius * (pressed ? 0.48f : 0.58f);
+    float specularRadius = radius * (pressed ? 0.24f : 0.30f);
 
-// ---------------------------------------------------------------------------
-// Game button texture loading + ImGui-drawn glossy fallback
-// ---------------------------------------------------------------------------
-static ImTextureID s_btnTex[CTRL_BTN_START + 1] = {};
-static bool s_texturesLoaded = false;
-
-static void unload_button_textures() {
-    for (auto& tex : s_btnTex) tex = {};
-    s_texturesLoaded = false;
-}
-
-static std::vector<uint8_t> decode_gx_to_rgba(const ResTIMG* timg) {
-    if (!timg) return {};
-    auto* pixelData = reinterpret_cast<const uint8_t*>(timg) + timg->imageOffset;
-    return ::decode_gx_to_rgba(timg->format, timg->width, timg->height, pixelData);
-}
-
-static void load_game_button_textures() {
-    auto* archive = dComIfGp_getMeterButtonArchive();
-    if (!archive) {
-        DuskLog.warn("touch: no button archive available");
-        unload_button_textures();
-        return;
-    }
-
-    auto getRes = [&](const char* name) -> const ResTIMG* {
-        auto* r = static_cast<const ResTIMG*>(archive->getResource('TIMG', name));
-        if (r) DuskLog.info("touch: found '{}' fmt={} wxh={}x{} off={}", name,
-                            (int)r->format, (int)r->width, (int)r->height, (int)r->imageOffset);
-        return r;
-    };
-
-    auto* abMaru = getRes("TT_ZELDA_BUTTON_AB_MARU.bti");
-    if (!abMaru) abMaru = getRes("tt_zelda_button_ab_maru.bti");
-    if (!abMaru) { DuskLog.warn("touch: failed AB_MARU"); return; }
-
-    auto* aText = getRes("TT_ZELDA_BUTTON_A_TEXT.bti");
-    if (!aText) aText = getRes("tt_zelda_button_a_text.bti");
-    if (!aText) { DuskLog.warn("touch: failed A_TEXT"); return; }
-
-    auto* bText = getRes("TT_ZELDA_BUTTON_B_TEXT.bti");
-    if (!bText) bText = getRes("tt_zelda_button_b_text.bti");
-    if (!bText) { DuskLog.warn("touch: failed B_TEXT"); return; }
-
-    auto* xBase = getRes("TT_ZELDA_BUTTON_X_BASE.bti");
-    if (!xBase) xBase = getRes("tt_zelda_button_x_base.bti");
-    if (!xBase) { DuskLog.warn("touch: failed X_BASE"); return; }
-
-    auto* xText = getRes("TT_ZELDA_BUTTON_X_TEXT.bti");
-    if (!xText) xText = getRes("tt_zelda_button_x_text.bti");
-    if (!xText) { DuskLog.warn("touch: failed X_TEXT"); return; }
-
-    auto* yBase = getRes("TT_ZELDA_BUTTON_Y_BASE.bti");
-    if (!yBase) yBase = getRes("tt_zelda_button_y_base.bti");
-    if (!yBase) { DuskLog.warn("touch: failed Y_BASE"); return; }
-
-    auto* yText = getRes("TT_ZELDA_BUTTON_Y_TEXT.bti");
-    if (!yText) yText = getRes("tt_zelda_button_y_text.bti");
-    if (!yText) { DuskLog.warn("touch: failed Y_TEXT"); return; }
-
-    if (!abMaru) { DuskLog.warn("touch: failed to find ab_maru texture"); return; }
-    if (!aText)  { DuskLog.warn("touch: failed to find a_text texture"); return; }
-    if (!bText)  { DuskLog.warn("touch: failed to find b_text texture"); return; }
-    if (!xBase)  { DuskLog.warn("touch: failed to find x_base texture"); return; }
-    if (!xText)  { DuskLog.warn("touch: failed to find x_text texture"); return; }
-    if (!yBase)  { DuskLog.warn("touch: failed to find y_base texture"); return; }
-    if (!yText)  { DuskLog.warn("touch: failed to find y_text texture"); return; }
-
-    // Tint IA4 base: modulate grayscale intensity by target color, preserve alpha
-    auto tint = [](std::vector<uint8_t>& p, uint8_t tr, uint8_t tg, uint8_t tb) {
-        for (size_t i = 0; i + 3 < p.size(); i += 4) {
-            float v = p[i] / 255.0f;    // IA4 intensity (R=G=B after decode)
-            float a = p[i + 3] / 255.0f;
-            p[i]     = static_cast<uint8_t>(tr * v);
-            p[i + 1] = static_cast<uint8_t>(tg * v);
-            p[i + 2] = static_cast<uint8_t>(tb * v);
-            // keep original alpha for transparency
-        }
-    };
-
-    // Composite text (I4, white on transparent) centered on tinted base
-    // (compositing done inline per-button below)
-
-    // A button
-    {
-        auto rgba = decode_gx_to_rgba(abMaru);
-        tint(rgba, 60, 200, 60);
-        auto txt = decode_gx_to_rgba(aText);
-        int32_t ox = ((int32_t)abMaru->width - (int32_t)aText->width) / 2;
-        int32_t oy = ((int32_t)abMaru->height - (int32_t)aText->height) / 2;
-        for (uint32_t y = 0; y < aText->height; ++y) {
-            int32_t dy = (int32_t)y + oy;
-            if (dy < 0 || dy >= (int32_t)abMaru->height) continue;
-            for (uint32_t x = 0; x < aText->width; ++x) {
-                int32_t dx = (int32_t)x + ox;
-                if (dx < 0 || dx >= (int32_t)abMaru->width) continue;
-                size_t si = ((size_t)y * aText->width + x) * 4;
-                size_t di = ((size_t)dy * abMaru->width + dx) * 4;
-                float a = txt[si + 3] / 255.0f;
-                if (a > 0.0f) {
-                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
-                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
-                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
-                }
-            }
-        }
-        s_btnTex[CTRL_BTN_A] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgba.data());
-    }
-
-    // B button (same base as A)
-    {
-        auto rgba = decode_gx_to_rgba(abMaru);
-        tint(rgba, 200, 40, 40);
-        auto txt = decode_gx_to_rgba(bText);
-        int32_t ox = ((int32_t)abMaru->width - (int32_t)bText->width) / 2;
-        int32_t oy = ((int32_t)abMaru->height - (int32_t)bText->height) / 2;
-        for (uint32_t y = 0; y < bText->height; ++y) {
-            int32_t dy = (int32_t)y + oy;
-            if (dy < 0 || dy >= (int32_t)abMaru->height) continue;
-            for (uint32_t x = 0; x < bText->width; ++x) {
-                int32_t dx = (int32_t)x + ox;
-                if (dx < 0 || dx >= (int32_t)abMaru->width) continue;
-                size_t si = ((size_t)y * bText->width + x) * 4;
-                size_t di = ((size_t)dy * abMaru->width + dx) * 4;
-                float a = txt[si + 3] / 255.0f;
-                if (a > 0.0f) {
-                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
-                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
-                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
-                }
-            }
-        }
-        s_btnTex[CTRL_BTN_B] = aurora_imgui_add_texture(abMaru->width, abMaru->height, rgba.data());
-    }
-
-    // X button
-    {
-        auto rgba = decode_gx_to_rgba(xBase);
-        tint(rgba, 40, 130, 220);
-        auto txt = decode_gx_to_rgba(xText);
-        int32_t ox = ((int32_t)xBase->width - (int32_t)xText->width) / 2;
-        int32_t oy = ((int32_t)xBase->height - (int32_t)xText->height) / 2;
-        for (uint32_t y = 0; y < xText->height; ++y) {
-            int32_t dy = (int32_t)y + oy;
-            if (dy < 0 || dy >= (int32_t)xBase->height) continue;
-            for (uint32_t x = 0; x < xText->width; ++x) {
-                int32_t dx = (int32_t)x + ox;
-                if (dx < 0 || dx >= (int32_t)xBase->width) continue;
-                size_t si = ((size_t)y * xText->width + x) * 4;
-                size_t di = ((size_t)dy * xBase->width + dx) * 4;
-                float a = txt[si + 3] / 255.0f;
-                if (a > 0.0f) {
-                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
-                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
-                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
-                }
-            }
-        }
-        s_btnTex[CTRL_BTN_X] = aurora_imgui_add_texture(xBase->width, xBase->height, rgba.data());
-    }
-
-    // Y button
-    {
-        auto rgba = decode_gx_to_rgba(yBase);
-        tint(rgba, 200, 50, 130);
-        auto txt = decode_gx_to_rgba(yText);
-        int32_t ox = ((int32_t)yBase->width - (int32_t)yText->width) / 2;
-        int32_t oy = ((int32_t)yBase->height - (int32_t)yText->height) / 2;
-        for (uint32_t y = 0; y < yText->height; ++y) {
-            int32_t dy = (int32_t)y + oy;
-            if (dy < 0 || dy >= (int32_t)yBase->height) continue;
-            for (uint32_t x = 0; x < yText->width; ++x) {
-                int32_t dx = (int32_t)x + ox;
-                if (dx < 0 || dx >= (int32_t)yBase->width) continue;
-                size_t si = ((size_t)y * yText->width + x) * 4;
-                size_t di = ((size_t)dy * yBase->width + dx) * 4;
-                float a = txt[si + 3] / 255.0f;
-                if (a > 0.0f) {
-                    rgba[di]     = (uint8_t)(txt[si] * a + rgba[di] * (1.0f - a));
-                    rgba[di + 1] = (uint8_t)(txt[si+1] * a + rgba[di+1] * (1.0f - a));
-                    rgba[di + 2] = (uint8_t)(txt[si+2] * a + rgba[di+2] * (1.0f - a));
-                }
-            }
-        }
-        s_btnTex[CTRL_BTN_Y] = aurora_imgui_add_texture(yBase->width, yBase->height, rgba.data());
-    }
-
-    s_texturesLoaded = true;
-    DuskLog.info("touch: loaded game button textures");
+    dl->AddCircleFilled({center.x + shadowOffset, center.y + shadowOffset}, shadowRadius,
+                        with_opacity(IM_COL32(0, 0, 0, pressed ? 36 : 52)), 48);
+    dl->AddCircleFilled(center, radius, fill, 48);
+    dl->AddCircleFilled({center.x - radius * 0.26f, center.y - radius * 0.30f}, highlightRadius,
+                        with_opacity(IM_COL32(255, 255, 255, pressed ? 28 : 54)), 32);
+    dl->AddCircleFilled({center.x - radius * 0.10f, center.y - radius * 0.16f}, specularRadius,
+                        with_opacity(IM_COL32(255, 255, 255, pressed ? 12 : 24)), 24);
+    dl->AddCircleFilled({center.x + radius * 0.22f, center.y + radius * 0.24f}, radius * 0.58f,
+                        with_opacity(IM_COL32(0, 0, 0, pressed ? 22 : 36)), 32);
+    dl->AddCircle(center, radius, border, 0, 2.f);
+    dl->AddCircle({center.x, center.y}, radius * 0.72f, with_opacity(IM_COL32(255, 255, 255, 16)), 0,
+                  1.0f);
 }
 
 static void draw_controls() {
@@ -680,15 +504,9 @@ static void draw_controls() {
     float w = io.DisplaySize.x;
     float h = io.DisplaySize.y;
 
-    // Auto-load button textures if archive is available
-    if (!s_texturesLoaded && !g_customizeMode) {
-        load_game_button_textures();
-    }
-
     ImU32 borderNormal   = with_opacity(IM_COL32(200, 200, 200, 200));
     ImU32 borderCustomize = with_opacity(IM_COL32(255, 220, 0, 230));
     ImU32 borderCol = g_customizeMode ? borderCustomize : borderNormal;
-
     // --- Regular buttons (A B X Y L R Z Start) ---
     for (int i = CTRL_BTN_A; i <= CTRL_BTN_START; ++i) {
         float cx = get_x(i) * w;
@@ -697,21 +515,13 @@ static void draw_controls() {
         bool  pressed = (g_held & kDefs[i].padBit) != 0;
         ImU32 fill = with_opacity(pressed ? kDefs[i].colorActive : kDefs[i].colorIdle);
 
-        // Use game texture for A/B/X/Y if loaded
-        if (s_texturesLoaded && i <= CTRL_BTN_Y && s_btnTex[i]) {
-            ImVec2 p1 = {cx - r, cy - r};
-            ImVec2 p2 = {cx + r, cy + r};
-            dl->AddImage(s_btnTex[i], p1, p2);
-            if (g_customizeMode)
-                dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
-        } else {
-            dl->AddCircleFilled({cx, cy}, r, fill);
-            dl->AddCircle({cx, cy}, r, borderCol, 0, 2.f);
-            if (kDefs[i].label) {
-                ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
-                dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
-                            with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
-            }
+        draw_glossy_disc(dl, {cx, cy}, r, fill, borderCol, pressed);
+        if (kDefs[i].label) {
+            ImVec2 ts = ImGui::CalcTextSize(kDefs[i].label);
+            ImVec2 shadowPos = {cx - ts.x * 0.5f + 1.0f, cy - ts.y * 0.5f + 1.0f};
+            dl->AddText(shadowPos, with_opacity(IM_COL32(0, 0, 0, 180)), kDefs[i].label);
+            dl->AddText({cx - ts.x * 0.5f, cy - ts.y * 0.5f},
+                        with_opacity(IM_COL32(255, 255, 255, 240)), kDefs[i].label);
         }
     }
 
@@ -771,6 +581,8 @@ static void draw_controls() {
         dl->AddCircle({cx, cy}, outerR, borderCol, 0, 2.f);
         dl->AddCircleFilled({tx, ty}, thumbR, thumb);
         dl->AddCircle({tx, ty}, thumbR, borderCol, 0, 1.5f);
+        dl->AddCircleFilled({cx - outerR * 0.24f, cy - outerR * 0.28f}, outerR * 0.48f,
+                            with_opacity(IM_COL32(255, 255, 255, 36)), 32);
     }
 
     // --- "C" label on C-stick (hidden when floating camera enabled) ---
@@ -815,22 +627,25 @@ static void draw_ui_buttons() {
                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
                  ImGuiWindowFlags_NoNav);
 
-    if (enabled) {
-        if (g_customizeMode) {
-            if (ImGui::Button("Done##tc", {editW, btnH})) {
-                g_customizeMode = false;
-                g_dragCtrl   = CTRL_NONE;
-                g_dragFinger = 0;
-                config::Save();
-            }
-            ImGui::SameLine(0.f, gap);
-            if (ImGui::Button("Reload##tc", {editW, btnH})) {
-                unload_button_textures();
-                load_game_button_textures();
-            }
-        } else {
-            if (ImGui::Button("Edit##tc", {editW, btnH})) {
-                g_customizeMode = true;
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, btnH * 0.45f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, 0.16f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.22f, 0.24f, 0.92f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.32f, 0.32f, 0.36f, 0.95f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.16f, 0.16f, 0.18f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.94f));
+
+        if (enabled) {
+            if (g_customizeMode) {
+                if (ImGui::Button("Done##tc", {editW, btnH})) {
+                    g_customizeMode = false;
+                    g_dragCtrl   = CTRL_NONE;
+                    g_dragFinger = 0;
+                    config::Save();
+                }
+            } else {
+                if (ImGui::Button("Edit##tc", {editW, btnH})) {
+                    g_customizeMode = true;
                 clear_virtual_state();
             }
         }
@@ -848,6 +663,8 @@ static void draw_ui_buttons() {
         }
     }
 
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(2);
     ImGui::End();
 }
 

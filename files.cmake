@@ -1412,6 +1412,9 @@ set(DOLPHIN_FILES
 
 set(DUSK_FILES
         include/dusk/endian_gx.hpp
+        include/dusk/action_bindings.h
+        include/dusk/item_checklist_hooks.h
+        include/dusk/platform_support.hpp
         include/dusk/config.hpp
         include/dusk/dvd_asset.hpp
         include/dusk/scope_guard.hpp
@@ -1439,6 +1442,7 @@ set(DUSK_FILES
         src/dusk/save_states.cpp
         src/dusk/save_import.cpp
         include/dusk/save_import.hpp
+        src/dusk/platform_support.cpp
         src/dusk/stubs.cpp
         src/dusk/touch_controls.cpp
         src/dusk/update_check.cpp
@@ -1532,6 +1536,11 @@ set(DUSK_FILES
         src/dusk/discord.cpp
         src/dusk/discord.hpp
         src/dusk/discord_presence.cpp
+        src/dusk/action_bindings.cpp
+        src/dusk/item_checklist/ItemChecklist.cpp
+        src/dusk/item_checklist/ItemChecklist.h
+        src/dusk/item_checklist/ItemChecklistDocument.cpp
+        src/dusk/item_checklist/ItemChecklistDocument.h
         src/dusk/version.cpp
 )
 
