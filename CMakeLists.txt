@@ -185,8 +185,6 @@ if (DUSK_MOVIE_SUPPORT)
             CMAKE_ANDROID_NDK
             CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION
             CMAKE_ANDROID_STL_TYPE
-            CMAKE_SYSTEM_NAME
-            CMAKE_SYSTEM_VERSION
         )
         foreach(_var IN LISTS _jpeg_passthrough_vars)
             if (DEFINED ${_var})
