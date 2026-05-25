@@ -264,6 +264,15 @@ scrollbarhorizontal sliderbar {
     display: none;
 }
 
+.section-content {
+    display: flex;
+    flex-flow: column;
+    gap: 6dp;
+    width: 100%;
+    min-width: 0;
+    padding-top: 6dp;
+}
+
 button:disabled {
     opacity: 0.35;
     cursor: default;

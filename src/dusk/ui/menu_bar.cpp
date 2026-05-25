@@ -64,12 +64,9 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
 
     mTabBar->add_tab("Achievements", [this] { push(std::make_unique<AchievementsWindow>()); });
 
-    // Keep menu density manageable on small screens: expose checklist with advanced tools.
-    if (getSettings().backend.enableAdvancedSettings) {
-        mTabBar->add_tab("Checklist", [this] {
-            push(std::make_unique<ItemChecklistDocument>());
-        });
-    }
+    mTabBar->add_tab("Checklist", [this] {
+        push(std::make_unique<ItemChecklistDocument>());
+    });
 
     // Follow v1.3.0 behavior: timer reset is a speedrun tool, not a global top-level action.
     if (getSettings().game.speedrunMode) {

@@ -223,6 +223,8 @@ void Pane::finalize() {
 
 void Pane::clear() {
     clear_children();
+    mRoot->SetInnerRML("");
+    mCurrentSection = nullptr;
     finalized = false;
 }
 
