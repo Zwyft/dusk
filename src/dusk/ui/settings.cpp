@@ -194,6 +194,17 @@ void reset_for_speedrun_mode() {
     getSettings().game.autoSave.setValue(false);
 }
 
+void clear_speedrun_overrides() {
+    config::EnumerateRegistered([](config::ConfigVarBase& cvar) {
+        cvar.clearSpeedrunOverride();
+    });
+}
+
+void restore_from_speedrun_mode() {
+    clear_speedrun_overrides();
+    aurora_set_pause_on_focus_lost(getSettings().game.pauseOnFocusLost.getValue());
+}
+
 const Rml::String kInternalResolutionHelpText =
     "Configure the resolution used for rendering the game. Higher values are more demanding on "
     "your graphics hardware.";
@@ -1004,7 +1015,13 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "Speedrun Mode",
                 .helpText =
                     "Enables speedrunning options while restricting certain gameplay modifiers.",
-                .onChange = [](bool) { reset_for_speedrun_mode(); },
+                .onChange = [](bool enabled) {
+                    if (enabled) {
+                        reset_for_speedrun_mode();
+                    } else {
+                        restore_from_speedrun_mode();
+                    }
+                },
             });
         config_bool_select(leftPane, rightPane, getSettings().game.liveSplitEnabled,
             {
