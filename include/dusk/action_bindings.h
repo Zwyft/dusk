@@ -15,7 +15,7 @@ enum class ActionBinds {
 };
 
 struct ActionBindData {
-    std::array<int, 4>* configVars{};
+    std::array<u32, 4>* configVars{};
     std::string actionName{};
 };
 

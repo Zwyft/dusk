@@ -9,13 +9,13 @@ namespace dusk {
 static std::array<std::array<ActionBindPressData, static_cast<int>(ActionBinds::COUNT)>, PAD_CHANMAX> actionPressData{};
 
 ActionBindsMap& getActionBinds() {
-    static std::array<int, 4> firstPersonCamera = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+    static std::array<u32, 4> firstPersonCamera = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
         PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
-    static std::array<int, 4> callMidna = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+    static std::array<u32, 4> callMidna = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
         PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
-    static std::array<int, 4> openDusklightMenu = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+    static std::array<u32, 4> openDusklightMenu = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
         PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
-    static std::array<int, 4> turboSpeedButton = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
+    static std::array<u32, 4> turboSpeedButton = {PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID,
         PAD_NATIVE_BUTTON_INVALID, PAD_NATIVE_BUTTON_INVALID};
 
     static ActionBindsMap actionBinds = {
@@ -100,6 +100,6 @@ bool getActionBindHoldAnyPort(ActionBinds action) {
 }
 
 int getActionBindButton(ActionBinds action, u32 port) {
-    return (*getActionBinds()[action].configVars)[port];
+    return static_cast<int>((*getActionBinds()[action].configVars)[port]);
 }
 }
