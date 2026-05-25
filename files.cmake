@@ -1437,6 +1437,8 @@ set(DUSK_FILES
         src/dusk/logging.cpp
         src/dusk/settings.cpp
         src/dusk/save_states.cpp
+        src/dusk/save_import.cpp
+        include/dusk/save_import.hpp
         src/dusk/stubs.cpp
         src/dusk/touch_controls.cpp
         src/dusk/update_check.cpp
