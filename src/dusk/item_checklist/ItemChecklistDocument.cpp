@@ -78,55 +78,67 @@ void ItemChecklistDocument::rebuildSections(const std::string& tab) {
     mCards.clear();
     mCardListeners.clear();
 
-    auto* grid = append(mSectionsRoot, "div");
-    if (grid == nullptr) {
+    const auto items = ItemChecklist::instance().getItemsByTab(tab);
+    if (items.empty()) {
         return;
     }
-    grid->SetClass("tracker-grid", true);
-    const bool isSpeedrunTab = tab == kSpeedrunTab;
-    if (isSpeedrunTab) {
-        grid->SetClass("speedrun-grid", true);
-    }
 
-    const auto items = ItemChecklist::instance().getItemsByTab(tab);
-    const auto layout = chooseLayout(tab, items.size());
-    grid->SetClass(layout.densityClass, true);
-    grid->SetClass(fmt::format("cols-{}", layout.columns), true);
-
-    Rml::Element* row = nullptr;
-    int index = 0;
+    std::vector<std::string> categories;
+    categories.reserve(items.size());
     for (const auto* item : items) {
-        if (item == nullptr) {
+        if (item == nullptr || item->category.empty()) {
             continue;
         }
-        if (index % layout.columns == 0) {
-            row = append(grid, "div");
-            if (row == nullptr) {
-                return;
-            }
-            row->SetClass("tracker-row", true);
+        if (std::find(categories.begin(), categories.end(), item->category) == categories.end()) {
+            categories.push_back(item->category);
         }
-        mCards[item->id] = createCard(*item, row);
-        ++index;
     }
 
-    if (isSpeedrunTab) {
-        const int targetCells = layout.columns * 7;
-        while (index < targetCells) {
-            if (index % layout.columns == 0) {
-                row = append(grid, "div");
-                if (row == nullptr) {
+    if (categories.empty()) {
+        categories.push_back("Items");
+    }
+
+    for (const auto& category : categories) {
+        auto* section = append(mSectionsRoot, "div");
+        if (section == nullptr) {
+            return;
+        }
+        section->SetClass("tracker-category", true);
+
+        auto* heading = append(section, "div");
+        if (heading == nullptr) {
+            return;
+        }
+        heading->SetClass("tracker-category-title", true);
+        heading->SetInnerRML(escape(category));
+
+        auto* grid = append(section, "div");
+        if (grid == nullptr) {
+            return;
+        }
+        grid->SetClass("tracker-grid", true);
+
+        size_t categoryCount = 0;
+        for (const auto* item : items) {
+            if (item == nullptr) {
+                continue;
+            }
+            if (!item->category.empty() && item->category != category) {
+                continue;
+            }
+            mCards[item->id] = createCard(*item, grid);
+            ++categoryCount;
+        }
+
+        if (tab == kSpeedrunTab && categoryCount < 12) {
+            for (size_t i = categoryCount; i < 12; ++i) {
+                auto* placeholder = append(grid, "div");
+                if (placeholder == nullptr) {
                     return;
                 }
-                row->SetClass("tracker-row", true);
+                placeholder->SetClass("tracker-card", true);
+                placeholder->SetClass("tracker-card-placeholder", true);
             }
-            auto* placeholder = append(row, "div");
-            if (placeholder == nullptr) {
-                return;
-            }
-            placeholder->SetClass("tracker-card", true);
-            placeholder->SetClass("tracker-card-placeholder", true);
-            ++index;
         }
     }
 }
