@@ -267,6 +267,7 @@ struct UserSettings {
         ConfigVar<bool> discordEnabled;
         ConfigVar<bool> portableMode;
         ConfigVar<std::string> customDataPath;
+        ConfigVar<int> checklistDensityMode;
     } backend;
 };
 

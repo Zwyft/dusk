@@ -335,6 +335,71 @@ std::string ItemChecklist::iconPathFor(uint8_t itemId) const {
     return {};
 }
 
+bool ItemChecklist::exportManualOverrides(
+    const std::filesystem::path& destination, std::string* error) const {
+    std::error_code ec;
+    std::filesystem::create_directories(destination.parent_path(), ec);
+    if (ec) {
+        if (error != nullptr) {
+            *error = ec.message();
+        }
+        return false;
+    }
+
+    json root = json::object();
+    root["version"] = 1;
+    auto& overrides = root["manualOverrides"];
+    overrides = json::object();
+    for (const auto& [itemId, collected] : mManualOverrides) {
+        overrides[std::to_string(itemId)] = collected;
+    }
+
+    try {
+        dusk::io::FileStream::WriteAllText(destination, root.dump(2));
+        return true;
+    } catch (const std::exception& e) {
+        if (error != nullptr) {
+            *error = e.what();
+        }
+        return false;
+    }
+}
+
+bool ItemChecklist::importManualOverrides(const std::filesystem::path& source, std::string* error) {
+    if (!std::filesystem::exists(source)) {
+        if (error != nullptr) {
+            *error = "file does not exist";
+        }
+        return false;
+    }
+
+    try {
+        const auto data = dusk::io::FileStream::ReadAllBytes(source);
+        json root = json::parse(data);
+        const auto overridesIt = root.find("manualOverrides");
+        if (overridesIt == root.end() || !overridesIt->is_object()) {
+            if (error != nullptr) {
+                *error = "missing manualOverrides object";
+            }
+            return false;
+        }
+
+        std::unordered_map<uint8_t, bool> imported;
+        for (const auto& [key, value] : overridesIt->items()) {
+            imported[static_cast<uint8_t>(std::stoul(key))] = value.get<bool>();
+        }
+        mManualOverrides = std::move(imported);
+        save();
+        bumpRevision();
+        return true;
+    } catch (const std::exception& e) {
+        if (error != nullptr) {
+            *error = e.what();
+        }
+        return false;
+    }
+}
+
 void ItemChecklist::loadItemDefinitions() {
     mItemDefinitions.clear();
     mItemMap.clear();

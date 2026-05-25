@@ -184,7 +184,8 @@ UserSettings g_userSettings = {
         .discordEnabled {"backend.discordEnabled", true},
         .portableMode {"backend.portableMode", false},
         .customDataPath {"backend.customDataPath", ""},
-    }
+        .checklistDensityMode {"backend.checklistDensityMode", 0},
+    },
 };
 
 UserSettings& getSettings() {
@@ -335,6 +336,7 @@ Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.backend.discordEnabled);
     Register(g_userSettings.backend.portableMode);
     Register(g_userSettings.backend.customDataPath);
+    Register(g_userSettings.backend.checklistDensityMode);
 }
 
 // Transient settings

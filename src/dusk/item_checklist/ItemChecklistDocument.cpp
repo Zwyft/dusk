@@ -4,6 +4,7 @@
 
 #include "dusk/ui/event.hpp"
 #include "dusk/ui/ui.hpp"
+#include "dusk/settings.h"
 
 #include <RmlUi/Core.h>
 
@@ -49,6 +50,32 @@ void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab)
 
 ItemChecklistDocument::LayoutConfig ItemChecklistDocument::chooseLayout(
     const std::string& tab, size_t itemCount) const {
+    const int densityMode = getSettings().backend.checklistDensityMode.getValue();
+    if (densityMode == 1) {
+        if (tab == kSpeedrunTab) {
+            return {.columns = 10, .densityClass = "dense-normal"};
+        }
+        if (itemCount <= 16) {
+            return {.columns = 4, .densityClass = "dense-normal"};
+        }
+        if (itemCount <= 28) {
+            return {.columns = 5, .densityClass = "dense-normal"};
+        }
+        return {.columns = 6, .densityClass = "dense-medium"};
+    }
+    if (densityMode == 2) {
+        if (tab == kSpeedrunTab) {
+            return {.columns = 14, .densityClass = "dense-compact"};
+        }
+        if (itemCount <= 16) {
+            return {.columns = 6, .densityClass = "dense-medium"};
+        }
+        if (itemCount <= 30) {
+            return {.columns = 7, .densityClass = "dense-medium"};
+        }
+        return {.columns = 8, .densityClass = "dense-compact"};
+    }
+
     if (tab == kSpeedrunTab) {
         return {.columns = 12, .densityClass = "dense-medium"};
     }

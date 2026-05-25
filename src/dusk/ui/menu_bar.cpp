@@ -8,6 +8,7 @@
 #include "achievements.hpp"
 #include "aurora/rmlui.hpp"
 #include "dusk/item_checklist/ItemChecklistDocument.h"
+#include "dusk/livesplit.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
 #include "editor.hpp"
@@ -64,6 +65,37 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     mTabBar->add_tab("Achievements", [this] { push(std::make_unique<AchievementsWindow>()); });
     mTabBar->add_tab("Checklist", [this] {
         push(std::make_unique<ItemChecklistDocument>());
+    });
+    mTabBar->add_tab("Reset Timer", [this] {
+        mTabBar->set_active_tab(-1);
+        const auto dismiss = [](Modal& modal) { modal.pop(); };
+        push(std::make_unique<Modal>(Modal::Props{
+            .title = "Reset Speedrun Timer",
+            .bodyRml = "Resets the integrated speedrun timer and LiveSplit game time.",
+            .actions =
+                {
+                    ModalAction{
+                        .label = "Cancel",
+                        .onPressed =
+                            [dismiss](Modal& modal) {
+                                mDoAud_seStartMenu(kSoundWindowClose);
+                                dismiss(modal);
+                            },
+                    },
+                    ModalAction{
+                        .label = "Reset Timer",
+                        .onPressed =
+                            [this, dismiss](Modal& modal) {
+                                mDoAud_seStartMenu(kSoundClick);
+                                dusk::speedrun::reset();
+                                dismiss(modal);
+                                hide(false);
+                            },
+                    },
+                },
+            .onDismiss = dismiss,
+            .icon = "question-mark",
+        }));
     });
     mTabBar->add_tab("Reset", [this] {
         mTabBar->set_active_tab(-1);

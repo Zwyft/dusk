@@ -46,6 +46,9 @@ public:
     std::string iconPathFor(uint8_t itemId) const;
     bool iconsReady() const { return mIconsReady; }
 
+    bool exportManualOverrides(const std::filesystem::path& destination, std::string* error = nullptr) const;
+    bool importManualOverrides(const std::filesystem::path& source, std::string* error = nullptr);
+
 private:
     ItemChecklist() = default;
     ~ItemChecklist() = default;

@@ -8,7 +8,10 @@
 #include "dusk/config.hpp"
 #include "dusk/file_select.hpp"
 #include "dusk/imgui/ImGuiEngine.hpp"
+#include "dusk/io.hpp"
+#include "dusk/item_checklist/ItemChecklist.h"
 #include "dusk/livesplit.h"
+#include "dusk/main.h"
 #include "dusk/save_import.hpp"
 #include "dusk/touch_controls.hpp"
 #include "graphics_tuner.hpp"
@@ -21,6 +24,8 @@
 #include "ui.hpp"
 
 #include <algorithm>
+
+#include <SDL3/SDL_misc.h>
 
 namespace dusk::ui {
 namespace {
@@ -211,6 +216,27 @@ bool gyro_enabled() {
     return getSettings().game.enableGyroAim ||
            (getSettings().game.enableGyroRollgoal &&
             getSettings().game.gyroMode.getValue() != GyroMode::Mouse);
+}
+
+bool open_directory_path(const std::filesystem::path& path) {
+    std::error_code ec;
+    std::filesystem::create_directories(path, ec);
+    if (ec) {
+        DuskLog.error("Failed to create directory '{}': {}", dusk::io::fs_path_to_string(path),
+            ec.message());
+        return false;
+    }
+#if defined(_WIN32)
+    const std::string url = "file:///" + path.generic_string();
+#else
+    const std::string url = "file://" + path.generic_string();
+#endif
+    if (!SDL_OpenURL(url.c_str())) {
+        DuskLog.error(
+            "Failed to open directory '{}': {}", dusk::io::fs_path_to_string(path), SDL_GetError());
+        return false;
+    }
+    return true;
 }
 
 struct ConfigBoolProps {
@@ -504,6 +530,50 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                         }
                     });
             }
+
+            leftPane.register_control(
+                leftPane.add_button("Export Checklist Overrides").on_pressed([] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    auto& checklist = ItemChecklist::instance();
+                    if (!checklist.isInitialized()) {
+                        checklist.initialize();
+                    }
+                    std::string error;
+                    const auto exportPath = save_import::saves_dir() / "item_checklist_export.json";
+                    if (!checklist.exportManualOverrides(exportPath, &error)) {
+                        DuskLog.error("Checklist export failed: {}", error);
+                    }
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_text("Exports manual checklist overrides to a JSON file.");
+                    pane.add_rml("<br/><b>Path:</b><br/>" +
+                                 Rml::String((save_import::saves_dir() / "item_checklist_export.json")
+                                                 .string()));
+                    pane.add_rml("<br/><br/>Scaffolding: this exports only manual override values.");
+                });
+
+            leftPane.register_control(
+                leftPane.add_button("Import Checklist Overrides").on_pressed([] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    auto& checklist = ItemChecklist::instance();
+                    if (!checklist.isInitialized()) {
+                        checklist.initialize();
+                    }
+                    std::string error;
+                    const auto importPath = save_import::saves_dir() / "item_checklist_export.json";
+                    if (!checklist.importManualOverrides(importPath, &error)) {
+                        DuskLog.error("Checklist import failed: {}", error);
+                    }
+                }),
+                rightPane, [](Pane& pane) {
+                    pane.clear();
+                    pane.add_text("Imports manual checklist overrides from JSON.");
+                    pane.add_rml("<br/><b>Path:</b><br/>" +
+                                 Rml::String((save_import::saves_dir() / "item_checklist_export.json")
+                                                 .string()));
+                    pane.add_rml("<br/><br/>Scaffolding: file picker and merge conflict UI can be added next.");
+                });
         });
     }
 
@@ -999,6 +1069,51 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
         auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
+        leftPane.add_section("Data Folders", true);
+        leftPane.register_control(
+            leftPane.add_button("Open Data Folder").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                dusk::OpenDataFolder();
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Opens Dusk's main data folder.");
+                pane.add_rml("<br/><b>Path:</b><br/>" + Rml::String(dusk::ConfigPath.string()));
+            });
+        leftPane.register_control(
+            leftPane.add_button("Open Mods Folder").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                open_directory_path(dusk::ConfigPath / "mods");
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Opens the folder for gameplay mods.");
+                pane.add_rml("<br/><b>Path:</b><br/>" +
+                             Rml::String((dusk::ConfigPath / "mods").string()));
+            });
+        leftPane.register_control(
+            leftPane.add_button("Open Logs Folder").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                open_directory_path(dusk::ConfigPath / "logs");
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Opens session logs for troubleshooting crashes and runtime issues.");
+                pane.add_rml("<br/><b>Path:</b><br/>" +
+                             Rml::String((dusk::ConfigPath / "logs").string()));
+            });
+        leftPane.register_control(
+            leftPane.add_button("Open Crash Reports Folder").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                open_directory_path(dusk::ConfigPath / "sentry");
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("Opens crash-report staging files and crash handler output.");
+                pane.add_rml("<br/><b>Path:</b><br/>" +
+                             Rml::String((dusk::ConfigPath / "sentry").string()));
+            });
+
         leftPane.add_section("Save Data", true);
         leftPane.register_control(
             leftPane.add_button("Open Saves Folder").on_pressed([] {
@@ -1063,6 +1178,55 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         }
 
         leftPane.add_section("Dusk", true);
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "Checklist Density",
+                .getValue = [] {
+                    switch (getSettings().backend.checklistDensityMode.getValue()) {
+                    case 1:
+                        return Rml::String{"Roomy"};
+                    case 2:
+                        return Rml::String{"Compact"};
+                    default:
+                        return Rml::String{"Auto"};
+                    }
+                },
+                .isModified =
+                    [] { return getSettings().backend.checklistDensityMode.getValue() != 0; },
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_button({
+                        .text = "Auto",
+                        .isSelected =
+                            [] { return getSettings().backend.checklistDensityMode.getValue() == 0; },
+                    })
+                    .on_pressed([] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().backend.checklistDensityMode.setValue(0);
+                        config::Save();
+                    });
+                pane.add_button({
+                        .text = "Roomy",
+                        .isSelected =
+                            [] { return getSettings().backend.checklistDensityMode.getValue() == 1; },
+                    })
+                    .on_pressed([] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().backend.checklistDensityMode.setValue(1);
+                        config::Save();
+                    });
+                pane.add_button({
+                        .text = "Compact",
+                        .isSelected =
+                            [] { return getSettings().backend.checklistDensityMode.getValue() == 2; },
+                    })
+                    .on_pressed([] {
+                        mDoAud_seStartMenu(kSoundItemChange);
+                        getSettings().backend.checklistDensityMode.setValue(2);
+                        config::Save();
+                    });
+            });
         leftPane.register_control(
             leftPane.add_select_button({
                 .key = "Notifications",

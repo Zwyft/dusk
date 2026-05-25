@@ -63,6 +63,18 @@ else ()
     set(DUSK_SHORT_VERSION_STRING "0.0.0")
 endif ()
 
+set(DUSK_VERSION_OVERRIDE "" CACHE STRING "Override DUSK_VERSION_STRING (format: major.minor.patch.tweak)")
+if (DUSK_VERSION_OVERRIDE)
+    set(DUSK_VERSION_STRING "${DUSK_VERSION_OVERRIDE}")
+endif ()
+
+set(DUSK_ANDROID_VERSION_CODE "" CACHE STRING "Override Android version code")
+if (DUSK_ANDROID_VERSION_CODE)
+    set(DUSK_VERSION_CODE "${DUSK_ANDROID_VERSION_CODE}")
+else ()
+    string(REPLACE "." "" DUSK_VERSION_CODE "${DUSK_VERSION_STRING}")
+endif ()
+
 # Add version information to CI environment variables
 if(DEFINED ENV{GITHUB_ENV})
     file(APPEND "$ENV{GITHUB_ENV}" "DUSK_VERSION=${DUSK_WC_DESCRIBE}\n")
@@ -165,6 +177,16 @@ if (DUSK_MOVIE_SUPPORT)
             ENABLE_ARC
             ENABLE_BITCODE
             PLATFORM
+            ANDROID
+            ANDROID_ABI
+            ANDROID_PLATFORM
+            ANDROID_STL
+            CMAKE_ANDROID_ARCH_ABI
+            CMAKE_ANDROID_NDK
+            CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION
+            CMAKE_ANDROID_STL_TYPE
+            CMAKE_SYSTEM_NAME
+            CMAKE_SYSTEM_VERSION
         )
         foreach(_var IN LISTS _jpeg_passthrough_vars)
             if (DEFINED ${_var})
