@@ -11,6 +11,7 @@
 #include "dusk/io.hpp"
 #include "dusk/item_checklist/ItemChecklist.h"
 #include "dusk/livesplit.h"
+#include "dusk/logging.h"
 #include "dusk/main.h"
 #include "dusk/save_import.hpp"
 #include "dusk/touch_controls.hpp"
