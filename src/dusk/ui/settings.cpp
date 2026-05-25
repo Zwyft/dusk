@@ -831,11 +831,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                 .key = "No Low HP Sound",
                 .helpText = "Disable the beeping sound when having low health.",
             });
-        config_bool_select(leftPane, rightPane, getSettings().game.midnasLamentNonStop,
-            {
-                .key = "Non-Stop Midna's Lament",
-                .helpText = "Prevents enemy music while Midna's Lament is playing.",
-            });
+        // Removed stale option: midnasLamentNonStop no longer exists in UserSettings.
     });
 
     add_tab("Gameplay", [this](Rml::Element* content) {
@@ -863,9 +859,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         leftPane.add_section("General");
         addOption("Mirror Mode", getSettings().game.enableMirrorMode,
             "Mirrors the world horizontally, matching the Wii version of the game.");
-        addOption("Minimal HUD", getSettings().game.minimalHUD,
-            "Disables the elements of the main HUD of the game.<br/>Useful for a more immersive "
-            "experience.");
+        // Removed stale option: minimalHUD no longer exists in UserSettings.
         addOption("Restore Wii 1.0 Glitches", getSettings().game.restoreWiiGlitches,
             "Restores patched glitches from Wii USA 1.0, the first released version.");
         addOption("Enable Rotating Link Doll", getSettings().game.enableLinkDollRotation,

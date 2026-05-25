@@ -1,0 +1,116 @@
+stages:
+  - build
+
+default:
+  interruptible: true
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: "0"
+  CMAKE_BUILD_PARALLEL_LEVEL: "8"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ------------------------------
+# Linux
+# ------------------------------
+build:linux:
+  stage: build
+  tags: [linux]
+  before_script:
+    - apt-get update -qq
+    - >-
+      apt-get install -y ninja-build libfuse2
+      libcurl4-openssl-dev libssl-dev libglu1-mesa-dev libasound2-dev
+      libpulse-dev libudev-dev libx11-xcb-dev libxrandr-dev libxi-dev
+      libxcursor-dev libxinerama-dev libdbus-1-dev libpng-dev
+      libvulkan-dev zlib1g-dev libfreetype-dev libgtk-3-dev
+      libdecor-0-dev libpipewire-0.3-dev libunwind-dev
+      libusb-1.0-0-dev libxss-dev python3
+    - python3 ci/patch-aurora.py
+  script:
+    - cmake --preset x-linux-ci-gcc
+    - cmake --build --preset x-linux-ci-gcc
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - build/install/
+      - build/linux-gcc/
+
+# ------------------------------
+# Windows
+# ------------------------------
+build:windows:
+  stage: build
+  tags: [windows]
+  script:
+    - python ci/patch-aurora.py
+    - cmake --preset x-windows-ci-msvc
+    - cmake --build --preset x-windows-ci-msvc
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - build/install/
+      - build/windows-msvc/
+
+# ------------------------------
+# macOS
+# ------------------------------
+build:macos:
+  stage: build
+  tags: [macos]
+  before_script:
+    - brew install cmake ninja || true
+    - python3 ci/patch-aurora.py
+    - sed -i '' '/static std::atomic_ref/d' extern/aurora/lib/gfx/pipeline_cache.cpp
+    - sed -i '' 's/++queuedPipelines/++g_stats.queuedPipelines/g' extern/aurora/lib/gfx/pipeline_cache.cpp
+    - sed -i '' 's/--queuedPipelines/--g_stats.queuedPipelines/g' extern/aurora/lib/gfx/pipeline_cache.cpp
+    - sed -i '' 's/++createdPipelines/++g_stats.createdPipelines/g' extern/aurora/lib/gfx/pipeline_cache.cpp
+    - sed -i '' 's/queuedPipelines = 0/g_stats.queuedPipelines = 0/g' extern/aurora/lib/gfx/pipeline_cache.cpp
+    - sed -i '' 's/createdPipelines = 0/g_stats.createdPipelines = 0/g' extern/aurora/lib/gfx/pipeline_cache.cpp
+  script:
+    - cmake --preset x-macos-ci-arm64
+    - cmake --build --preset x-macos-ci-arm64
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - build/install/
+      - build/macos-arm64/
+
+# ------------------------------
+# Android (arm64-v8a)
+# ------------------------------
+build:android:
+  stage: build
+  tags: [linux]
+  variables:
+    ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    ANDROID_HOME: /usr/local/lib/android/sdk
+    ANDROID_NDK_VERSION: "29.0.14206865"
+    JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+    ANDROID_STAGE_STRIP: "0"
+    ANDROID_STAGE_ABIS: arm64-v8a
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y ninja-build openjdk-17-jdk python3
+    - yes | sdkmanager --licenses >/dev/null || true
+    - sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;${ANDROID_NDK_VERSION}"
+    - python3 ci/patch-aurora.py
+  script:
+    - cmake --preset android-arm64
+    - cmake --build --preset android-arm64
+    - chmod +x platforms/android/scripts/stage-jni-libs.sh
+    - ./platforms/android/scripts/stage-jni-libs.sh
+    - cd platforms/android && chmod +x gradlew && ./gradlew :app:assembleDebug
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - platforms/android/app/build/outputs/apk/debug/*.apk
+      - build/android-arm64/
