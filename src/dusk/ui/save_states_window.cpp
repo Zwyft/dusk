@@ -43,7 +43,7 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
     dusk::SaveStates& states = dusk::getSaveStates();
 
     leftPane.add_section("Quick Saves");
-    rightPane.add_text("Quick save slots with stage reload. Use Full for instant load without stage transition.");
+    rightPane.add_text("Each slot can store either Stage Reload (safe/default) or Full Snapshot (instant but less stable). Open a slot to see details before loading.");
 
     static constexpr int kSlots = 4;
 
@@ -56,7 +56,7 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
         if (slotInfo.occupied) {
             info = fmt::format("{} ({})",
                 states.quickSaveInfo(slot),
-                slotInfo.isFullState ? "Full" : "Save");
+                slotInfo.isFullState ? "Full Snapshot" : "Stage Reload");
         } else {
             info = "Empty";
         }
@@ -69,14 +69,15 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
                 const auto& saves = dusk::getSaveStates().getQuickSaves();
                 if (!saves[slot].occupied) {
                     pane.clear();
-                    pane.add_text("Empty slot. Use Save or Full to create a save.");
+                    pane.add_text("Empty slot. Use Stage Save or Full Snapshot to create one.");
                     return;
                 }
                 pane.clear();
                 const auto& save = saves[slot];
-                pane.add_rml(fmt::format("<b>Stage:</b> {}<br/><b>Room:</b> {}<br/><b>Type:</b> {}<br/><b>Saved:</b> {}",
+                pane.add_rml(fmt::format("<b>Slot:</b> {}<br/><b>Stage:</b> {}<br/><b>Room:</b> {}<br/><b>Type:</b> {}<br/><b>Saved:</b> {}",
+                    slot + 1,
                     save.stageName, (int)save.roomNo,
-                    save.isFullState ? "Full State" : "Stage Reload",
+                    save.isFullState ? "Full Snapshot (instant load)" : "Stage Reload (safe/default)",
                     formatTimeAgo(save.timestamp)));
             });
 
@@ -84,23 +85,23 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
 
         if (gameRunning) {
             leftPane.register_control(
-                leftPane.add_button("Save").on_pressed([slot]() {
+                leftPane.add_button("Save (Stage)").on_pressed([slot]() {
                     mDoAud_seStartMenu(kSoundClick);
                     dusk::getSaveStates().quickSave(slot);
                 }),
                 rightPane, [](Pane& pane) {
                     pane.clear();
-                    pane.add_text("Save current game state using stage reload method.");
+                    pane.add_text("Save current game state using stage reload method (recommended).\nMore stable across rooms and script events.");
                 });
 
             leftPane.register_control(
-                leftPane.add_button("Full").on_pressed([slot]() {
+                leftPane.add_button("Save (Full Snapshot)").on_pressed([slot]() {
                     mDoAud_seStartMenu(kSoundClick);
                     dusk::getSaveStates().quickSaveFull(slot);
                 }),
                 rightPane, [](Pane& pane) {
                     pane.clear();
-                    pane.add_text("Save full actor snapshot for instant load without stage transition.");
+                    pane.add_text("Capture full actor snapshot for instant load.\nUseful for practice, but may be less stable in complex scenes.");
                 });
         }
 
@@ -109,16 +110,11 @@ void SaveStatesWindow::build_quick_saves_tab(Rml::Element* content) {
                 leftPane.add_button("Load").on_pressed([slot]() {
                     mDoAud_seStartMenu(kSoundClick);
                     dusk::SaveStates& s = dusk::getSaveStates();
-                    const auto& qs = s.getQuickSaves()[slot];
-                    if (qs.isFullState) {
-                        s.quickLoadFull(slot);
-                    } else {
-                        s.quickLoad(slot);
-                    }
+                    s.quickLoad(slot);
                 }),
                 rightPane, [](Pane& pane) {
                     pane.clear();
-                    pane.add_text("Load this save state.");
+                    pane.add_text("Load this slot. Dusk will choose the correct load mode automatically.");
                 });
 
             leftPane.register_control(
@@ -141,7 +137,7 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
     dusk::SaveStates& states = dusk::getSaveStates();
 
     leftPane.add_section("Named States");
-    rightPane.add_text("Save, load, and manage named save states. States persist across sessions.");
+    rightPane.add_text("Save, load, and manage named save states. Tip: use descriptive names for routes, boss setups, or practice checkpoints.");
 
     const auto& namedStates = states.getNamedStates();
     bool gameRunning = dusk::IsGameLaunched && !dusk::getTransientSettings().stateShareLoadActive;
@@ -153,12 +149,22 @@ void SaveStatesWindow::build_named_states_tab(Rml::Element* content) {
         const auto& state = namedStates[i];
 
         leftPane.register_control(
-            leftPane.add_button(fmt::format("{}", state.name)).on_pressed([this, idx] {
+            leftPane.add_button(fmt::format("{}: {}", idx + 1, state.name)).on_pressed([this, idx] {
                 mDoAud_seStartMenu(kSoundItemChange);
             }),
-            rightPane, [this, idx](Pane& pane) {
+            rightPane, [idx](Pane& pane) {
+                const auto& states = dusk::getSaveStates().getNamedStates();
+                if (idx < 0 || idx >= (int)states.size()) {
+                    pane.clear();
+                    pane.add_text("State not found.");
+                    return;
+                }
+
+                const auto& state = states[idx];
                 pane.clear();
-                pane.add_text("Select to view options.");
+                pane.add_rml(fmt::format("<b>Name:</b> {}<br/><b>Type:</b> {}",
+                    state.name,
+                    state.isFullState ? "Full Snapshot" : "Stage Reload"));
             });
 
         leftPane.register_control(

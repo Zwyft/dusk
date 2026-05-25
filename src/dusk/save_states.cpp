@@ -31,6 +31,28 @@ static constexpr size_t PACKET_SAVE_ONLY = sizeof(StateSharePacket) + sizeof(dSv
 static constexpr auto STATES_FILENAME = "states.json";
 static constexpr auto QUICKSAVE_PREFIX = "quicksave_";
 
+enum class EncodedStateType {
+    Invalid,
+    Full,
+    SaveOnly,
+};
+
+static EncodedStateType DetectEncodedStateType(const std::string& encoded) {
+    std::string decoded;
+    if (!absl::Base64Unescape(encoded, &decoded)) {
+        return EncodedStateType::Invalid;
+    }
+
+    unsigned long long dSize = ZSTD_getFrameContentSize(decoded.data(), decoded.size());
+    if (dSize == PACKET_TOTAL) {
+        return EncodedStateType::Full;
+    }
+    if (dSize == PACKET_SAVE_ONLY) {
+        return EncodedStateType::SaveOnly;
+    }
+    return EncodedStateType::Invalid;
+}
+
 static std::filesystem::path GetQuickSaveFilePath(int slot) {
     return dusk::ConfigPath / fmt::format("{}{}.json", QUICKSAVE_PREFIX, slot);
 }
@@ -62,13 +84,18 @@ void SaveStates::loadQuickSaves() {
                 continue;
             }
             slot.encoded = j["data"].get<std::string>();
-            if (!ValidateEncodedState(slot.encoded)) {
+            auto detectedType = DetectEncodedStateType(slot.encoded);
+            if (detectedType == EncodedStateType::Invalid) {
                 slot.occupied = false;
                 continue;
             }
             slot.occupied = true;
+            slot.isFullState = (detectedType == EncodedStateType::Full);
             if (j.contains("stage")) slot.stageName = j["stage"].get<std::string>();
             if (j.contains("room")) slot.roomNo = j["room"].get<int8_t>();
+            if (j.contains("isFullState")) {
+                slot.isFullState = j["isFullState"].get<bool>();
+            }
             if (j.contains("timestamp")) {
                 auto ts = j["timestamp"].get<int64_t>();
                 slot.timestamp = std::chrono::system_clock::time_point(std::chrono::seconds(ts));
@@ -92,6 +119,7 @@ void SaveStates::saveQuickSaves() {
         j["data"] = slot.encoded;
         j["stage"] = slot.stageName;
         j["room"] = slot.roomNo;
+        j["isFullState"] = slot.isFullState;
         j["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
             slot.timestamp.time_since_epoch()).count();
         try {
@@ -120,6 +148,10 @@ bool SaveStates::quickLoad(int slot) {
     if (slot < 0 || slot >= 4) return false;
     if (!m_quickSaves[slot].occupied) return false;
     if (dusk::getTransientSettings().stateShareLoadActive) return false;
+
+    if (m_quickSaves[slot].isFullState) {
+        return quickLoadFull(slot);
+    }
 
     bool ok = applyEncodedState(m_quickSaves[slot].encoded,
                                 fmt::format("Quick Save {}", slot + 1));
@@ -192,7 +224,12 @@ bool SaveStates::quickLoadFull(int slot) {
         return false;
     }
 
-    save_state::restoreState(stateData);
+    bool ok = save_state::restoreState(stateData);
+    if (!ok) {
+        m_statusMsg = fmt::format("Failed to restore full state from slot {}.", slot + 1);
+        return false;
+    }
+
     m_statusMsg = fmt::format("Loaded full state from slot {}.", slot + 1);
     return true;
 }
@@ -328,12 +365,7 @@ void SaveStates::tickPendingApply() {
 }
 
 bool SaveStates::ValidateEncodedState(const std::string& encoded) {
-    std::string decoded;
-    if (!absl::Base64Unescape(encoded, &decoded)) {
-        return false;
-    }
-    unsigned long long dSize = ZSTD_getFrameContentSize(decoded.data(), decoded.size());
-    return dSize == PACKET_TOTAL || dSize == PACKET_SAVE_ONLY;
+    return DetectEncodedStateType(encoded) != EncodedStateType::Invalid;
 }
 
 void SaveStates::loadStatesFile() {
@@ -355,6 +387,11 @@ void SaveStates::loadStatesFile() {
             SavedStateEntry s;
             s.name    = entry["name"].get<std::string>();
             s.encoded = entry["data"].get<std::string>();
+            auto detectedType = DetectEncodedStateType(s.encoded);
+            if (detectedType == EncodedStateType::Invalid) {
+                continue;
+            }
+            s.isFullState = (detectedType == EncodedStateType::Full);
             m_states.push_back(std::move(s));
         }
     } catch (const std::exception& e) {
@@ -365,7 +402,7 @@ void SaveStates::loadStatesFile() {
 void SaveStates::saveStatesFile() {
     json j = json::array();
     for (const auto& s : m_states) {
-        j.push_back(json{{"name", s.name}, {"data", s.encoded}});
+        j.push_back(json{{"name", s.name}, {"data", s.encoded}, {"isFullState", s.isFullState}});
     }
     try {
         io::FileStream::WriteAllText(GetStatesFilePath(), j.dump(2));
@@ -408,6 +445,7 @@ void SaveStates::mergeFromFile(const std::string& path) {
             SavedStateEntry s;
             s.name    = name;
             s.encoded = encoded;
+            s.isFullState = (DetectEncodedStateType(encoded) == EncodedStateType::Full);
             existingNames.insert(s.name);
             m_states.push_back(std::move(s));
             ++added;
@@ -438,7 +476,18 @@ void SaveStates::deleteQuickSave(int slot) {
 }
 
 void SaveStates::addNamedState(const std::string& name, const std::string& encoded, bool isFullState) {
-    m_states.push_back({name, encoded, isFullState});
+    auto detectedType = DetectEncodedStateType(encoded);
+    bool finalIsFull = detectedType == EncodedStateType::Full;
+    if (detectedType == EncodedStateType::Invalid) {
+        m_statusMsg = "State rejected: invalid encoded data.";
+        return;
+    }
+
+    if (detectedType == EncodedStateType::SaveOnly && isFullState) {
+        finalIsFull = false;
+    }
+
+    m_states.push_back({name, encoded, finalIsFull});
     saveStatesFile();
     m_statusMsg = fmt::format("State '{}' saved.", name);
 }
