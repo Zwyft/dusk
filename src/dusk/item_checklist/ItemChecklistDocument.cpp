@@ -21,7 +21,12 @@ const Rml::String kChecklistContent = R"RML(
 }  // namespace
 
 ItemChecklistDocument::ItemChecklistDocument() {
-    const auto trackerTabs = ItemChecklist::instance().tabs();
+    auto& checklist = ItemChecklist::instance();
+    if (!checklist.isInitialized()) {
+        checklist.initialize();
+    }
+
+    const auto trackerTabs = checklist.tabs();
     for (const auto& tab : trackerTabs) {
         add_tab(tab, [this, tab](Rml::Element* content) { build(content, tab); });
     }
