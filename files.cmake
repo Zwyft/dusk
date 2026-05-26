@@ -1483,6 +1483,8 @@ set(DUSK_FILES
         src/dusk/ui/controller_config.hpp
         src/dusk/ui/save_states_window.cpp
         src/dusk/ui/save_states_window.hpp
+        src/dusk/ui/media_import_window.cpp
+        src/dusk/ui/media_import_window.hpp
         src/dusk/ui/document.cpp
         src/dusk/ui/document.hpp
         src/dusk/ui/editor.cpp

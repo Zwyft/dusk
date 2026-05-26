@@ -88,6 +88,8 @@ void push_toast(Toast toast) noexcept;
 std::deque<Toast>& get_toasts() noexcept;
 void show_menu_notification() noexcept;
 bool consume_menu_notification_request() noexcept;
+void request_secret_media_menu() noexcept;
+bool consume_secret_media_menu_request() noexcept;
 
 const char* battery_icon(SDL_PowerState state, int level) noexcept;
 const char* connection_state_icon(SDL_JoystickConnectionState state) noexcept;

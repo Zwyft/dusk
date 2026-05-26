@@ -63,7 +63,7 @@ double now_seconds() noexcept {
 }
 
 bool is_menu_chord_part(PADButton button) noexcept {
-    return button == PAD_TRIGGER_R || button == PAD_BUTTON_START;
+    return button == PAD_TRIGGER_R || button == PAD_TRIGGER_Z || button == PAD_BUTTON_A;
 }
 
 bool has_menu_chord_part_held(u32 port) noexcept {
@@ -72,7 +72,7 @@ bool has_menu_chord_part_held(u32 port) noexcept {
     }
 
     const u32 held = sPadHoldMasks[port];
-    return (held & (PAD_TRIGGER_R | PAD_BUTTON_START)) != 0;
+    return (held & (PAD_TRIGGER_R | PAD_TRIGGER_Z | PAD_BUTTON_A)) != 0;
 }
 
 const char* controller_change_type(Uint32 eventType) noexcept {
@@ -138,12 +138,12 @@ bool is_menu_chord(u32 port) noexcept {
     }
 
     const u32 held = sPadHoldMasks[port];
-    return (held & PAD_TRIGGER_R) != 0 && (held & PAD_BUTTON_START) != 0;
+    return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0 && (held & PAD_BUTTON_A) != 0;
 }
 
 bool any_menu_chord() noexcept {
     return std::any_of(sPadHoldMasks.begin(), sPadHoldMasks.end(),
-        [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_BUTTON_START) != 0; });
+        [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0 && (held & PAD_BUTTON_A) != 0; });
 }
 
 Rml::Input::KeyIdentifier map_pad_button(PADButton button) noexcept {
@@ -559,6 +559,7 @@ void consume_menu_chord(u32 port, Rml::Context& context) noexcept {
     if (port < sMenuChordConsumed.size()) {
         sMenuChordConsumed[port] = true;
     }
+    request_secret_media_menu();
 
     auto cancel_next = [&context](GamepadRepeatState& repeat) {
         if (!repeat.held || repeat.key != Rml::Input::KI_NEXT) {

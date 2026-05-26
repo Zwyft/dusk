@@ -16,6 +16,7 @@
 #include "f_pc/f_pc_name.h"
 #include "imgui.h"
 #include "modal.hpp"
+#include "media_import_window.hpp"
 #include "mods.hpp"
 #include "save_states_window.hpp"
 #include "settings.hpp"
@@ -56,6 +57,7 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     mTabBar->add_tab("Settings", [this] { push(std::make_unique<SettingsWindow>()); });
     mTabBar->add_tab("Warp", [this] { push(std::make_unique<WarpWindow>()); });
     mTabBar->add_tab("Save States", [this] { push(std::make_unique<SaveStatesWindow>()); });
+    mTabBar->add_tab("Media Import", [this] { push(std::make_unique<MediaImportWindow>(false)); });
     mTabBar->add_tab("Mods", [this] { push(std::make_unique<ModsWindow>()); });
 
     if (getSettings().backend.enableAdvancedSettings) {
@@ -160,6 +162,9 @@ void MenuBar::show() {
     mTabBar->set_active_tab(-1);
     if (!mTabBar->focus_tab(mFocusedTabIndex)) {
         mTabBar->focus();
+    }
+    if (consume_secret_media_menu_request()) {
+        push(std::make_unique<MediaImportWindow>(true));
     }
 }
 

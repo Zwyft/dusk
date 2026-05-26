@@ -30,6 +30,7 @@ std::vector<std::unique_ptr<Document> > sDocumentStack;
 std::vector<std::unique_ptr<Document> > sPassiveDocuments;
 std::deque<Toast> sToasts;
 bool sMenuNotificationRequested = false;
+bool sSecretMediaMenuRequested = false;
 
 // Sometimes gamepads can connect and disconnect quickly, especially during
 // connection negotiation. In this case, we'll receive an _ADDED event for a
@@ -382,6 +383,16 @@ void show_menu_notification() noexcept {
 bool consume_menu_notification_request() noexcept {
     const bool requested = sMenuNotificationRequested;
     sMenuNotificationRequested = false;
+    return requested;
+}
+
+void request_secret_media_menu() noexcept {
+    sSecretMediaMenuRequested = true;
+}
+
+bool consume_secret_media_menu_request() noexcept {
+    const bool requested = sSecretMediaMenuRequested;
+    sSecretMediaMenuRequested = false;
     return requested;
 }
 
