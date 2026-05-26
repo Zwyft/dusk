@@ -146,15 +146,27 @@ bool any_menu_chord() noexcept {
         [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0; });
 }
 
+bool is_sdl_axis_pressed(SDL_Gamepad* gamepad, SDL_GamepadAxis axis) noexcept {
+    return SDL_GetGamepadAxis(gamepad, axis) >= kGamepadAxisPressThreshold;
+}
+
 bool is_secret_menu_chord_sdl_active(SDL_JoystickID gamepadId) noexcept {
     SDL_Gamepad* gamepad = SDL_GetGamepadFromID(gamepadId);
     if (gamepad == nullptr) {
         return false;
     }
 
-    // Android/Bluetooth-safe fallback: L shoulder + R shoulder.
-    return SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) &&
-           SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+    const bool leftShoulder = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+    const bool rightShoulder = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+    const bool leftTrigger = is_sdl_axis_pressed(gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+    const bool rightTrigger = is_sdl_axis_pressed(gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+    // Android/Bluetooth-safe fallbacks:
+    // - Z + R in Dusk's default GC mapping is native right shoulder + right trigger.
+    // - L + R on controllers with separate analog triggers is native left trigger + right trigger.
+    // - Some Android TV remotes expose L/R as shoulders instead of trigger axes.
+    return (rightShoulder && rightTrigger) || (leftTrigger && rightTrigger) ||
+           (leftShoulder && rightShoulder);
 }
 
 Rml::Input::KeyIdentifier map_pad_button(PADButton button) noexcept {
