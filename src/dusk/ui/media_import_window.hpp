@@ -2,6 +2,8 @@
 
 #include "window.hpp"
 
+#include <string>
+
 namespace dusk::ui {
 
 class MediaImportWindow : public Window {
@@ -11,6 +13,7 @@ public:
 private:
     void build_tab(Rml::Element* content);
     bool mAllowRemote = false;
+    std::string mManualUrl;
 };
 
 } // namespace dusk::ui

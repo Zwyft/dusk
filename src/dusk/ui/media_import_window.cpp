@@ -7,6 +7,7 @@
 #include "dusk/main.h"
 #include "dusk/ui/ui.hpp"
 #include "pane.hpp"
+#include "string_button.hpp"
 
 #include <SDL3/SDL_clipboard.h>
 #include <fmt/format.h>
@@ -43,15 +44,19 @@ std::string trim_url(std::string value) {
     return value;
 }
 
-std::string filename_from_url(const std::string& url) {
+std::string filename_from_url(const std::string& url, const std::string& fallbackFilename = "download.rvz") {
     const auto slash = url.find_last_of('/');
     std::string file = slash == std::string::npos ? "download.rvz" : url.substr(slash + 1);
     const auto q = file.find('?');
     if (q != std::string::npos) {
         file = file.substr(0, q);
     }
-    if (file.empty()) {
-        file = "download.rvz";
+    const auto fragment = file.find('#');
+    if (fragment != std::string::npos) {
+        file = file.substr(0, fragment);
+    }
+    if (file.empty() || std::filesystem::path(file).extension().empty()) {
+        file = fallbackFilename;
     }
     return file;
 }
@@ -157,17 +162,17 @@ void on_pick_local(void*, const char* path, const char* error) {
     import_local_file(path);
 }
 
-bool download_from_url(const std::string& rawUrl) {
+bool download_from_url(const std::string& rawUrl, const std::string& fallbackFilename = "download.rvz") {
     const std::string url = trim_url(rawUrl);
     if (!(url.rfind("https://", 0) == 0 || url.rfind("http://", 0) == 0)) {
         show_toast("Media Import", "URL must start with http:// or https://", "danger");
         return false;
     }
 
-    const auto filename = filename_from_url(url);
+    const auto filename = filename_from_url(url, fallbackFilename);
     const auto outPath = media_dir() / filename;
     if (!is_allowed_image_ext(outPath)) {
-        show_toast("Media Import", "URL must resolve to .rvz or .iso filename.", "danger");
+        show_toast("Media Import", "Download filename must end in .rvz or .iso.", "danger");
         return false;
     }
 
@@ -179,6 +184,15 @@ bool download_from_url(const std::string& rawUrl) {
 
     show_toast("Media Import", fmt::format("Downloaded {}", outPath.filename().string()), "success");
     return true;
+}
+
+bool download_google_drive_url(const std::string& rawUrl) {
+    const std::string normalized = normalize_google_drive_url(rawUrl);
+    if (normalized.empty()) {
+        show_toast("Media Import", "Could not parse Google Drive file URL.", "danger");
+        return false;
+    }
+    return download_from_url(normalized, "google-drive-download.rvz");
 }
 
 } // namespace
@@ -215,7 +229,37 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
     leftPane.add_section("Secret Remote Sources");
 
     leftPane.register_control(
-        leftPane.add_button("Option B: Download Clipboard URL").on_pressed([] {
+        leftPane.add_child<StringButton>(StringButton::Props{
+            .key = "Option B: Enter Download URL",
+            .getValue = [this] { return Rml::String(mManualUrl); },
+            .setValue = [this](Rml::String value) { mManualUrl = trim_url(std::move(value)); },
+            .maxLength = 2048,
+        }),
+        rightPane, [](Pane& pane) {
+            pane.clear();
+            pane.add_text("Press A/Enter to type or paste any http:// or https:// .rvz/.iso download link.");
+            pane.add_text("Press A/Enter again when done, then choose Download Entered URL.");
+        });
+
+    leftPane.register_control(
+        leftPane.add_button("Option C: Download Entered URL").on_pressed([this] {
+            mDoAud_seStartMenu(kSoundClick);
+            if (trim_url(mManualUrl).empty()) {
+                show_toast("Media Import", "Enter a URL first.", "warning");
+                return;
+            }
+            download_from_url(mManualUrl);
+        }),
+        rightPane, [this](Pane& pane) {
+            pane.clear();
+            pane.add_text("Downloads the URL you typed above. Links with no filename are saved as download.rvz.");
+            if (!trim_url(mManualUrl).empty()) {
+                pane.add_text(fmt::format("Current URL: {}", trim_url(mManualUrl)));
+            }
+        });
+
+    leftPane.register_control(
+        leftPane.add_button("Option D: Download Clipboard URL").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             if (!SDL_HasClipboardText()) {
                 show_toast("Media Import", "Clipboard has no URL.", "warning");
@@ -237,7 +281,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         });
 
     leftPane.register_control(
-        leftPane.add_button("Option C: Google Drive URL from Clipboard").on_pressed([] {
+        leftPane.add_button("Option E: Google Drive URL from Clipboard").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             if (!SDL_HasClipboardText()) {
                 show_toast("Media Import", "Clipboard has no URL.", "warning");
@@ -249,12 +293,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
                 if (text != nullptr) SDL_free(text);
                 return;
             }
-            const std::string normalized = normalize_google_drive_url(text);
-            if (normalized.empty()) {
-                show_toast("Media Import", "Could not parse Google Drive file URL.", "danger");
-            } else {
-                download_from_url(normalized);
-            }
+            download_google_drive_url(text);
             SDL_free(text);
         }),
         rightPane, [](Pane& pane) {
