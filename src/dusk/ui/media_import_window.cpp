@@ -3,12 +3,12 @@
 #include "button.hpp"
 #include "dusk/file_select.hpp"
 #include "dusk/logging.h"
+#include "dusk/http/http.hpp"
 #include "dusk/main.h"
 #include "dusk/ui/ui.hpp"
 #include "pane.hpp"
 
 #include <SDL3/SDL_clipboard.h>
-#include <curl/curl.h>
 #include <fmt/format.h>
 
 #include <cstdio>
@@ -56,49 +56,36 @@ std::string filename_from_url(const std::string& url) {
     return file;
 }
 
-size_t write_to_file(void* ptr, size_t size, size_t nmemb, void* userdata) {
-    return std::fwrite(ptr, size, nmemb, static_cast<FILE*>(userdata));
-}
-
 bool download_to_file(const std::string& url, const std::filesystem::path& outPath, std::string& error) {
-    CURL* curl = curl_easy_init();
-    if (curl == nullptr) {
-        error = "curl init failed";
+    dusk::http::Request req{};
+    req.url = url;
+    req.timeout = std::chrono::seconds(30);
+    req.maxBodyBytes = 64 * 1024 * 1024;
+
+    auto result = dusk::http::get(req);
+    if (result.error != dusk::http::Error::None) {
+        error = result.message.empty() ? "request failed" : result.message;
+        return false;
+    }
+
+    if (result.response.statusCode < 200 || result.response.statusCode >= 300) {
+        error = fmt::format("http {}", result.response.statusCode);
         return false;
     }
 
     FILE* fp = std::fopen(outPath.string().c_str(), "wb");
     if (fp == nullptr) {
-        curl_easy_cleanup(curl);
         error = "cannot open destination file";
         return false;
     }
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_file);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-
-    const CURLcode code = curl_easy_perform(curl);
-    long status = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-
+    const size_t written = std::fwrite(result.response.body.data(), 1, result.response.body.size(), fp);
     std::fclose(fp);
-    curl_easy_cleanup(curl);
+    if (written != result.response.body.size()) {
+        std::filesystem::remove(outPath);
+        error = "short write";
+        return false;
+    }
 
-    if (code != CURLE_OK) {
-        error = curl_easy_strerror(code);
-        std::filesystem::remove(outPath);
-        return false;
-    }
-    if (status < 200 || status >= 300) {
-        error = fmt::format("http {}", status);
-        std::filesystem::remove(outPath);
-        return false;
-    }
     return true;
 }
 
