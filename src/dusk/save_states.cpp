@@ -557,6 +557,57 @@ void SaveStates::clearSessionSnapshots() {
     m_statusMsg = "Session snapshots cleared.";
 }
 
+bool SaveStates::renameSessionSnapshot(int index, const std::string& newName) {
+    if (index < 0 || index >= (int)m_sessionSnapshots.size() || newName.empty()) {
+        return false;
+    }
+    m_sessionSnapshots[index].name = newName;
+    m_statusMsg = fmt::format("Renamed snapshot to '{}'", newName);
+    return true;
+}
+
+bool SaveStates::deleteSessionSnapshot(int index) {
+    if (index < 0 || index >= (int)m_sessionSnapshots.size()) {
+        return false;
+    }
+    const auto removed = m_sessionSnapshots[index].name;
+    m_sessionSnapshots.erase(m_sessionSnapshots.begin() + index);
+    m_statusMsg = fmt::format("Deleted snapshot '{}'", removed);
+    return true;
+}
+
+bool SaveStates::moveSessionSnapshot(int fromIndex, int toIndex) {
+    if (fromIndex < 0 || fromIndex >= (int)m_sessionSnapshots.size() ||
+        toIndex < 0 || toIndex >= (int)m_sessionSnapshots.size() || fromIndex == toIndex) {
+        return false;
+    }
+    auto entry = std::move(m_sessionSnapshots[fromIndex]);
+    m_sessionSnapshots.erase(m_sessionSnapshots.begin() + fromIndex);
+    m_sessionSnapshots.insert(m_sessionSnapshots.begin() + toIndex, std::move(entry));
+    m_statusMsg = "Reordered session snapshots.";
+    return true;
+}
+
+bool SaveStates::toggleFavoriteSessionSnapshot(int index) {
+    if (index < 0 || index >= (int)m_sessionSnapshots.size()) {
+        return false;
+    }
+    m_sessionSnapshots[index].favorite = !m_sessionSnapshots[index].favorite;
+    m_statusMsg = fmt::format("Snapshot '{}' favorite: {}",
+        m_sessionSnapshots[index].name,
+        m_sessionSnapshots[index].favorite ? "on" : "off");
+    return true;
+}
+
+bool SaveStates::setSessionSnapshotTag(int index, const std::string& tag) {
+    if (index < 0 || index >= (int)m_sessionSnapshots.size()) {
+        return false;
+    }
+    m_sessionSnapshots[index].tag = tag;
+    m_statusMsg = tag.empty() ? "Snapshot tag cleared." : fmt::format("Snapshot tagged as '{}'", tag);
+    return true;
+}
+
 void SaveStates::createPracticePresetState(const std::string& name,
                                            const std::string& stage,
                                            int8_t roomNo,

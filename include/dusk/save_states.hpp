@@ -28,6 +28,8 @@ struct SessionSnapshotEntry {
     std::string name;
     std::string encoded;
     bool isFullState = false;
+    bool favorite = false;
+    std::string tag;
     std::chrono::system_clock::time_point timestamp;
 };
 
@@ -65,6 +67,11 @@ public:
     bool loadSessionSnapshot(int index);
     bool rollbackLastSessionSnapshot();
     void clearSessionSnapshots();
+    bool renameSessionSnapshot(int index, const std::string& newName);
+    bool deleteSessionSnapshot(int index);
+    bool moveSessionSnapshot(int fromIndex, int toIndex);
+    bool toggleFavoriteSessionSnapshot(int index);
+    bool setSessionSnapshotTag(int index, const std::string& tag);
 
     void createPracticePresetState(const std::string& name,
                                    const std::string& stage,

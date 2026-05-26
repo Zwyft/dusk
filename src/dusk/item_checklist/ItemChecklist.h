@@ -20,6 +20,12 @@ public:
         bool isQuestItem = false;
     };
 
+    struct DebugInfo {
+        bool collected = false;
+        std::string source;
+        std::string reason;
+    };
+
     static ItemChecklist& instance();
 
     bool initialize();
@@ -45,6 +51,7 @@ public:
 
     std::string iconPathFor(uint8_t itemId) const;
     bool iconsReady() const { return mIconsReady; }
+    DebugInfo getDebugInfo(uint8_t itemId) const;
 
     bool exportManualOverrides(const std::filesystem::path& destination, std::string* error = nullptr) const;
     bool importManualOverrides(const std::filesystem::path& source, std::string* error = nullptr);

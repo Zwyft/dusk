@@ -15,6 +15,12 @@ namespace {
 
 const Rml::String kChecklistContent = R"RML(
 <div id="tracker-root" class="tracker-window">
+    <div class="tracker-debug" id="tracker-debug">
+        <div class="tracker-debug-title">Rule Debugger</div>
+        <div id="tracker-debug-state">Select an item to inspect.</div>
+        <div id="tracker-debug-source"></div>
+        <div id="tracker-debug-reason"></div>
+    </div>
     <div id="tracker-sections" class="tracker-sections"></div>
 </div>
 )RML";
@@ -43,8 +49,14 @@ void ItemChecklistDocument::build(Rml::Element* content, const std::string& tab)
 
     content->SetInnerRML(kChecklistContent);
     mSectionsRoot = content->GetElementById("tracker-sections");
+    mDebugState = content->GetElementById("tracker-debug-state");
+    mDebugSource = content->GetElementById("tracker-debug-source");
+    mDebugReason = content->GetElementById("tracker-debug-reason");
     rebuildSections(tab);
     refresh();
+    if (const auto items = ItemChecklist::instance().getItemsByTab(tab); !items.empty() && items.front() != nullptr) {
+        refreshDebugPanel(items.front()->id);
+    }
     mSeenRevision = ItemChecklist::instance().revision();
 }
 
@@ -178,10 +190,19 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
             button, Rml::EventId::Click, [itemId = item.id, this](Rml::Event&) {
                 ItemChecklist::instance().toggleCollected(itemId);
                 refreshItem(itemId);
+                refreshDebugPanel(itemId);
                 mSeenRevision = ItemChecklist::instance().revision();
             }));
+    } else {
+        mCardListeners.emplace_back(std::make_unique<ScopedEventListener>(
+            button, Rml::EventId::Click, [itemId = item.id, this](Rml::Event&) {
+                refreshDebugPanel(itemId);
+            }));
     }
-
+    mCardListeners.emplace_back(std::make_unique<ScopedEventListener>(
+        button, Rml::EventId::Mouseover, [itemId = item.id, this](Rml::Event&) {
+            refreshDebugPanel(itemId);
+        }));
     const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
     if (!iconPath.empty()) {
         auto* icon = append(button, "img");
@@ -233,6 +254,26 @@ void ItemChecklistDocument::refreshItem(uint8_t itemId) {
             it->second.iconSource = iconPath;
         }
     }
+}
+
+void ItemChecklistDocument::refreshDebugPanel(uint8_t itemId) {
+    if (mDebugState == nullptr || mDebugSource == nullptr || mDebugReason == nullptr) {
+        return;
+    }
+
+    const auto* item = ItemChecklist::instance().getItemInfo(itemId);
+    if (item == nullptr) {
+        mDebugState->SetInnerRML("Unknown item");
+        mDebugSource->SetInnerRML("Source: Unknown");
+        mDebugReason->SetInnerRML("Reason: Missing definition.");
+        return;
+    }
+
+    const auto info = ItemChecklist::instance().getDebugInfo(itemId);
+    mDebugState->SetInnerRML(escape(fmt::format("{}: {}", item->name,
+        info.collected ? "Collected" : "Not Collected")));
+    mDebugSource->SetInnerRML(escape(fmt::format("Source: {}", info.source)));
+    mDebugReason->SetInnerRML(escape(fmt::format("Reason: {}", info.reason)));
 }
 
 void ItemChecklistDocument::refresh() {

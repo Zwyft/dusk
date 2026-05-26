@@ -12,6 +12,36 @@
     align-items: stretch;
 }
 
+.tracker-debug {
+    display: flex;
+    flex-direction: column;
+    gap: 2dp;
+    padding: 6dp 8dp;
+    border-radius: 8dp;
+    background: rgba(255, 245, 213, 0.08);
+    box-shadow: rgba(194, 164, 45, 0.24) 0 0 0 1dp;
+}
+
+.tracker-debug-title {
+    font-family: "Fira Sans Condensed";
+    font-size: 11dp;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 241, 189, 0.9);
+}
+
+#tracker-debug-state {
+    font-size: 14dp;
+    font-weight: bold;
+    color: #fff6dc;
+}
+
+#tracker-debug-source,
+#tracker-debug-reason {
+    font-size: 12dp;
+    color: rgba(248, 236, 199, 0.82);
+}
+
 .tracker-shell {
     display: flex;
     flex-direction: column;

@@ -38,11 +38,15 @@ private:
     void build(Rml::Element* content, const std::string& tab);
     void rebuildSections(const std::string& tab);
     void refreshItem(uint8_t itemId);
+    void refreshDebugPanel(uint8_t itemId);
     LayoutConfig chooseLayout(const std::string& tab, size_t itemCount) const;
 
     CardRefs createCard(const ::ItemChecklist::ItemInfo& item, Rml::Element* parent);
 
     Rml::Element* mSectionsRoot = nullptr;
+    Rml::Element* mDebugState = nullptr;
+    Rml::Element* mDebugSource = nullptr;
+    Rml::Element* mDebugReason = nullptr;
     std::vector<std::unique_ptr<ScopedEventListener>> mCardListeners;
     std::unordered_map<uint8_t, CardRefs> mCards;
     uint64_t mSeenRevision = 0;

@@ -391,13 +391,19 @@ void SaveStatesWindow::build_session_snapshots_tab(Rml::Element* content) {
     } else {
         for (int i = (int)snaps.size() - 1; i >= 0; --i) {
             const auto& snap = snaps[i];
+            const auto label = fmt::format("{}{}: {}{}",
+                snap.favorite ? "★ " : "",
+                i + 1,
+                snap.name,
+                snap.tag.empty() ? "" : fmt::format(" [{}]", snap.tag));
             leftPane.register_control(
-                leftPane.add_button(fmt::format("{}: {}", i + 1, snap.name)).on_pressed([i]() {
+                leftPane.add_button(label).on_pressed([i]() {
                     mDoAud_seStartMenu(kSoundClick);
                     dusk::getSaveStates().loadSessionSnapshot(i);
                 }),
                 rightPane, [i](Pane& pane) {
-                    const auto& local = dusk::getSaveStates().getSessionSnapshots();
+                    auto& stateMgr = dusk::getSaveStates();
+                    const auto& local = stateMgr.getSessionSnapshots();
                     if (i < 0 || i >= (int)local.size()) {
                         pane.clear();
                         pane.add_text("Snapshot missing.");
@@ -405,10 +411,51 @@ void SaveStatesWindow::build_session_snapshots_tab(Rml::Element* content) {
                     }
                     const auto& s = local[i];
                     pane.clear();
-                    pane.add_rml(fmt::format("<b>{}</b><br/>Type: {}<br/>Saved: {}",
+                    pane.add_rml(fmt::format("<b>{}</b><br/>Type: {}<br/>Saved: {}<br/>Favorite: {}<br/>Tag: {}",
                         s.name,
                         s.isFullState ? "Full" : "Stage Reload",
-                        formatTimeAgo(s.timestamp)));
+                        formatTimeAgo(s.timestamp),
+                        s.favorite ? "Yes" : "No",
+                        s.tag.empty() ? "(none)" : s.tag));
+
+                    pane.add_rml("<br/>");
+                    pane.add_section("Snapshot Manager");
+                    pane.add_button("Rename (Auto)").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+                        dusk::getSaveStates().renameSessionSnapshot(i, fmt::format("Snapshot {}", now));
+                    });
+                    pane.add_button("Toggle Favorite").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().toggleFavoriteSessionSnapshot(i);
+                    });
+                    pane.add_button("Tag: Boss").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().setSessionSnapshotTag(i, "Boss");
+                    });
+                    pane.add_button("Tag: Movement").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().setSessionSnapshotTag(i, "Movement");
+                    });
+                    pane.add_button("Clear Tag").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().setSessionSnapshotTag(i, "");
+                    });
+                    pane.add_button("Move Up").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().moveSessionSnapshot(i, i > 0 ? i - 1 : i);
+                    });
+                    pane.add_button("Move Down").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        auto& mgr = dusk::getSaveStates();
+                        const int last = (int)mgr.getSessionSnapshots().size() - 1;
+                        mgr.moveSessionSnapshot(i, i < last ? i + 1 : i);
+                    });
+                    pane.add_button("Delete Snapshot").on_pressed([i]() {
+                        mDoAud_seStartMenu(kSoundClick);
+                        dusk::getSaveStates().deleteSessionSnapshot(i);
+                    });
                 });
         }
 

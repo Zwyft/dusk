@@ -11,6 +11,7 @@
 
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_iostream.h>
+#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -333,6 +334,45 @@ std::string ItemChecklist::iconPathFor(uint8_t itemId) const {
         return item->iconPath;
     }
     return {};
+}
+
+ItemChecklist::DebugInfo ItemChecklist::getDebugInfo(uint8_t itemId) const {
+    DebugInfo info;
+    const auto* item = getItemInfo(itemId);
+    if (item == nullptr) {
+        info.source = "Unknown";
+        info.reason = "Item id not found in checklist definitions.";
+        return info;
+    }
+
+    info.collected = isCollected(itemId);
+
+    bool autoCollected = false;
+    if (collected_from_auto_rule(item->id, autoCollected)) {
+        info.source = "Auto Rule";
+        info.reason = fmt::format("Mapped rule id {} returned {}.", item->id,
+            autoCollected ? "collected" : "not collected");
+        return info;
+    }
+
+    if (item->useLiveState) {
+        const bool live = dComIfGs_isItemFirstBit(item->liveItemId) != 0;
+        info.source = "Live Memory";
+        info.reason = fmt::format("dComIfGs_isItemFirstBit({}) => {}.", item->liveItemId,
+            live ? 1 : 0);
+        return info;
+    }
+
+    if (const auto overrideIt = mManualOverrides.find(itemId); overrideIt != mManualOverrides.end()) {
+        info.source = "Manual Override";
+        info.reason = fmt::format("Manual toggle is {}.",
+            overrideIt->second ? "enabled" : "disabled");
+    } else {
+        info.source = "Manual Override";
+        info.reason = "No manual override set yet.";
+    }
+
+    return info;
 }
 
 bool ItemChecklist::exportManualOverrides(
