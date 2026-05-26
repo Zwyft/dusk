@@ -244,5 +244,12 @@ std::string resolve_content_uri(std::string_view path) {
     env->DeleteLocalRef(resultStr);
     return result;
 }
+
+std::string resolve_content_uri_for_playback(std::string_view path) {
+    // Android's SDL_IOFromFile can stream content:// URIs directly through the
+    // platform file descriptor bridge. Keep large .rvz/.iso selections on USB
+    // or external storage instead of copying them into the app cache first.
+    return std::string(path);
+}
 #endif
 }  // namespace dusk

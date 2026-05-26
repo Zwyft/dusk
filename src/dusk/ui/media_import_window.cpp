@@ -5,6 +5,7 @@
 #include "dusk/logging.h"
 #include "dusk/http/http.hpp"
 #include "dusk/main.h"
+#include "dusk/ui/prelaunch.hpp"
 #include "dusk/ui/ui.hpp"
 #include "pane.hpp"
 #include "string_button.hpp"
@@ -162,6 +163,36 @@ void on_pick_local(void*, const char* path, const char* error) {
     import_local_file(path);
 }
 
+void use_local_file_direct(const char* path) {
+    if (path == nullptr || path[0] == '\0') {
+        show_toast("Media Import", "No file selected.", "warning");
+        return;
+    }
+
+    const std::string displayName = dusk::display_name_for_path(path);
+    if (!is_allowed_image_ext(displayName)) {
+        show_toast("Media Import", "Only .rvz and .iso are accepted.", "danger");
+        return;
+    }
+
+    const std::string playbackPath = dusk::resolve_content_uri_for_playback(path);
+    if (playbackPath.empty()) {
+        show_toast("Media Import", "Unable to use selected file.", "danger");
+        return;
+    }
+
+    select_disc_image_path(playbackPath);
+    show_toast("Media Import", fmt::format("Using {} from its current location.", displayName), "success");
+}
+
+void on_use_local_direct(void*, const char* path, const char* error) {
+    if (error != nullptr && error[0] != '\0') {
+        show_toast("Media Import", error, "danger");
+        return;
+    }
+    use_local_file_direct(path);
+}
+
 bool download_from_url(const std::string& rawUrl, const std::string& fallbackFilename = "download.rvz") {
     const std::string url = trim_url(rawUrl);
     if (!(url.rfind("https://", 0) == 0 || url.rfind("http://", 0) == 0)) {
@@ -205,11 +236,27 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
     auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
     auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
-    leftPane.add_section("Option A: Local Import");
-    rightPane.add_text("Import your legally obtained .rvz/.iso from local storage.");
+    leftPane.add_section("Option A: USB / External Storage");
+    rightPane.add_text("Use your legally obtained .rvz/.iso from USB or external storage without copying it into TV storage.");
 
     leftPane.register_control(
-        leftPane.add_button("Pick Local .rvz/.iso").on_pressed([] {
+        leftPane.add_button("Use USB/External .rvz/.iso").on_pressed([] {
+            mDoAud_seStartMenu(kSoundClick);
+            static const SDL_DialogFileFilter filters[] = {
+                {"Game Images (*.rvz;*.iso)", "rvz;iso"},
+            };
+            dusk::ShowFileSelect(on_use_local_direct, nullptr, nullptr, filters, 1, nullptr, false);
+        }),
+        rightPane, [](Pane& pane) {
+            pane.clear();
+            pane.add_text("Pick the .rvz/.iso directly from USB/SD/external storage. Dusk keeps the Android file permission and streams it from there, so it does not need another 1+ GB of internal space.");
+        });
+
+    leftPane.add_section("Optional Copy Import");
+    rightPane.add_text("Copy a smaller .rvz/.iso into Dusk app storage only if you have enough free space.");
+
+    leftPane.register_control(
+        leftPane.add_button("Copy Local .rvz/.iso into Dusk").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             static const SDL_DialogFileFilter filters[] = {
                 {"Game Images (*.rvz;*.iso)", "rvz;iso"},
@@ -218,7 +265,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         }),
         rightPane, [](Pane& pane) {
             pane.clear();
-            pane.add_text("Pick from device storage, USB, SD card, or mounted path.");
+            pane.add_text("Copies the selected file into Dusk app storage. For large Android TV installs, prefer Use USB/External above.");
         });
 
     if (!mAllowRemote) {

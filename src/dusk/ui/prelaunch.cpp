@@ -500,7 +500,7 @@ void file_dialog_callback(void*, const char* path, const char* error) {
         return;
     }
 
-    begin_disc_verification(dusk::resolve_content_uri(path));
+    begin_disc_verification(dusk::resolve_content_uri_for_playback(path));
 }
 
 PrelaunchState sPrelaunchState;
@@ -553,6 +553,11 @@ void refresh_configured_disc_state() noexcept {
     if (state.configuredDiscPath == state.activeDiscPath) {
         state.activeDiscInfo = {};
     }
+}
+
+void select_disc_image_path(std::string path) noexcept {
+    ensure_initialized();
+    begin_disc_verification(std::move(path));
 }
 
 void try_push_verification_modal(Document& host) {
