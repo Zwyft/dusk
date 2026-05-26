@@ -178,6 +178,12 @@ void MenuBar::hide(bool close) {
 void MenuBar::update() {
     update_safe_area();
     Document::update();
+    if (consume_secret_media_menu_request()) {
+        if (!Document::visible()) {
+            show();
+        }
+        push(std::make_unique<MediaImportWindow>(true));
+    }
 }
 
 void MenuBar::update_safe_area() noexcept {
