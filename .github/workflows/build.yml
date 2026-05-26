@@ -220,6 +220,7 @@ jobs:
       RUSTC_WRAPPER:
       ANDROID_STAGE_STRIP: 0
       ANDROID_STAGE_ABIS: arm64-v8a
+      CMAKE_BUILD_PARALLEL_LEVEL: 12
 
     steps:
       - uses: actions/checkout@v6
@@ -247,10 +248,35 @@ jobs:
         run: |
           rustup target add aarch64-linux-android
 
+      - name: Restore sccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sccache
+          key: sccache-android-v1
+          restore-keys: |
+            sccache-android-
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-android-v1-${{ hashFiles('platforms/android/**/*.gradle*', 'platforms/android/gradle.properties', 'platforms/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-android-v1-
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Configure CMake
+        run: cmake --preset x-android-ci-arm64
+
       - name: Build native libs (arm64-v8a)
-        run: |
-          cmake --preset android-arm64
-          cmake --build --preset android-arm64
+        run: cmake --build --preset x-android-ci-arm64
+
+      - name: Print sccache stats
+        run: sccache --show-stats
 
       - name: Stage JNI libs
         run: ./platforms/android/scripts/stage-jni-libs.sh
@@ -259,7 +285,7 @@ jobs:
         working-directory: platforms/android
         run: |
           chmod +x gradlew
-          ./gradlew syncDuskAssets :app:assembleDebug
+          ./gradlew --no-daemon --build-cache syncDuskAssets :app:assembleDebug
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v7
