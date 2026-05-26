@@ -57,7 +57,6 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     mTabBar->add_tab("Settings", [this] { push(std::make_unique<SettingsWindow>()); });
     mTabBar->add_tab("Warp", [this] { push(std::make_unique<WarpWindow>()); });
     mTabBar->add_tab("Save States", [this] { push(std::make_unique<SaveStatesWindow>()); });
-    mTabBar->add_tab("Media Import", [this] { push(std::make_unique<MediaImportWindow>(false)); });
     mTabBar->add_tab("Mods", [this] { push(std::make_unique<ModsWindow>()); });
 
     if (getSettings().backend.enableAdvancedSettings) {

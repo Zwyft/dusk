@@ -146,6 +146,18 @@ bool any_menu_chord() noexcept {
         [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0 && (held & PAD_BUTTON_A) != 0; });
 }
 
+bool is_secret_menu_chord_sdl_active(SDL_JoystickID gamepadId) noexcept {
+    SDL_Gamepad* gamepad = SDL_GetGamepadFromID(gamepadId);
+    if (gamepad == nullptr) {
+        return false;
+    }
+
+    // Android/Bluetooth-safe fallback: A + L shoulder + R shoulder.
+    return SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_SOUTH) &&
+           SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) &&
+           SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+}
+
 Rml::Input::KeyIdentifier map_pad_button(PADButton button) noexcept {
     switch (button) {
     case PAD_BUTTON_UP:
@@ -627,8 +639,9 @@ void process_axis_direction(
     }
 
     set_pad_button_held(port, heldPadButton, true);
-    const bool chorded = heldPadButton == PAD_TRIGGER_R && is_menu_chord(port) &&
-                         (port >= sMenuChordConsumed.size() || !sMenuChordConsumed[port]);
+    const bool chorded =
+        ((heldPadButton == PAD_TRIGGER_R && is_menu_chord(port)) || is_secret_menu_chord_sdl_active(event.which)) &&
+        (port >= sMenuChordConsumed.size() || !sMenuChordConsumed[port]);
     if (chorded) {
         consume_menu_chord(port, context);
     }
@@ -716,7 +729,9 @@ void handle_event(const SDL_Event& event) noexcept {
     const bool hasPadButton = find_event_pad_button(event.gbutton, port, button);
     if (event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
         set_pad_button_held(port, button, true);
-        const bool chorded = hasPadButton && is_menu_chord_part(button) && is_menu_chord(port);
+        const bool chorded =
+            (hasPadButton && is_menu_chord_part(button) && is_menu_chord(port)) ||
+            is_secret_menu_chord_sdl_active(event.gbutton.which);
         if (chorded) {
             consume_menu_chord(port, *context);
         }
