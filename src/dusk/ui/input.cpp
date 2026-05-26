@@ -63,7 +63,7 @@ double now_seconds() noexcept {
 }
 
 bool is_menu_chord_part(PADButton button) noexcept {
-    return button == PAD_TRIGGER_R || button == PAD_TRIGGER_Z || button == PAD_BUTTON_A;
+    return button == PAD_TRIGGER_R || button == PAD_TRIGGER_Z;
 }
 
 bool has_menu_chord_part_held(u32 port) noexcept {
@@ -72,7 +72,7 @@ bool has_menu_chord_part_held(u32 port) noexcept {
     }
 
     const u32 held = sPadHoldMasks[port];
-    return (held & (PAD_TRIGGER_R | PAD_TRIGGER_Z | PAD_BUTTON_A)) != 0;
+    return (held & (PAD_TRIGGER_R | PAD_TRIGGER_Z)) != 0;
 }
 
 const char* controller_change_type(Uint32 eventType) noexcept {
@@ -138,12 +138,12 @@ bool is_menu_chord(u32 port) noexcept {
     }
 
     const u32 held = sPadHoldMasks[port];
-    return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0 && (held & PAD_BUTTON_A) != 0;
+    return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0;
 }
 
 bool any_menu_chord() noexcept {
     return std::any_of(sPadHoldMasks.begin(), sPadHoldMasks.end(),
-        [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0 && (held & PAD_BUTTON_A) != 0; });
+        [](u32 held) { return (held & PAD_TRIGGER_R) != 0 && (held & PAD_TRIGGER_Z) != 0; });
 }
 
 bool is_secret_menu_chord_sdl_active(SDL_JoystickID gamepadId) noexcept {
@@ -152,9 +152,8 @@ bool is_secret_menu_chord_sdl_active(SDL_JoystickID gamepadId) noexcept {
         return false;
     }
 
-    // Android/Bluetooth-safe fallback: A + L shoulder + R shoulder.
-    return SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_SOUTH) &&
-           SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) &&
+    // Android/Bluetooth-safe fallback: L shoulder + R shoulder.
+    return SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) &&
            SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
 }
 
