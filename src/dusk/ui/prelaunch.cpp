@@ -500,7 +500,7 @@ void file_dialog_callback(void*, const char* path, const char* error) {
         return;
     }
 
-    begin_disc_verification(dusk::resolve_content_uri_for_playback(path));
+    begin_disc_verification(dusk::resolve_content_uri(path));
 }
 
 PrelaunchState sPrelaunchState;

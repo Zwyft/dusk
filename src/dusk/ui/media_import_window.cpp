@@ -236,27 +236,11 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
     auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
     auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
-    leftPane.add_section("Option A: USB / External Storage");
-    rightPane.add_text("Use your legally obtained .rvz/.iso from USB or external storage without copying it into TV storage.");
+    leftPane.add_section("Option A: Local Import");
+    rightPane.add_text("Import your legally obtained .rvz/.iso from local storage.");
 
     leftPane.register_control(
-        leftPane.add_button("Use USB/External .rvz/.iso").on_pressed([] {
-            mDoAud_seStartMenu(kSoundClick);
-            static const SDL_DialogFileFilter filters[] = {
-                {"Game Images (*.rvz;*.iso)", "rvz;iso"},
-            };
-            dusk::ShowFileSelect(on_use_local_direct, nullptr, nullptr, filters, 1, nullptr, false);
-        }),
-        rightPane, [](Pane& pane) {
-            pane.clear();
-            pane.add_text("Pick the .rvz/.iso directly from USB/SD/external storage. Dusk keeps the Android file permission and streams it from there, so it does not need another 1+ GB of internal space.");
-        });
-
-    leftPane.add_section("Optional Copy Import");
-    rightPane.add_text("Copy a smaller .rvz/.iso into Dusk app storage only if you have enough free space.");
-
-    leftPane.register_control(
-        leftPane.add_button("Copy Local .rvz/.iso into Dusk").on_pressed([] {
+        leftPane.add_button("Pick Local .rvz/.iso").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             static const SDL_DialogFileFilter filters[] = {
                 {"Game Images (*.rvz;*.iso)", "rvz;iso"},
@@ -265,7 +249,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         }),
         rightPane, [](Pane& pane) {
             pane.clear();
-            pane.add_text("Copies the selected file into Dusk app storage. For large Android TV installs, prefer Use USB/External above.");
+            pane.add_text("Pick from device storage, USB, SD card, or mounted path. This original import path copies the selected file into Dusk app storage.");
         });
 
     if (!mAllowRemote) {
@@ -273,11 +257,24 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
     }
 
     leftPane.add_rml("<br/>");
-    leftPane.add_section("Secret Remote Sources");
+    leftPane.add_section("Secret TV Sources");
+
+    leftPane.register_control(
+        leftPane.add_button("Option B: Use USB/External .rvz/.iso").on_pressed([] {
+            mDoAud_seStartMenu(kSoundClick);
+            static const SDL_DialogFileFilter filters[] = {
+                {"Game Images (*.rvz;*.iso)", "rvz;iso"},
+            };
+            dusk::ShowFileSelect(on_use_local_direct, nullptr, nullptr, filters, 1, nullptr, false);
+        }),
+        rightPane, [](Pane& pane) {
+            pane.clear();
+            pane.add_text("Secret TV option: pick the .rvz/.iso directly from USB/SD/external storage. Dusk keeps the Android file permission and streams it from there instead of copying another 1+ GB into internal storage.");
+        });
 
     leftPane.register_control(
         leftPane.add_child<StringButton>(StringButton::Props{
-            .key = "Option B: Enter Download URL",
+            .key = "Option C: Enter Download URL",
             .getValue = [this] { return Rml::String(mManualUrl); },
             .setValue = [this](Rml::String value) { mManualUrl = trim_url(std::move(value)); },
             .maxLength = 2048,
@@ -289,7 +286,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         });
 
     leftPane.register_control(
-        leftPane.add_button("Option C: Download Entered URL").on_pressed([this] {
+        leftPane.add_button("Option D: Download Entered URL").on_pressed([this] {
             mDoAud_seStartMenu(kSoundClick);
             if (trim_url(mManualUrl).empty()) {
                 show_toast("Media Import", "Enter a URL first.", "warning");
@@ -306,7 +303,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         });
 
     leftPane.register_control(
-        leftPane.add_button("Option D: Download Clipboard URL").on_pressed([] {
+        leftPane.add_button("Option E: Download Clipboard URL").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             if (!SDL_HasClipboardText()) {
                 show_toast("Media Import", "Clipboard has no URL.", "warning");
@@ -328,7 +325,7 @@ void MediaImportWindow::build_tab(Rml::Element* content) {
         });
 
     leftPane.register_control(
-        leftPane.add_button("Option E: Google Drive URL from Clipboard").on_pressed([] {
+        leftPane.add_button("Option F: Google Drive URL from Clipboard").on_pressed([] {
             mDoAud_seStartMenu(kSoundClick);
             if (!SDL_HasClipboardText()) {
                 show_toast("Media Import", "Clipboard has no URL.", "warning");
