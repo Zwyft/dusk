@@ -19,6 +19,9 @@ export JAVA_HOME="/usr/lib/jvm/java-17-openjdk"
 ## Build Native Libraries
 
 ```bash
+cmake --preset android-armv7
+cmake --build --preset android-armv7
+
 cmake --preset android-arm64
 cmake --build --preset android-arm64
 
@@ -28,17 +31,21 @@ cmake --build --preset android-x86_64
 
 These builds produce:
 
-- `build/android-arm64/Binaries/libmain.so`
-- `build/android-x86_64/Binaries/libmain.so`
+- `build/android-armv7/libmain.so`
+- `build/android-arm64/libmain.so`
+- `build/android-x86_64/libmain.so`
 
 ## Stage Libraries Into APK Project
 
 ```bash
-./android/scripts/stage-jni-libs.sh
+# Default stages armeabi-v7a, arm64-v8a, and x86_64 when all three libs exist.
+# For an Android TV that only supports 32-bit ARM, build/package just armeabi-v7a:
+ANDROID_STAGE_ABIS=armeabi-v7a ./android/scripts/stage-jni-libs.sh
 ```
 
 This copies:
 
+- `libmain.so` -> `android/app/src/main/jniLibs/armeabi-v7a/`
 - `libmain.so` -> `android/app/src/main/jniLibs/arm64-v8a/`
 - `libmain.so` -> `android/app/src/main/jniLibs/x86_64/`
 

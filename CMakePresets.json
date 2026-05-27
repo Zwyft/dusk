@@ -333,6 +333,16 @@
       }
     },
     {
+      "name": "android-armv7",
+      "displayName": "Android (armeabi-v7a)",
+      "inherits": [
+        "android-base"
+      ],
+      "cacheVariables": {
+        "ANDROID_ABI": "armeabi-v7a"
+      }
+    },
+    {
       "name": "android-arm64",
       "displayName": "Android (arm64-v8a)",
       "inherits": [
@@ -364,6 +374,17 @@
           "type": "BOOL",
           "value": false
         }
+      }
+    },
+    {
+      "name": "x-android-ci-armv7",
+      "binaryDir": "${sourceDir}/build/android-armv7",
+      "inherits": [
+        "x-android-ci"
+      ],
+      "cacheVariables": {
+        "ANDROID_ABI": "armeabi-v7a",
+        "Rust_CARGO_TARGET": "armv7-linux-androideabi"
       }
     },
     {
@@ -568,6 +589,15 @@
       ]
     },
     {
+      "name": "android-armv7",
+      "configurePreset": "android-armv7",
+      "description": "Android armeabi-v7a release build with debug info",
+      "displayName": "Android armeabi-v7a RelWithDebInfo",
+      "targets": [
+        "dusk"
+      ]
+    },
+    {
       "name": "android-arm64",
       "configurePreset": "android-arm64",
       "description": "Android arm64-v8a release build with debug info",
@@ -581,6 +611,15 @@
       "configurePreset": "android-x86_64",
       "description": "Android x86_64 release build with debug info",
       "displayName": "Android x86_64 RelWithDebInfo",
+      "targets": [
+        "dusk"
+      ]
+    },
+    {
+      "name": "x-android-ci-armv7",
+      "configurePreset": "x-android-ci-armv7",
+      "description": "(Internal) Android CI armeabi-v7a",
+      "displayName": "(Internal) Android CI armeabi-v7a",
       "targets": [
         "dusk"
       ]

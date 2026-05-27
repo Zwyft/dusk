@@ -105,7 +105,7 @@ Every commit automatically builds all four platforms via GitHub Actions:
 | Linux | AppImage | `ubuntu-24.04` |
 | macOS | `.app` bundle | `macos-15` (Apple Silicon) |
 | Windows | `.exe` + `.dll` | `windows-2022` (MSVC x64) |
-| Android | `.apk` (arm64-v8a) | `ubuntu-24.04` + Android NDK 29 |
+| Android | `.apk` (armeabi-v7a, arm64-v8a) | `ubuntu-24.04` + Android NDK 29 |
 
 - **Auto-upload** — artifacts are available on every successful build
 - **Concurrent builds** — duplicate runs are cancelled automatically

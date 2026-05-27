@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 APP_DIR="$ROOT_DIR/platforms/android/app/src/main/jniLibs"
 ANDROID_HOME_DIR="${ANDROID_HOME:-$HOME/Android/Sdk}"
 ANDROID_NDK_VER="${ANDROID_NDK_VERSION:-}"
-ANDROID_STAGE_ABIS="${ANDROID_STAGE_ABIS:-arm64-v8a x86_64}"
+ANDROID_STAGE_ABIS="${ANDROID_STAGE_ABIS:-armeabi-v7a arm64-v8a x86_64}"
 ANDROID_STAGE_STRIP="${ANDROID_STAGE_STRIP:-1}"
 STRIP_TOOL=""
 
@@ -57,14 +57,15 @@ copy_lib() {
 }
 
 # Drop any previously staged ABI directories to avoid stale APK contents.
-rm -rf "$APP_DIR/x86" "$APP_DIR/arm64-v8a" "$APP_DIR/x86_64"
+rm -rf "$APP_DIR/x86" "$APP_DIR/armeabi-v7a" "$APP_DIR/arm64-v8a" "$APP_DIR/x86_64"
 
 for abi in $ANDROID_STAGE_ABIS; do
   case "$abi" in
+    armeabi-v7a) src="$ROOT_DIR/build/android-armv7/libmain.so" ;;
     arm64-v8a) src="$ROOT_DIR/build/android-arm64/libmain.so" ;;
     x86_64) src="$ROOT_DIR/build/android-x86_64/libmain.so" ;;
     *)
-      echo "Unsupported ABI '$abi'. Supported ABIs: arm64-v8a x86_64" >&2
+      echo "Unsupported ABI '$abi'. Supported ABIs: armeabi-v7a arm64-v8a x86_64" >&2
       exit 1
       ;;
   esac

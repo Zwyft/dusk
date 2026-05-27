@@ -4,6 +4,10 @@ plugins {
 
 def duskRepoDir = rootProject.projectDir.parentFile.parentFile
 def duskGeneratedAssetsDir = layout.buildDirectory.dir('generated/assets/dusk').get().asFile
+def androidSplitAbis = (System.getenv('ANDROID_STAGE_ABIS') ?: 'armeabi-v7a arm64-v8a')
+    .split(/\s+/)
+    .findAll { it }
+    .toArray(new String[0])
 def syncDuskAssets = tasks.register('syncDuskAssets', Sync) {
     from(new File(duskRepoDir, 'res')) {
         into 'res'
@@ -45,7 +49,7 @@ android {
         abi {
             enable true
             reset()
-            include 'arm64-v8a'
+            include(*androidSplitAbis)
             universalApk false
         }
     }
