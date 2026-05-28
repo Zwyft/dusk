@@ -252,3 +252,14 @@ const char* dusk::GetLogFilePath() {
     return reinterpret_cast<const char*>(
         g_logState.filePath.empty() ? nullptr : g_logState.filePath.c_str());
 }
+
+int dusk::GetLogFileDescriptor() {
+    if (!g_logStateAlive.load(std::memory_order_acquire)) {
+        return -1;
+    }
+    std::lock_guard lock(g_logState.mutex);
+    if (g_logState.file == nullptr) {
+        return -1;
+    }
+    return fileno(g_logState.file);
+}
