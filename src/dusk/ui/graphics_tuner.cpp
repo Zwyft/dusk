@@ -3,7 +3,6 @@
 #include "Z2AudioLib/Z2SeMgr.h"
 #include "m_Do/m_Do_audio.h"
 
-#include <aurora/aurora.h>
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/vi.h>
 #include <fmt/format.h>
@@ -70,15 +69,6 @@ void set_value(GraphicsOption option, int value) {
             static_cast<int>(Resampler::Bilinear),
             static_cast<int>(Resampler::Area)));
         getSettings().game.resampler.setValue(sampler);
-        switch (sampler) {
-        case Resampler::Area:
-            aurora_set_resampler(SAMPLER_AREA);
-            break;
-        case Resampler::Bilinear:
-        default:
-            aurora_set_resampler(SAMPLER_BILINEAR);
-            break;
-        }
         break;
     }
     case GraphicsOption::BloomMode:
