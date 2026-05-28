@@ -206,6 +206,8 @@ const Rml::String kInternalResolutionHelpText =
 const Rml::String kShadowResolutionHelpText =
     "Configure the shadow-map resolution. Higher values improve shadow quality but increase GPU "
     "and memory usage.";
+const Rml::String kResamplerHelpText =
+    "Configure the sampling method used when scaling the internal resolution for final presentation.";
 const Rml::String kBloomHelpText =
     "Configure the post-processing bloom effect. Classic uses the original bloom pass; Dusk uses "
     "a higher-quality bloom pass.";
@@ -734,6 +736,11 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             {
                 .key = "Enable Mini-Map Shadows",
             });
+        config_bool_select(leftPane, rightPane, getSettings().game.disableCutscenePillarboxing,
+            {
+                .key = "Disable Cutscene Pillarboxing",
+                .helpText = "Removes black bars during widezoom cutscenes, filling the screen.",
+            });
     });
 
     add_tab("Input", [this](Rml::Element* content) {
@@ -939,8 +946,10 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         // Removed stale option: minimalHUD no longer exists in UserSettings.
         addOption("Restore Wii 1.0 Glitches", getSettings().game.restoreWiiGlitches,
             "Restores patched glitches from Wii USA 1.0, the first released version.");
-        addOption("Enable Rotating Link Doll", getSettings().game.enableLinkDollRotation,
-            "Enables rotating Link in the collection menu with the C-Stick.");
+        addOption("Link Doll Rotation", getSettings().game.enableLinkDollRotation,
+            "Rotates the Link doll on the file select screen.");
+        addOption("Disable Cutscene Pillarboxing", getSettings().game.disableCutscenePillarboxing,
+            "Removes black bars during widezoom cutscenes, filling the screen.");
 
         leftPane.add_section("Difficulty", true);
         leftPane.register_control(
@@ -999,6 +1008,8 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Link will not recoil when his sword hits walls.");
         addOption("No 2nd Fish for Cat", getSettings().game.no2ndFishForCat,
             "Skip needing to catch a second fish for Sera's cat.");
+        addOption("Show Poe Count on Map", getSettings().game.enhancedMapMenus,
+            "Displays collected/total number of Poe Souls for a region on the map.");
         addOption("Sun's Song (R+X)", getSettings().game.sunsSong,
             "Allows Wolf Link to howl and change the time of day.");
         addOption("Quick Transform (R+Y)", getSettings().game.enableQuickTransform,

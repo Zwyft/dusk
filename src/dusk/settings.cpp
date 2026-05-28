@@ -46,6 +46,7 @@ UserSettings g_userSettings = {
         .instantText {"game.instantText", false},
         .sunsSong {"game.sunsSong", false},
         .autoSave {"game.autoSave", false},
+        .enhancedMapMenus {"game.enhancedMapMenus", false},
         .fastAreaTransitions {"game.fastAreaTransitions", false},
 
         // Preferences
@@ -55,6 +56,7 @@ UserSettings g_userSettings = {
         .enableLinkDollRotation {"game.enableLinkDollRotation", false},
         .enableAchievementToasts {"game.enableAchievementToasts", true},
         .enableControllerToasts {"game.enableControllerToasts", true},
+        .menuScalingMode {"game.menuScalingMode", 0},
 
         // Graphics
         .bloomMode {"game.bloomMode", BloomMode::Dusk},
@@ -63,8 +65,10 @@ UserSettings g_userSettings = {
         .enableFrameInterpolation {"game.enableFrameInterpolation", false},
         .internalResolutionScale {"game.internalResolutionScale", 0},
         .shadowResolutionMultiplier {"game.shadowResolutionMultiplier", 1},
+        .resampler {"game.resampler", Resampler::Bilinear},
         .enableDepthOfField {"game.enableDepthOfField", true},
         .enableMapBackground {"game.enableMapBackground", true},
+        .disableCutscenePillarboxing {"game.disableCutscenePillarboxing", false},
 
         // Audio
         .noLowHpSound {"game.noLowHpSound", false},
@@ -246,8 +250,10 @@ void registerSettings() {
     Register(g_userSettings.game.disableWaterRefraction);
     Register(g_userSettings.game.internalResolutionScale);
     Register(g_userSettings.game.shadowResolutionMultiplier);
+    Register(g_userSettings.game.resampler);
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
+    Register(g_userSettings.game.disableCutscenePillarboxing);
     Register(g_userSettings.game.noLowHpSound);
     Register(g_userSettings.game.battleBGM);
     Register(g_userSettings.game.enableLinkDollRotation);
