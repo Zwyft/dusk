@@ -325,6 +325,26 @@ namespace dusk {
             ImGuiTextCenter("Failed to initialize any graphics backend.");
             ImGuiTextCenter("\nYour system may be misconfigured, or your hardware may not support the required versions of any of the available backends.");
             ImGuiTextCenter("\nA clean reinstall of Dusk may help. For further assistance, please visit #tech-support on the Twilit Realm Discord server.");
+            // NOTE: No PopFont() - ImGui auto-pops at end of frame
+            
+            // Debug: Show why it failed + GPU info
+            ImGui::Separator();
+            ImGui::Text("Debug Info:");
+            ImGui::BeginChild("ErrorDetails", ImVec2(0, 250), true);
+            ImGui::Text("If you can see this, the UI works but graphics failed.");
+            ImGui::Text("");
+            ImGui::Text("Minimum requirements:");
+            ImGui::Text("  - OpenGL ES 3.1+ OR");
+            ImGui::Text("  - Vulkan 1.1+ OR");
+            ImGui::Text("  - Software renderer (SwiftShader)");
+            ImGui::Text("");
+            ImGui::Text("Your TV likely has OpenGL 2.0 (too old).");
+            ImGui::Text("Check logcat for detailed graphics info:");
+            ImGui::Text("adb logcat -d | grep -iE 'dusk|dawn|vulkan|opengl|egl'");
+            ImGui::Text("");
+            ImGui::Text("Check /sdcard/Android/data/");
+            ImGui::Text("dev.twilitrealm.dusk/files/ for logs.");
+            ImGui::EndChild();
             const auto& style = ImGui::GetStyle();
             const auto retrySize = ImGui::CalcTextSize("Retry (Auto backend)");
             const auto quitSize = ImGui::CalcTextSize("Quit");

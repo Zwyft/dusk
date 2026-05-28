@@ -459,7 +459,7 @@ endif ()
 
 target_compile_definitions(dusk PRIVATE ${GAME_COMPILE_DEFS})
 target_include_directories(dusk PRIVATE ${GAME_INCLUDE_DIRS})
-target_link_libraries(dusk PRIVATE aurora::main ${GAME_LIBS} ${JSYSTEM_LINK_LIBRARIES})
+target_link_libraries(dusk PRIVATE aurora::main ${GAME_LIBS} ${JSYSTEM_LINK_LIBRARIES} EGL GLESv3)
 target_precompile_headers(dusk PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/include/dusk_pch.hpp>")
 if (TARGET crashpad_handler)
     add_dependencies(dusk crashpad_handler)

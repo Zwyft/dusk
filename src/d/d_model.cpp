@@ -4,6 +4,9 @@
 #include "JSystem/J3DGraphBase/J3DDrawBuffer.h"
 #include "JSystem/J3DGraphBase/J3DMaterial.h"
 #include "d/d_com_inf_game.h"
+#if TARGET_PC
+#include "dusk/frame_interpolation.h"
+#endif
 
 void dMdl_c::draw() {
     j3dSys.setVtxPos(mpModelData->getVtxPosArray(), mpModelData->getVtxNum());
@@ -45,6 +48,20 @@ void dMdl_c::create(J3DModelData* i_modelData, u16 i_materialId, dKy_tevstr_c* i
 }
 
 void dMdl_c::entryObj(dMdl_obj_c* i_obj) {
+#if TARGET_PC
+    // if field_0x1a is false, this dMdl_c is not in the drawlist
+    // if true, we need to make sure with interp enabled
+    if (dusk::frame_interp::is_enabled() && field_0x1a) {
+        auto pkt = dComIfGd_getListPacket()->mpBuffer[0];
+        while (pkt && pkt != this) {
+            pkt = pkt->getNextPacket();
+        }
+        if (!pkt) {
+            field_0x1a = false;
+        }
+    }
+#endif
+
     if (!field_0x1a) {
         dComIfGd_getListPacket()->entryImm(this, 0);
         field_0x1a = true;

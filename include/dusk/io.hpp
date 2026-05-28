@@ -31,7 +31,12 @@ public:
     ~FileStream();
 
     /**
-     * \brief Open a file for reading at the given path.
+     * \\brief Flush buffered writes and throw if the flush fails.
+     */
+    void Flush();
+
+    /**
+     * \\brief Open a file for reading at the given path.
      */
     static FileStream OpenRead(const char* utf8Path);
 

@@ -53,6 +53,7 @@
 #include <thread>
 #include "SSystem/SComponent/c_API.h"
 #include "dusk/app_info.hpp"
+#include "dusk/crash_handler.h"
 #include "dusk/crash_reporting.h"
 #include "dusk/dusk.h"
 #include "dusk/frame_interpolation.h"
@@ -756,6 +757,7 @@ int game_main(int argc, char* argv[]) {
     dusk::config::LoadFromUserPreferences();
     ApplyCVarOverrides(parsed_arg_options["cvar"]);
     dusk::crash_reporting::initialize();
+    dusk::crash_handler::install();
     EnsureInitialPipelineCache(dusk::ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);

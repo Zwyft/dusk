@@ -1,5 +1,7 @@
+#include <cerrno>
 #include <cstdio>
 #include <filesystem>
+#include <system_error>
 
 #include "dusk/io.hpp"
 
@@ -28,6 +30,9 @@ static FILE* ThrowIfNotOpen(const FileStream& file) {
 }
 
 [[noreturn]] static void ThrowForError(int code) {
+    if (code == 0) {
+        throw std::system_error(std::make_error_code(std::errc::io_error));
+    }
     throw std::system_error(std::make_error_code(static_cast<std::errc>(code)));
 }
 
@@ -73,6 +78,14 @@ FileStream::FileStream(FileStream&& other) noexcept {
 FileStream::~FileStream() {
     if (file)
         fclose(static_cast<FILE*>(file));
+}
+
+void FileStream::Flush() {
+    FILE* fileHandle = ThrowIfNotOpen(*this);
+
+    if (fflush(fileHandle) != 0) {
+        ThrowForError(errno);
+    }
 }
 
 FileStream FileStream::OpenRead(const char* utf8Path) {
@@ -161,6 +174,7 @@ void FileStream::WriteAllText(const char* utf8Path, const std::string_view text)
 void FileStream::WriteAllText(const std::filesystem::path& path, const std::string_view text) {
     auto handle = Create(path);
     handle.Write(text.data(), text.size());
+    handle.Flush();
 }
 
 FILE* FileStream::ToInner() {
