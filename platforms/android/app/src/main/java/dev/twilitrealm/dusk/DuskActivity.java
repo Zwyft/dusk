@@ -636,10 +636,24 @@ public class DuskActivity extends SDLActivity {
         try {
             java.io.File dir = new java.io.File(path);
             if (!dir.exists()) dir.mkdirs();
+            // Try direct file manager intent first
             android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
             intent.setDataAndType(android.net.Uri.fromFile(dir), "resource/folder");
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+            try {
+                startActivity(intent);
+                return;
+            } catch (android.content.ActivityNotFoundException e) {
+                Log.w(TAG, "No file manager found, trying SAF picker");
+            }
+            // Fallback: Storage Access Framework document tree picker
+            android.content.Intent safIntent = new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT_TREE);
+            safIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                | android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            // Set initial directory if possible
+            safIntent.putExtra("android.provider.extra.INITIAL_URI", android.net.Uri.fromFile(dir));
+            startActivity(safIntent);
         } catch (Exception e) {
             Log.e(TAG, "Failed to open directory: " + path, e);
         }
