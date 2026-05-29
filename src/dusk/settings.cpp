@@ -234,6 +234,7 @@ void registerSettings() {
     Register(g_userSettings.game.instantText);
     Register(g_userSettings.game.sunsSong);
     Register(g_userSettings.game.autoSave);
+    Register(g_userSettings.game.enhancedMapMenus);
     Register(g_userSettings.game.fastAreaTransitions);
     Register(g_userSettings.game.enableMirrorMode);
     Register(g_userSettings.game.invertCameraXAxis);
@@ -253,6 +254,7 @@ void registerSettings() {
     Register(g_userSettings.game.resampler);
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
+    Register(g_userSettings.game.disableCutscenePillarboxing);
     Register(g_userSettings.game.disableCutscenePillarboxing);
     Register(g_userSettings.game.noLowHpSound);
     Register(g_userSettings.game.battleBGM);
