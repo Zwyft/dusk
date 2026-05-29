@@ -241,6 +241,7 @@ bool open_directory_path(const std::filesystem::path& path) {
     const std::string url = "file://" + path.generic_string();
 #endif
     #if defined(__ANDROID__)
+#include <jni.h>
     JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
     jobject activity = (jobject)SDL_GetAndroidActivity();
     if (env && activity) {
