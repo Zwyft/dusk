@@ -1,5 +1,6 @@
 #include "string_button.hpp"
 
+#include <algorithm>
 #include <aurora/rmlui.hpp>
 
 namespace dusk::ui {

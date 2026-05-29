@@ -757,7 +757,9 @@ int game_main(int argc, char* argv[]) {
     dusk::config::LoadFromUserPreferences();
     ApplyCVarOverrides(parsed_arg_options["cvar"]);
     dusk::crash_reporting::initialize();
+#ifndef __ANDROID__
     dusk::crash_handler::install();
+#endif
     EnsureInitialPipelineCache(dusk::ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);
