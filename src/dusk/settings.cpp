@@ -255,12 +255,12 @@ void registerSettings() {
     Register(g_userSettings.game.enableDepthOfField);
     Register(g_userSettings.game.enableMapBackground);
     Register(g_userSettings.game.disableCutscenePillarboxing);
-    Register(g_userSettings.game.disableCutscenePillarboxing);
     Register(g_userSettings.game.noLowHpSound);
     Register(g_userSettings.game.battleBGM);
     Register(g_userSettings.game.enableLinkDollRotation);
     Register(g_userSettings.game.enableAchievementToasts);
     Register(g_userSettings.game.enableControllerToasts);
+    Register(g_userSettings.game.menuScalingMode);
     Register(g_userSettings.game.noMissClimbing);
     Register(g_userSettings.game.restoreWiiGlitches);
     Register(g_userSettings.game.enableTurboKeybind);
