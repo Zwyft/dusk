@@ -79,3 +79,4 @@ Thumbs.db
 # Build scripts and temporary files
 *.sh
 *.patch
+build-local-check/
