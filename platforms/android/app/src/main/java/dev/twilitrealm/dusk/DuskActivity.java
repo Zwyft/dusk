@@ -631,4 +631,17 @@ public class DuskActivity extends SDLActivity {
             return "";
         }
     }
+
+    public void openLocalDirectory(String path) {
+        try {
+            java.io.File dir = new java.io.File(path);
+            if (!dir.exists()) dir.mkdirs();
+            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+            intent.setDataAndType(android.net.Uri.fromFile(dir), "resource/folder");
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to open directory: " + path, e);
+        }
+    }
 }

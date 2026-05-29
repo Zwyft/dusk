@@ -20,6 +20,8 @@
 
     <application
         android:allowBackup="true"
+        android:requestLegacyExternalStorage="true"
+        android:preserveLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:appCategory="game"
         android:banner="@mipmap/icon"

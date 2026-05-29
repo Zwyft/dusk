@@ -240,12 +240,30 @@ bool open_directory_path(const std::filesystem::path& path) {
 #else
     const std::string url = "file://" + path.generic_string();
 #endif
+    #if defined(__ANDROID__)
+    JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    jobject activity = (jobject)SDL_GetAndroidActivity();
+    if (env && activity) {
+        jclass cls = env->GetObjectClass(activity);
+        jmethodID mid = env->GetMethodID(cls, "openLocalDirectory", "(Ljava/lang/String;)V");
+        if (mid) {
+            jstring jpath = env->NewStringUTF(path.generic_string().c_str());
+            env->CallVoidMethod(activity, mid, jpath);
+            env->DeleteLocalRef(jpath);
+            env->DeleteLocalRef(cls);
+            return true;
+        }
+        env->DeleteLocalRef(cls);
+    }
+    return false;
+#else
     if (!SDL_OpenURL(url.c_str())) {
         DuskLog.error(
             "Failed to open directory '{}': {}", dusk::io::fs_path_to_string(path), SDL_GetError());
         return false;
     }
     return true;
+#endif
 }
 
 struct ConfigBoolProps {
