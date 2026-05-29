@@ -1,0 +1,101 @@
+--------- beginning of main
+05-28 07:01:14.163 V/SDL     (14882): onStart()
+05-28 07:01:14.165 V/SDL     (14882): onResume()
+05-28 07:01:14.176 V/TclFrameworkFactory(14882): successes to get AllImpl object and return....
+05-28 07:01:14.176 D/TclFrameworkFactory(14882): get TclViewRootImplEx success
+05-28 07:01:14.247 W/libc    (14882): Access denied finding property "persist.vendor.gralloc.debugUsage"
+05-28 07:01:14.247 E/ion     (14882): ioctl c0044901 failed with code -1: Inappropriate ioctl for device
+05-28 07:01:14.247 I/DMABUFHEAPS(14882): Using : Non-legacy ION heaps
+05-28 07:01:14.247 W/libc    (14882): Access denied finding property "odm.tcl.factory.pmode"
+05-28 07:01:14.247 W/libc    (14882): Access denied finding property "vendor.product.pvr.debug_level"
+05-28 07:01:14.247 E/IMGSRV  (14882): :3259: platform=rtd6748, qos_mode=48, gGROUP_SELECTION=1, prop_level=0 
+05-28 07:01:14.269 E/IMGSRV  (14882): :2426: platform=rtd6748, qos_mode=48, gGROUP_SELECTION=1
+05-28 07:01:14.308 W/libc    (14882): Unable to set property "debug.is_esticker" to "0": connection failed; errno=13 (Permission denied)
+05-28 07:01:14.308 W/libc    (14882): Unable to set property "enable.lossless" to "0": connection failed; errno=13 (Permission denied)
+05-28 07:01:14.312 V/SDL     (14882): surfaceCreated()
+05-28 07:01:14.312 V/SDL     (14882): surfaceChanged()
+05-28 07:01:14.312 V/SDL     (14882): Window size: 1920x1080
+05-28 07:01:14.313 V/SDL     (14882): Device size: 1920x1080
+05-28 07:01:14.314 E/SensorManager(14882): sensor or listener is null
+05-28 07:01:14.314 V/SDL     (14882): nativeInitSDLThread() 1 time
+05-28 07:01:14.314 E/SensorManager(14882): sensor or listener is null
+05-28 07:01:14.314 V/SDL     (14882): Running main function SDL_main from library /data/app/~~0yHU-D3udzkqlGDC5wfbmw==/dev.twilitrealm.dusk-SyHUKF-FvMN10jmtVwP4wQ==/lib/arm/libmain.so
+05-28 07:01:14.314 D/ViewRootImpl[DuskActivity](14882): pendingDrawFinished. Waiting on draw reported mDrawsNeededToReport=1
+05-28 07:01:14.315 D/ViewRootImpl[DuskActivity](14882): TFWD:Creating frameCompleteCallback mNextDrawUseBlastSync=false mReportNextDraw=true commitCallbacks size=0
+05-28 07:01:14.315 D/ViewRootImpl[DuskActivity](14882): TFWD:Creating frameDrawingCallback nextDrawUseBlastSync=false reportNextDraw=true hasBlurUpdates=false
+05-28 07:01:14.318 I/dusk::config(14882): Loading config from '/data/data/dev.twilitrealm.dusk/files/config.json'
+05-28 07:01:14.319 I/dusk::config(14882): Config file did not exist, staying with defaults
+05-28 07:01:14.319 I/dusk    (14882): No bundled initial pipeline cache found
+05-28 07:01:14.320 I/aurora  (14882): Aurora initializing
+05-28 07:01:14.334 D/ViewRootImpl[DuskActivity](14882): TFWD:Received frameDrawingCallback frameNum=1. Creating transactionCompleteCallback=false
+05-28 07:01:14.351 D/ViewRootImpl[DuskActivity](14882): TFWD:Received frameCompleteCallback frameNum=1
+05-28 07:01:14.359 I/OpenGLRenderer(14882): TFWD:First frame:dev.twilitrealm.dusk/dev.twilitrealm.dusk.DuskActivity, duration=149ms; Flags=1, FrameTimelineVsyncId=452498, IntendedVsync=5305977886737, Vsync=5305994553403, InputEventId=0, HandleInputStart=5305998776836, AnimationStart=5305998786207, PerformTraversalsStart=5305998793762, DrawStart=5306104760133, FrameDeadline=5305994553403, FrameInterval=5305998692725, FrameStartTime=16666666, SyncQueued=5306108455614, SyncStart=5306121711836, IssueDrawCommandsStart=5306122472021, SwapBuffers=5306139424281, FrameCompleted=5306140882318, DequeueBufferDuration=0, QueueBufferDuration=951444, GpuCompleted=5306140840466, SwapBuffersCompleted=5306140882318, DisplayPresentTime=0, 
+05-28 07:01:14.414 D/vulkan  (14882): searching for layers in '/data/app/~~0yHU-D3udzkqlGDC5wfbmw==/dev.twilitrealm.dusk-SyHUKF-FvMN10jmtVwP4wQ==/lib/arm'
+05-28 07:01:14.415 D/vulkan  (14882): searching for layers in '/data/app/~~0yHU-D3udzkqlGDC5wfbmw==/dev.twilitrealm.dusk-SyHUKF-FvMN10jmtVwP4wQ==/base.apk!/lib/armeabi-v7a'
+05-28 07:01:14.415 V/SDL     (14882): setOrientation() requestedOrientation=11 width=1216 height=896 resizable=true hint=LandscapeLeft LandscapeRight
+05-28 07:01:14.417 D/ViewRootImpl[DuskActivity](14882): TFWD:reportDrawFinished
+05-28 07:01:14.417 I/aurora::gpu(14882): === Graphics Capability Detection ===
+05-28 07:01:14.417 I/aurora::gpu(14882): Checking available graphics APIs...
+05-28 07:01:14.417 I/aurora::gpu(14882): Dawn requires at least OpenGL ES 3.1 or Vulkan 1.1
+05-28 07:01:14.417 I/aurora::gpu(14882): If this log appears, Dawn initialization is starting
+05-28 07:01:14.417 I/aurora::gpu(14882): =====================================
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL: Got display 0x1
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL: Initialized, version 1.5
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL Extensions: EGL_ANDROID_front_buffer_auto_refresh EGL_ANDROID_get_frame_timestamps EGL_ANDROID_get_native_client_buffer EGL_ANDROID_presentation_time EGL_EXT_surface_CTA861_3_metadata EGL_EXT_surface_SMPTE2086_metadata EGL_KHR_get_all_proc_addresses EGL_KHR_swap_buffers_with_damage EGL_ANDROID_image_native_buffer EGL_ANDROID_native_fence_sync EGL_ANDROID_recordable EGL_EXT_buffer_age EGL_EXT_create_context_robustness EGL_EXT_pixel_format_float EGL_EXT_yuv_surface EGL_IMG_context_priority EGL_KHR_create_context EGL_KHR_fence_sync EGL_KHR_gl_colorspace EGL_KHR_gl_renderbuffer_image EGL_KHR_gl_texture_2D_image EGL_KHR_gl_texture_3D_image EGL_KHR_gl_texture_cubemap_image EGL_KHR_image EGL_KHR_image_base EGL_KHR_mutable_render_buffer EGL_KHR_no_config_context EGL_KHR_partial_update EGL_KHR_surfaceless_context EGL_KHR_wait_sync EGL_NV_context_priority_realtime 
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL Vendor: Android
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL Version: 1.5 Android META-EGL
+05-28 07:01:14.417 I/aurora::gpu(14882): EGL Context before Dawn: 0x0
+05-28 07:01:14.417 W/aurora::gpu(14882): EGL: No current context - creating dummy context for Dawn
+05-28 07:01:14.419 E/IMGSRV  (14882): :2426: platform=rtd6748, qos_mode=48, gGROUP_SELECTION=1
+05-28 07:01:14.423 I/aurora::gpu(14882): EGL: Created dummy context 0xee3eaf90
+05-28 07:01:14.423 I/aurora::gpu(14882): Creating WebGPU instance
+05-28 07:01:14.425 I/aurora::gpu(14882): Forcing OpenGLES backend only (OpenGL ES 3.2 available on device)
+05-28 07:01:14.425 I/aurora::gpu(14882): Forcing OpenGLES backend - skipping Vulkan/Null
+05-28 07:01:14.425 I/aurora::gpu(14882): Starting backend selection loop
+05-28 07:01:14.425 I/aurora::gpu(14882): Attempting to initialize OpenGLES
+05-28 07:01:14.425 I/aurora::gpu(14882): Attempting to initialize OpenGLES
+05-28 07:01:14.425 W/aurora::gpu(14882): Adapter request failed: No supported adapters
+05-28 07:01:14.425 W/aurora::gpu(14882): Failed to create adapter for OpenGLES
+05-28 07:01:14.425 I/aurora::gpu(14882): Attempting to initialize Null
+05-28 07:01:14.425 I/aurora::gpu(14882): Attempting to initialize Null
+05-28 07:01:14.425 E/Dawn    (14882): Error: [Surface "Surface"] is not configured.
+05-28 07:01:14.425 E/Dawn    (14882):     at Unconfigure (/root/dusk/build/android-armv7/_deps/dawn-src/src/dawn/native/Surface.cpp:521)
+05-28 07:01:14.425 E/Dawn    (14882): 
+05-28 07:01:14.425 I/aurora::gpu(14882): Successfully initialized Null
+05-28 07:01:14.425 I/aurora::gpu(14882): Successfully initialized Null
+05-28 07:01:14.425 I/aurora::gpu(14882): Graphics adapter information
+05-28 07:01:14.425 I/aurora::gpu(14882):   API: Null
+05-28 07:01:14.425 I/aurora::gpu(14882):   Device: Null backend (CPU)
+05-28 07:01:14.425 I/aurora::gpu(14882):   Driver: 
+05-28 07:01:14.425 I/aurora::gpu(14882): Using limits:
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxTextureDimension1D: 8192
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxTextureDimension2D: 8192
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxTextureDimension3D: 2048
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxTextureArrayLayers: 256
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxDynamicStorageBuffersPerPipelineLayout: 4
+05-28 07:01:14.425 I/aurora::gpu(14882):   maxStorageBuffersPerShaderStage: 8
+05-28 07:01:14.425 I/aurora::gpu(14882):   minUniformBufferOffsetAlignment: 256
+05-28 07:01:14.425 I/aurora::gpu(14882):   minStorageBufferOffsetAlignment: 256
+05-28 07:01:14.426 I/aurora::gpu(14882): Using surface format BGRA8Unorm, present mode Fifo
+05-28 07:01:14.427 D/aurora::gpu::cache(14882): SQLite version 3.51.3
+05-28 07:01:14.427 D/aurora::gpu::cache(14882): Using dawn cache at /data/data/dev.twilitrealm.dusk/files/dawn_cache.db
+05-28 07:01:14.457 V/SDL     (14882): onTrimMemory()
+05-28 07:01:14.483 D/aurora::gpu::cache(14882): SQLite cache init succeeded
+05-28 07:01:14.495 V/SDL     (14882): setOrientation() requestedOrientation=11 width=1216 height=896 resizable=true hint=LandscapeLeft LandscapeRight
+05-28 07:01:14.498 W/libc    (14882): Unable to set property "debug.is_esticker" to "0": connection failed; errno=13 (Permission denied)
+05-28 07:01:14.498 W/libc    (14882): Unable to set property "enable.lossless" to "0": connection failed; errno=13 (Permission denied)
+05-28 07:01:14.498 I/SDL/APP (14882): pixel format wanted SDL_PIXELFORMAT_RGBA8888 (1), got SDL_PIXELFORMAT_RGBA8888 (1)
+05-28 07:01:14.499 E/IMGSRV  (14882): :2426: platform=rtd6748, qos_mode=48, gGROUP_SELECTION=1
+05-28 07:01:14.520 V/SDL     (14882): onWindowFocusChanged(): true
+05-28 07:01:15.221 V/SDL     (14882): nativeFocusChanged()
+05-28 07:01:15.292 I/aurora  (14882): Using framebuffer size 1920x1080 scale 2
+05-28 07:01:15.413 I/aurora::rmlui(14882): Loaded font face 'Fira Sans' [regular] from 'res/FiraSans-Regular.ttf'.
+05-28 07:01:15.419 I/aurora::rmlui(14882): Loaded font face 'Fira Sans' [bold] from 'res/FiraSans-Bold.ttf'.
+05-28 07:01:15.426 I/aurora::rmlui(14882): Loaded font face 'Fira Sans Condensed' [regular] from 'res/FiraSansCondensed-Regular.ttf'.
+05-28 07:01:15.433 I/aurora::rmlui(14882): Loaded font face 'Fira Sans Condensed' [bold] from 'res/FiraSansCondensed-Bold.ttf'.
+05-28 07:01:15.438 I/aurora::rmlui(14882): Loaded font face 'Alegreya SC' [regular] from 'res/AlegreyaSC-Regular.ttf'.
+05-28 07:01:15.443 I/aurora::rmlui(14882): Loaded font face 'Alegreya SC' [bold] from 'res/AlegreyaSC-Bold.ttf'.
+05-28 07:01:15.459 I/aurora::rmlui(14882): Loaded font face 'Material Symbols Rounded' [regular] from 'res/MaterialSymbolsRounded-Regular.ttf'.
+05-28 07:01:15.486 I/dusk    (14882): Disc verification status: unknown (path: <none>)
+05-28 07:01:15.600 V/hidapi  (14882): initialize(true, false)
+05-28 07:01:15.641 I/dusk::config(14882): Saving config to '/data/data/dev.twilitrealm.dusk/files/config.json'
