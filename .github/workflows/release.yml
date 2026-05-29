@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           submodules: recursive
 
       - name: Install Rust
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           submodules: recursive
 
       - name: Install dependencies
@@ -126,7 +126,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           submodules: recursive
 
       - name: Enable Visual Studio environment
@@ -175,7 +175,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           submodules: recursive
 
       - name: Setup Java
