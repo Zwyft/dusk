@@ -1,4 +1,4 @@
-package com.twilitrealm.dusk;
+package dev.twilitrealm.dusk;
 
 import android.Manifest;
 import android.app.ActionBar;
