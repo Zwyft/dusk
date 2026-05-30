@@ -423,6 +423,10 @@
           "type": "BOOL",
           "value": false
         },
+        "AURORA_ENABLE_DVD": {
+          "type": "BOOL",
+          "value": false
+        },
         "BUILD_SHARED_LIBS": {
           "type": "BOOL",
           "value": false

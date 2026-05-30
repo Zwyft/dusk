@@ -143,6 +143,8 @@ if (DUSK_EXPERIMENTAL_SWITCH)
         "Sentry is currently disabled for the experimental Switch target" FORCE)
     set(DUSK_ENABLE_DISCORD OFF CACHE BOOL
         "Discord Rich Presence is currently disabled for the experimental Switch target" FORCE)
+    set(AURORA_ENABLE_DVD OFF CACHE BOOL
+        "Aurora DVD (nod) is currently disabled for the experimental Switch target" FORCE)
 endif ()
 
 # Edit & Continue
@@ -340,9 +342,12 @@ set(GAME_INCLUDE_DIRS
     ${CMAKE_BINARY_DIR})
 
 find_package(Threads REQUIRED)
-set(GAME_LIBS aurora::core aurora::gx aurora::gd aurora::si aurora::vi aurora::pad aurora::mtx aurora::os aurora::dvd
+set(GAME_LIBS aurora::core aurora::gx aurora::gd aurora::si aurora::vi aurora::pad aurora::mtx aurora::os
     aurora::card freeverb cxxopts::cxxopts absl::flat_hash_map nlohmann_json::nlohmann_json TracyClient fmt::fmt
     Threads::Threads)
+if (NOT DUSK_EXPERIMENTAL_SWITCH)
+    list(APPEND GAME_LIBS aurora::dvd)
+endif ()
 
 list(APPEND GAME_LIBS libzstd_static)
 
