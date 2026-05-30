@@ -224,12 +224,14 @@ jobs:
     container: devkitpro/devkita64:latest
     env:
       RUSTC_WRAPPER:
+      DEVKITPRO: /opt/devkitpro
+      DEVKITA64: /opt/devkitpro/devkita64
 
     steps:
       - name: Install dependencies
         run: |
           apt-get update -qq
-          apt-get install -y cmake ninja-build python3
+          apt-get install -y cmake ninja-build python3 zip
 
       - uses: actions/checkout@v6
         with:
@@ -241,17 +243,13 @@ jobs:
 
       - name: Configure Switch CMake
         run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITA64=/opt/devkitpro/devkita64
-          cmake --preset switch-libnx-relwithdebinfo
+          cmake --preset switch-libnx-relwithdebinfo -G "Ninja"
 
       - name: Build Switch
         run: cmake --build --preset switch-libnx-relwithdebinfo
 
       - name: Package Switch NRO
         run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITA64=/opt/devkitpro/devkita64
           BUILD_DIR=build/switch-libnx-relwithdebinfo
           $DEVKITPRO/tools/bin/nacptool --create "Dusk" "Dusk" "${{github.ref_name}}" $BUILD_DIR/dusk.nacp
           $DEVKITPRO/tools/bin/elf2nro $BUILD_DIR/dusk $BUILD_DIR/dusk.nro --nacp=$BUILD_DIR/dusk.nacp --romfsdir=res
