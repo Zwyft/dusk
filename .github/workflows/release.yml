@@ -246,6 +246,7 @@ jobs:
 
       - name: Configure Switch CMake
         run: |
+          git config --global --add safe.directory /__w/dusk/dusk
           cmake --preset switch-libnx-relwithdebinfo -G "Ninja" -DAURORA_ENABLE_DVD=OFF
 
       - name: Build Switch
