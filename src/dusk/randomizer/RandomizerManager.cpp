@@ -4,10 +4,48 @@
 #include "fmt/format.h"
 #include "nlohmann/json.hpp"
 #include "dusk/io.hpp"
+#include "dusk/ui/ui.hpp"
+#include <SDL3/SDL_iostream.h>
 #include <algorithm>
 #include <random>
 
 namespace dusk::randomizer {
+
+namespace {
+
+std::vector<u8> read_io_full(SDL_IOStream* io) {
+    std::vector<u8> data;
+    if (io == nullptr) return data;
+
+    const Sint64 size = SDL_GetIOSize(io);
+    if (size > 0) {
+        data.resize(static_cast<size_t>(size));
+        SDL_ReadIO(io, data.data(), data.size());
+    } else {
+        std::array<u8, 4096> buffer;
+        while (true) {
+            const size_t read = SDL_ReadIO(io, buffer.data(), buffer.size());
+            if (read == 0) break;
+            data.insert(data.end(), buffer.begin(), buffer.begin() + read);
+        }
+    }
+    return data;
+}
+
+std::vector<u8> read_bundled_bytes(const std::filesystem::path& path) {
+    const std::string pathUtf8 = dusk::io::fs_path_to_string(path);
+
+    SDL_IOStream* io = SDL_IOFromFile(pathUtf8.c_str(), "rb");
+    if (io != nullptr) {
+        auto data = read_io_full(io);
+        SDL_CloseIO(io);
+        return data;
+    }
+
+    return {};
+}
+
+} // namespace
 
 RandomizerManager& RandomizerManager::instance() {
     static RandomizerManager s_instance;
@@ -33,7 +71,11 @@ void RandomizerManager::generateSeed(const std::string& seedStr) {
     // Load locations from JSON
     std::vector<Location> locations;
     try {
-        auto data = dusk::io::FileStream::ReadAllBytes("res/randomizer_locations.json");
+        auto data = read_bundled_bytes(dusk::ui::resource_path("randomizer_locations.json"));
+        if (data.empty()) {
+            DuskLog.error("Randomizer locations file not found or empty.");
+            return;
+        }
         nlohmann::json j = nlohmann::json::parse(data);
         for (const auto& item : j) {
             locations.push_back({
@@ -54,12 +96,13 @@ void RandomizerManager::generateSeed(const std::string& seedStr) {
 
     std::vector<u8> itemPool;
     // For now, we just shuffle the original items back into the locations
-    // In a full implementation, we'd have a separate item pool
     try {
-        auto data = dusk::io::FileStream::ReadAllBytes("res/randomizer_locations.json");
-        nlohmann::json j = nlohmann::json::parse(data);
-        for (const auto& item : j) {
-            itemPool.push_back(item["originalItem"].get<u8>());
+        auto data = read_bundled_bytes(dusk::ui::resource_path("randomizer_locations.json"));
+        if (!data.empty()) {
+            nlohmann::json j = nlohmann::json::parse(data);
+            for (const auto& item : j) {
+                itemPool.push_back(item["originalItem"].get<u8>());
+            }
         }
     } catch (...) {}
 
