@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       ANDROID_NDK_VERSION: 29.0.14206865
-      ANDROID_STAGE_STRIP: 0
+      ANDROID_STAGE_STRIP: 1
       ANDROID_STAGE_ABIS: arm64-v8a
 
     steps:

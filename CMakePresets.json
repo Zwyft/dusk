@@ -369,11 +369,20 @@
       }
     },
     {
+      "name": "minsize",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+      }
+    },
+    {
       "name": "x-android-ci",
       "hidden": true,
       "inherits": [
         "android-base",
-        "ci"
+        "ci",
+        "minsize"
       ],
       "cacheVariables": {
         "DUSK_ENABLE_SENTRY_NATIVE": {
