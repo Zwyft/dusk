@@ -1433,7 +1433,9 @@ set(DUSK_FILES
         src/dusk/mod_manager.cpp
         src/dusk/globals.cpp
         src/dusk/gyro.cpp
-		src/dusk/gamepad_color.cpp
+        src/dusk/randomizer/RandomizerManager.cpp
+        src/dusk/gamepad_color.cpp
+
 		src/dusk/autosave.cpp
         src/dusk/http/http.hpp
         src/dusk/io.cpp

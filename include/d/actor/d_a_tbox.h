@@ -133,10 +133,11 @@ public:
     int getShapeType() { return (fopAcM_GetParam(this) >> 20) & 0xf; }
     int getSwNo() { return (fopAcM_GetParam(this) >> 12) & 0xff; }
     int getTboxNo() { return (fopAcM_GetParam(this) >> 6) & 0x3f; }
-    int getFuncType() { return fopAcM_GetParam(this) & 0x3f; }
+    int getFuncType() { return fopAcM_getParam(this) & 0x3f; }
     u32 getSwType() { return field_0x980 & 0xf; }
-    int getItemNo() { return (field_0x982 >> 8) & 0xff; }
+    int getItemNo();
     int getPathId() { return field_0x982 & 0xff; }
+
     void flagClr() { mFlags = 0; }
     void flagOn(u16 i_flag) { mFlags |= i_flag; }
     void flagOff(u16 i_flag) { mFlags &= ~i_flag; }

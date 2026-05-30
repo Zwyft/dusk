@@ -145,6 +145,19 @@ UserSettings g_userSettings = {
         .removeQuestMapMarkers {"game.removeQuestMapMarkers", false},
     },
 
+    .randomizer = {
+        .enabled {"randomizer.enabled", false},
+        .seed {"randomizer.seed", ""},
+        .logic {"randomizer.logic", RandomizerLogic::Glitchless},
+        .goal {"randomizer.goal", RandomizerGoal::Ganon},
+        .shuffleDungeonItems {"randomizer.shuffleDungeonItems", false},
+        .shuffleBugs {"randomizer.shuffleBugs", false},
+        .shufflePoes {"randomizer.shufflePoes", false},
+        .shuffleSkills {"randomizer.shuffleSkills", false},
+        .shuffleShops {"randomizer.shuffleShops", false},
+        .openCastle {"randomizer.openCastle", false},
+    },
+
     .touch = {
         .enabled {"touch.enabled",
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS)
@@ -308,6 +321,18 @@ Register(g_userSettings.game.enableFastIronBoots);
     Register(g_userSettings.game.anisotropicFiltering);
     Register(g_userSettings.game.fpsLimit);
     Register(g_userSettings.game.autoBackupSaves);
+
+    // Randomizer
+    Register(g_userSettings.randomizer.enabled);
+    Register(g_userSettings.randomizer.seed);
+    Register(g_userSettings.randomizer.logic);
+    Register(g_userSettings.randomizer.goal);
+    Register(g_userSettings.randomizer.shuffleDungeonItems);
+    Register(g_userSettings.randomizer.shuffleBugs);
+    Register(g_userSettings.randomizer.shufflePoes);
+    Register(g_userSettings.randomizer.shuffleSkills);
+    Register(g_userSettings.randomizer.shuffleShops);
+    Register(g_userSettings.randomizer.openCastle);
 
     // Touch controls
     Register(g_userSettings.touch.enabled);

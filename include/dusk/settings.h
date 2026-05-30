@@ -56,7 +56,31 @@ enum class IngameHudMode : int {
     On = 255,
 };
 
+enum class RandomizerLogic : u8 {
+    Glitchless = 0,
+    Glitched = 1,
+    NoLogic = 2,
+};
+
+enum class RandomizerGoal : u8 {
+    Ganon = 0,
+    AllDungeons = 1,
+    TriforceHunt = 2,
+};
+
 namespace config {
+
+template <>
+struct ConfigEnumRange<RandomizerLogic> {
+    static constexpr auto min = RandomizerLogic::Glitchless;
+    static constexpr auto max = RandomizerLogic::NoLogic;
+};
+
+template <>
+struct ConfigEnumRange<RandomizerGoal> {
+    static constexpr auto min = RandomizerGoal::Ganon;
+    static constexpr auto max = RandomizerGoal::TriforceHunt;
+};
 template <>
 struct ConfigEnumRange<BloomMode> {
     static constexpr auto min = BloomMode::Off;
@@ -243,6 +267,19 @@ struct UserSettings {
         ConfigVar<bool> enableSaveStates;
         ConfigVar<bool> removeQuestMapMarkers;
     } game;
+
+    struct {
+        ConfigVar<bool> enabled;
+        ConfigVar<std::string> seed;
+        ConfigVar<RandomizerLogic> logic;
+        ConfigVar<RandomizerGoal> goal;
+        ConfigVar<bool> shuffleDungeonItems;
+        ConfigVar<bool> shuffleBugs;
+        ConfigVar<bool> shufflePoes;
+        ConfigVar<bool> shuffleSkills;
+        ConfigVar<bool> shuffleShops;
+        ConfigVar<bool> openCastle;
+    } randomizer;
 
     struct {
         // Touch controls

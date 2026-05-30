@@ -178,6 +178,8 @@ namespace dusk::config {
     template class ConfigImpl<dusk::GyroMode>;
     template class ConfigImpl<dusk::BattleBGMMode>;
     template class ConfigImpl<dusk::IngameHudMode>;
+    template class ConfigImpl<dusk::RandomizerLogic>;
+    template class ConfigImpl<dusk::RandomizerGoal>;
 }
 
 void dusk::config::Register(ConfigVarBase& configVar) {

@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Link's House - Wooden Sword",
+        "stage": "F_SP108",
+        "room": 0,
+        "id": 1,
+        "type": 0,
+        "originalItem": 64
+    },
+    {
+        "name": "Link's House - Basement Chest",
+        "stage": "F_SP108",
+        "room": 1,
+        "id": 2,
+        "type": 0,
+        "originalItem": 65
+    },
+    {
+        "name": "Faron Woods - Coro's Bottle",
+        "stage": "F_SP108",
+        "room": 2,
+        "id": 100,
+        "type": 1,
+        "originalItem": 66
+    }
+]

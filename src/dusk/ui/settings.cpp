@@ -1399,6 +1399,77 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                             "recording footage.",
             });
     });
+
+    add_tab("Randomizer", [this](Rml::Element* content) {
+        auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
+        auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+
+        leftPane.add_section("General", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.enabled,
+            {
+                .key = "Enable Randomizer",
+                .helpText = "Enable native item randomization.<br/><br/>"
+                            "Requires a fresh save or seed generation.",
+            });
+
+        leftPane.register_control(
+            leftPane.add_child<StringButton>(StringButton::Props{
+                .key = "Seed",
+                .value = &getSettings().randomizer.seed,
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("The unique string used to generate the randomized item layout.");
+            });
+
+        config_enum_select(leftPane, rightPane, getSettings().randomizer.logic,
+            {
+                .key = "Logic",
+                .helpText = "Determines how the shuffler ensures the game is beatable.",
+                .labels = {"Glitchless", "Glitched", "No Logic"},
+            });
+
+        config_enum_select(leftPane, rightPane, getSettings().randomizer.goal,
+            {
+                .key = "Goal",
+                .helpText = "The win condition for this randomized seed.",
+                .labels = {"Defeat Ganon", "All Dungeons", "Triforce Hunt"},
+            });
+
+        leftPane.add_section("Shuffle Options", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleDungeonItems,
+            {
+                .key = "Shuffle Dungeon Items",
+                .helpText = "Small Keys, Big Keys, Maps, and Compasses are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleBugs,
+            {
+                .key = "Shuffle Golden Bugs",
+                .helpText = "Golden Bugs are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shufflePoes,
+            {
+                .key = "Shuffle Poe Souls",
+                .helpText = "Poe Souls are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleSkills,
+            {
+                .key = "Shuffle Hidden Skills",
+                .helpText = "Hidden Skills are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleShops,
+            {
+                .key = "Shuffle Shops",
+                .helpText = "All shop items are randomized.",
+            });
+
+        leftPane.add_section("Rules", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.openCastle,
+            {
+                .key = "Open Hyrule Castle",
+                .helpText = "Hyrule Castle is open from the start (no Fused Shadows/Mirror Shards needed).",
+            });
+    });
 }
 
 void SettingsWindow::update() {

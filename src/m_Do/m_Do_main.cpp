@@ -71,6 +71,7 @@
 #include "dusk/ui/preset.hpp"
 #include "dusk/ui/ui.hpp"
 #include "dusk/touch_controls.hpp"
+#include "dusk/randomizer/RandomizerManager.hpp"
 #include "version.h"
 
 #include <aurora/aurora.h>
@@ -755,6 +756,7 @@ int game_main(int argc, char* argv[]) {
     dusk::InitializeFileLogging(dusk::ConfigPath, startupLogLevel);
 
     dusk::config::LoadFromUserPreferences();
+    dusk::randomizer::RandomizerManager::instance().init();
     ApplyCVarOverrides(parsed_arg_options["cvar"]);
     dusk::crash_reporting::initialize();
 #ifndef __ANDROID__
