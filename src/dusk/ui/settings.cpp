@@ -13,13 +13,13 @@
 #include "dusk/livesplit.h"
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/save_import.hpp"
 #include "dusk/touch_controls.hpp"
 #include "graphics_tuner.hpp"
 #include "m_Do/m_Do_main.h"
 #include "menu_bar.hpp"
 #include "number_button.hpp"
-#include "menu_bar.hpp"
 #include "pane.hpp"
 #include "prelaunch.hpp"
 #include "ui.hpp"
@@ -681,7 +681,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
 
         if constexpr (!dusk::platform::IsSwitchTarget) {
             config_bool_select(leftPane, rightPane, getSettings().video.enableVsync,
-                {
+                ConfigBoolProps{
                     .key = "Enable VSync",
                     .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
                     .onChange = [](bool value) { aurora_enable_vsync(value); },
@@ -692,7 +692,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
 
         if constexpr (!dusk::platform::IsSwitchTarget) {
             config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
-                {
+                ConfigBoolProps{
                     .key = "Lock 4:3 Aspect Ratio",
                     .helpText = "Lock the game's aspect ratio to the original.",
                     .onChange =
@@ -704,7 +704,7 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         }
 
         config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
-            {
+            ConfigBoolProps{
                 .key = "Pause on Focus Lost",
                 .isDisabled = [] { return IsMobile || dusk::platform::IsSwitchTarget; },
             });

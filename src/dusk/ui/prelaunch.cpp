@@ -4,6 +4,7 @@
 #include "dusk/file_select.hpp"
 #include "dusk/iso_validate.hpp"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/settings.h"
 #include "dusk/ui/mods.hpp"
 #include "dusk/update_check.hpp"

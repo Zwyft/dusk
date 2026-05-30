@@ -231,7 +231,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -qq
-          apt-get install -y cmake ninja-build python3 zip
+          apt-get install -y cmake python3 zip
 
       - uses: actions/checkout@v6
         with:
@@ -243,7 +243,7 @@ jobs:
 
       - name: Configure Switch CMake
         run: |
-          cmake --preset switch-libnx-relwithdebinfo -G "Ninja"
+          cmake --preset switch-libnx-relwithdebinfo -G "Unix Makefiles"
 
       - name: Build Switch
         run: cmake --build --preset switch-libnx-relwithdebinfo
