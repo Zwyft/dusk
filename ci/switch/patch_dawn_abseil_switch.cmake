@@ -48,6 +48,10 @@ def patch_abseil_switch(absl_sysinfo):
     if patched == text:
         raise RuntimeError(f"could not find abseil thread-id fallback in {absl_sysinfo}")
 
+    # Ensure <cstdint> is included for intptr_t
+    if "#include <cstdint>" not in patched:
+        patched = patched.replace('#include "absl/base/internal/sysinfo.h"', '#include "absl/base/internal/sysinfo.h"\n#include <cstdint>')
+
     absl_sysinfo.write_text(patched)
     log(f"applied Switch abseil patch: {absl_sysinfo}")
 
