@@ -16,8 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
+  SCCACHE_DIR: ${{ github.workspace }}/.sccache
+  CMAKE_BUILD_PARALLEL_LEVEL: 4 # GHA runners usually have 2-4 cores
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
@@ -38,8 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 1
+          submodules: true
 
       - name: Install Rust
         run: |
@@ -63,10 +64,10 @@ jobs:
       - name: Restore sccache cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/sccache
-          key: sccache-linux-v1
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-linux-v2-${{ github.sha }}
           restore-keys: |
-            sccache-linux-
+            sccache-linux-v2-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -107,8 +108,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 1
+          submodules: true
 
       - name: Install dependencies
         run: brew install cmake ninja
@@ -128,10 +129,10 @@ jobs:
       - name: Restore sccache cache
         uses: actions/cache@v4
         with:
-          path: ~/Library/Caches/Mozilla.sccache
-          key: sccache-macos-v1
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-macos-v2-${{ github.sha }}
           restore-keys: |
-            sccache-macos-
+            sccache-macos-v2-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -168,8 +169,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 1
+          submodules: true
 
       - name: Enable Visual Studio environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -185,10 +186,10 @@ jobs:
       - name: Restore sccache cache
         uses: actions/cache@v4
         with:
-          path: ~\AppData\Local\Mozilla\sccache\cache
-          key: sccache-windows-v1
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-windows-v2-${{ github.sha }}
           restore-keys: |
-            sccache-windows-
+            sccache-windows-v2-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -217,16 +218,14 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       ANDROID_NDK_VERSION: 29.0.14206865
-      RUSTC_WRAPPER:
       ANDROID_STAGE_STRIP: 0
       ANDROID_STAGE_ABIS: arm64-v8a
-      CMAKE_BUILD_PARALLEL_LEVEL: 12
 
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 1
+          submodules: true
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -251,10 +250,10 @@ jobs:
       - name: Restore sccache cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/sccache
-          key: sccache-android-v1
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-android-v2-${{ github.sha }}
           restore-keys: |
-            sccache-android-
+            sccache-android-v2-
 
       - name: Restore Gradle cache
         uses: actions/cache@v4
@@ -262,9 +261,9 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-android-v1-${{ hashFiles('platforms/android/**/*.gradle*', 'platforms/android/gradle.properties', 'platforms/android/gradle/wrapper/gradle-wrapper.properties') }}
+          key: gradle-android-v2-${{ hashFiles('platforms/android/**/*.gradle*', 'platforms/android/gradle.properties', 'platforms/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
-            gradle-android-v1-
+            gradle-android-v2-
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10

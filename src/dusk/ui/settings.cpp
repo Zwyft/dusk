@@ -28,6 +28,11 @@
 
 #include <SDL3/SDL_misc.h>
 
+#if defined(__ANDROID__)
+#include <SDL3/SDL_system.h>
+#include <jni.h>
+#endif
+
 namespace dusk::ui {
 namespace {
 
@@ -241,7 +246,6 @@ bool open_directory_path(const std::filesystem::path& path) {
     const std::string url = "file://" + path.generic_string();
 #endif
     #if defined(__ANDROID__)
-#include <jni.h>
     JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
     jobject activity = (jobject)SDL_GetAndroidActivity();
     if (env && activity) {
