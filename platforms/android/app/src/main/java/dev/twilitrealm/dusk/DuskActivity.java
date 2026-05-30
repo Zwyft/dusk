@@ -340,14 +340,40 @@ public class DuskActivity extends SDLActivity {
     }
 
     private void requestStoragePermissions() {
+        // Android 13+ (API 33+) Media Permissions
+        if (Build.VERSION.SDK_INT >= 33) {
+            List<String> permissionsNeeded = new ArrayList<>();
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.READ_MEDIA_VIDEO);
+            }
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.READ_MEDIA_AUDIO);
+            }
+
+            if (!permissionsNeeded.isEmpty()) {
+                requestPermissions(permissionsNeeded.toArray(new String[0]), STORAGE_PERMISSION_REQUEST_CODE);
+                return;
+            }
+        }
+
         // Android 11+ (API 30+) MANAGE_EXTERNAL_STORAGE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
-                Log.i(TAG, "Requesting MANAGE_EXTERNAL_STORAGE permission");
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", getPackageName(), null);
-                intent.setData(uri);
-                startActivity(intent);
+                Log.i(TAG, "MANAGE_EXTERNAL_STORAGE not granted, showing dialog");
+                new AlertDialog.Builder(this)
+                    .setTitle("Storage Permission")
+                    .setMessage("Dusk needs access to all files to manage your game data and mods. Please grant permission in the next screen.")
+                    .setPositiveButton("Settings", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
                 return;
             }
         }
@@ -388,7 +414,7 @@ public class DuskActivity extends SDLActivity {
             if (allGranted) {
                 Log.i(TAG, "Storage permissions granted");
             } else {
-                Log.w(TAG, "Storage permissions denied - some features may not work");
+                Log.w(TAG, "Storage permissions denied");
             }
         }
     }
@@ -636,21 +662,34 @@ public class DuskActivity extends SDLActivity {
         try {
             java.io.File dir = new java.io.File(path);
             if (!dir.exists()) dir.mkdirs();
-            // Try direct file manager intent first
-            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
-            intent.setDataAndType(android.net.Uri.fromFile(dir), "resource/folder");
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                startActivity(intent);
-                return;
-            } catch (android.content.ActivityNotFoundException e) {
-                Log.w(TAG, "No file manager found, trying SAF picker");
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // On modern Android, we must use SAF to open a directory
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                
+                // Construct a proper document tree URI
+                // This is the primary way to open specific folders in modern Android File Managers
+                android.net.Uri uri = android.net.Uri.parse("content://com.android.externalstorage.documents/document/primary:" + 
+                    path.replace("/sdcard/", "").replace("/storage/emulated/0/", ""));
+                
+                intent.setDataAndType(uri, "vnd.android.document/directory");
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                
+                try {
+                    startActivity(intent);
+                    return;
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.w(TAG, "Primary folder intent failed, trying generic SAF picker");
+                }
             }
+
             // Fallback: Storage Access Framework document tree picker
             android.content.Intent safIntent = new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT_TREE);
             safIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                | android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                | android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
             // Set initial directory if possible
             safIntent.putExtra("android.provider.extra.INITIAL_URI", android.net.Uri.fromFile(dir));
             startActivity(safIntent);
