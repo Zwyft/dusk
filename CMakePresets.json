@@ -369,6 +369,74 @@
       }
     },
     {
+      "name": "switch-libnx",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "inherits": [
+        "relwithdebinfo"
+      ],
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/switch-libnx.cmake",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
+        "DUSK_EXPERIMENTAL_SWITCH": {
+          "type": "BOOL",
+          "value": true
+        },
+        "DUSK_ENABLE_UPDATE_CHECKER": {
+          "type": "BOOL",
+          "value": false
+        },
+        "DUSK_ENABLE_SENTRY_NATIVE": {
+          "type": "BOOL",
+          "value": false
+        },
+        "DUSK_ENABLE_DISCORD": {
+          "type": "BOOL",
+          "value": false
+        },
+        "CMAKE_DISABLE_FIND_PACKAGE_BZip2": {
+          "type": "BOOL",
+          "value": true
+        },
+        "CMAKE_DISABLE_FIND_PACKAGE_LibLZMA": {
+          "type": "BOOL",
+          "value": true
+        },
+        "CMAKE_DISABLE_FIND_PACKAGE_zstd": {
+          "type": "BOOL",
+          "value": true
+        },
+        "SDL_PTHREADS": {
+          "type": "BOOL",
+          "value": true
+        },
+        "SDL_PTHREADS_SEM": {
+          "type": "BOOL",
+          "value": true
+        },
+        "SDL_THREADS": {
+          "type": "BOOL",
+          "value": true
+        },
+        "DUSK_MOVIE_SUPPORT": {
+          "type": "BOOL",
+          "value": false
+        },
+        "BUILD_SHARED_LIBS": {
+          "type": "BOOL",
+          "value": false
+        }
+      }
+    },
+    {
+      "name": "switch-libnx-relwithdebinfo",
+      "displayName": "Nintendo Switch (scaffolding)",
+      "inherits": [
+        "switch-libnx"
+      ]
+    },
+    {
       "name": "minsize",
       "hidden": true,
       "cacheVariables": {

@@ -865,7 +865,11 @@ void Prelaunch::update() {
     if (mDiscStatus != nullptr && discStatusLabel != nullptr) {
         if (!activeDiscLoaded) {
             mDiscStatus->RemoveAttribute("status");
-            discStatusLabel->SetInnerRML("No disc image found.");
+            if constexpr (dusk::platform::IsSwitchTarget) {
+                discStatusLabel->SetInnerRML("No disc image found in sdmc:/dusk.");
+            } else {
+                discStatusLabel->SetInnerRML("No disc image found.");
+            }
         } else if (discRestartPending) {
             mDiscStatus->SetAttribute("status", "pending");
             discStatusLabel->SetInnerRML("Pending restart.");

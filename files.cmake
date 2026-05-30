@@ -1447,6 +1447,9 @@ set(DUSK_FILES
         include/dusk/save_import.hpp
         src/dusk/platform_support.cpp
         src/dusk/stubs.cpp
+        $<$<BOOL:${DUSK_EXPERIMENTAL_SWITCH}>:src/dusk/platform/switch/libnx_bootstrap.cpp>
+        $<$<BOOL:${DUSK_EXPERIMENTAL_SWITCH}>:src/dusk/platform/switch/dvd_stubs.cpp>
+        $<$<BOOL:${DUSK_EXPERIMENTAL_SWITCH}>:src/dusk/platform/switch/posix_stubs.c>
         src/dusk/touch_controls.cpp
         src/dusk/update_check.cpp
         src/dusk/update_check.hpp

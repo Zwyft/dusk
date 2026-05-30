@@ -900,6 +900,13 @@ int game_main(int argc, char* argv[]) {
         }
     }
 
+    if (dvd_path.empty() && dusk::platform::IsSwitchTarget) {
+        if (const auto defaultSwitchDisc = dusk::platform::FindDefaultSwitchDiscPath()) {
+            dvd_path = defaultSwitchDisc->string();
+            DuskLog.info("Using Switch default DVD image path: {}", dvd_path);
+        }
+    }
+
     dusk::iso::log_verification_state(
         dusk::getSettings().backend.isoPath.getValue(),
         dusk::getSettings().backend.isoVerification.getValue());
@@ -936,6 +943,14 @@ int game_main(int argc, char* argv[]) {
         }
 
         dvd_path = dusk::getSettings().backend.isoPath;
+
+        if (dvd_path.empty() && dusk::platform::IsSwitchTarget) {
+            const auto defaultSwitchDisc = dusk::platform::FindDefaultSwitchDiscPath();
+            if (defaultSwitchDisc.has_value()) {
+                dvd_path = defaultSwitchDisc->string();
+                DuskLog.info("Using Switch default DVD image path: {}", dvd_path);
+            }
+        }
 
         if (dvd_path.empty()) {
             DuskLog.fatal("No DVD image specified, unable to boot!");

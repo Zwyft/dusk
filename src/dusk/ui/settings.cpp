@@ -484,33 +484,38 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
                     }
                     pane.add_rml("<br/>Changes require a restart.");
                 });
-            leftPane.register_control(
-                leftPane.add_select_button({
-                    .key = "Graphics Backend",
-                    .getValue = [] { return Rml::String{backend_name(configured_backend())}; },
-                    .isModified =
-                        [] {
-                            return getSettings().backend.graphicsBackend.getValue() !=
-                                   prelaunch_state().initialGraphicsBackend;
-                        },
-                }),
-                rightPane, [](Pane& pane) {
-                    const auto availableBackends = available_backends();
-                    for (const auto backend : availableBackends) {
-                        pane
-                            .add_button({
-                                .text = Rml::String{backend_name(backend)},
-                                .isSelected = [backend] { return configured_backend() == backend; },
-                            })
-                            .on_pressed([backend] {
-                                mDoAud_seStartMenu(kSoundItemChange);
-                                getSettings().backend.graphicsBackend.setValue(
-                                    std::string{backend_id(backend)});
-                                config::Save();
-                            });
-                    }
-                    pane.add_rml("<br/>Changes require a restart.");
-                });
+            if constexpr (!dusk::platform::IsSwitchTarget) {
+                leftPane.register_control(
+                    leftPane.add_select_button({
+                        .key = "Graphics Backend",
+                        .getValue = [] { return Rml::String{backend_name(configured_backend())}; },
+                        .isModified =
+                            [] {
+                                return getSettings().backend.graphicsBackend.getValue() !=
+                                       prelaunch_state().initialGraphicsBackend;
+                            },
+                    }),
+                    rightPane, [](Pane& pane) {
+                        const auto availableBackends = available_backends();
+                        for (const auto backend : availableBackends) {
+                            pane
+                                .add_button({
+                                    .text = Rml::String{backend_name(backend)},
+                                    .isSelected = [backend] { return configured_backend() == backend; },
+                                })
+                                .on_pressed([backend] {
+                                    mDoAud_seStartMenu(kSoundItemChange);
+                                    getSettings().backend.graphicsBackend.setValue(
+                                        std::string{backend_id(backend)});
+                                    config::Save();
+                                });
+                        }
+                        pane.add_rml("<br/>Changes require a restart.");
+                    });
+            } else {
+                leftPane.add_text("Switch standalone backend");
+            }
+
             leftPane.register_control(
                 leftPane.add_select_button({
                     .key = "Save File Type",
@@ -545,59 +550,61 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             // ----------------------------------------------------------------
             // Save Data
             // ----------------------------------------------------------------
-            leftPane.add_section("Save Data", true);
+            if constexpr (!dusk::platform::IsSwitchTarget) {
+                leftPane.add_section("Save Data", true);
 
-            leftPane.register_control(
-                leftPane.add_button("Open Saves Folder").on_pressed([] {
-                    mDoAud_seStartMenu(kSoundItemChange);
-                    save_import::open_saves_dir();
-                }),
-                rightPane, [](Pane& pane) {
-                    pane.clear();
-                    if (IsMobile && save_import::can_open_saves_dir()) {
-                        // iOS: opens Files app via shareddocuments://
-                        pane.add_text("Opens the Files app.");
-                        pane.add_rml("<br/>Navigate to <b>On My iPhone/iPad &rarr; Dusk</b> "
-                                     "to find your saves.");
-                    } else if (IsMobile) {
-                        // Android: file:// URLs are blocked; show path only
-                        pane.add_text("Your saves are stored at:");
-                        pane.add_rml("<br/>" + Rml::String(save_import::saves_dir().string()));
-                        pane.add_rml("<br/><br/>Use a file manager app to browse this folder.");
-                    } else {
-                        // Desktop: Explorer / Finder / Nautilus
-                        pane.add_text("Opens your Dusk saves folder in the file manager.");
-                        pane.add_rml("<br/><b>Current location:</b><br/>" +
-                                     Rml::String(save_import::saves_dir().string()) +
-                                     "<br/><br/>To use a folder next to the Dusk executable instead "
-                                     "of AppData, create a <b>saves/</b> folder in the same directory "
-                                     "as the Dusk binary.");
-                    }
-                });
-
-            // Dolphin runs on desktop and Android but not iOS.
-            if (!IsMobile || !save_import::can_open_saves_dir()) {
                 leftPane.register_control(
-                    leftPane.add_button("Import from Dolphin").on_pressed([] {
+                    leftPane.add_button("Open Saves Folder").on_pressed([] {
                         mDoAud_seStartMenu(kSoundItemChange);
-                        save_import::import_from_dolphin();
+                        save_import::open_saves_dir();
                     }),
                     rightPane, [](Pane& pane) {
                         pane.clear();
-                        pane.add_text("Copies your Dolphin GCN save data into Dusk's saves folder.");
-                        auto dolphinPath = save_import::detect_dolphin_saves();
-                        if (!dolphinPath.empty()) {
-                            pane.add_rml("<br/><b>Detected:</b><br/>" +
-                                         Rml::String(dolphinPath.string()));
-                            pane.add_rml("<br/><br/><b>Destination:</b><br/>" +
-                                         Rml::String(save_import::saves_dir().string()));
-                            pane.add_rml("<br/><br/>Takes effect on next launch.");
+                        if (IsMobile && save_import::can_open_saves_dir()) {
+                            // iOS: opens Files app via shareddocuments://
+                            pane.add_text("Opens the Files app.");
+                            pane.add_rml("<br/>Navigate to <b>On My iPhone/iPad &rarr; Dusk</b> "
+                                         "to find your saves.");
+                        } else if (IsMobile) {
+                            // Android: file:// URLs are blocked; show path only
+                            pane.add_text("Your saves are stored at:");
+                            pane.add_rml("<br/>" + Rml::String(save_import::saves_dir().string()));
+                            pane.add_rml("<br/><br/>Use a file manager app to browse this folder.");
                         } else {
-                            pane.add_rml("<br/>No Dolphin save detected on this system.");
-                            pane.add_rml("<br/><br/>You can also manually copy save files "
-                                         "into the saves folder using <b>Open Saves Folder</b>.");
+                            // Desktop: Explorer / Finder / Nautilus
+                            pane.add_text("Opens your Dusk saves folder in the file manager.");
+                            pane.add_rml("<br/><b>Current location:</b><br/>" +
+                                         Rml::String(save_import::saves_dir().string()) +
+                                         "<br/><br/>To use a folder next to the Dusk executable instead "
+                                         "of AppData, create a <b>saves/</b> folder in the same directory "
+                                         "as the Dusk binary.");
                         }
                     });
+
+                // Dolphin runs on desktop and Android but not iOS.
+                if (!IsMobile || !save_import::can_open_saves_dir()) {
+                    leftPane.register_control(
+                        leftPane.add_button("Import from Dolphin").on_pressed([] {
+                            mDoAud_seStartMenu(kSoundItemChange);
+                            save_import::import_from_dolphin();
+                        }),
+                        rightPane, [](Pane& pane) {
+                            pane.clear();
+                            pane.add_text("Copies your Dolphin GCN save data into Dusk's saves folder.");
+                            auto dolphinPath = save_import::detect_dolphin_saves();
+                            if (!dolphinPath.empty()) {
+                                pane.add_rml("<br/><b>Detected:</b><br/>" +
+                                             Rml::String(dolphinPath.string()));
+                                pane.add_rml("<br/><br/><b>Destination:</b><br/>" +
+                                             Rml::String(save_import::saves_dir().string()));
+                                pane.add_rml("<br/><br/>Takes effect on next launch.");
+                            } else {
+                                pane.add_rml("<br/>No Dolphin save detected on this system.");
+                                pane.add_rml("<br/><br/>You can also manually copy save files "
+                                             "into the saves folder using <b>Open Saves Folder</b>.");
+                            }
+                        });
+                }
             }
 
             leftPane.register_control(
@@ -652,41 +659,54 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
 
         leftPane.add_section("Display", true);
 
-        leftPane.register_control(leftPane.add_button("Toggle Fullscreen").on_pressed([] {
-            mDoAud_seStartMenu(kSoundItemChange);
-            getSettings().video.enableFullscreen.setValue(!getSettings().video.enableFullscreen);
-            VISetWindowFullscreen(getSettings().video.enableFullscreen);
-            config::Save();
-        }),
-            rightPane, [](Pane& pane) { pane.clear(); });
-        leftPane.register_control(leftPane.add_button("Restore Default Window Size").on_pressed([] {
-            mDoAud_seStartMenu(kSoundItemChange);
-            getSettings().video.enableFullscreen.setValue(false);
-            VISetWindowFullscreen(false);
-            VISetWindowSize(FB_WIDTH * 2, FB_HEIGHT * 2);
-            VICenterWindow();
-        }),
-            rightPane, [](Pane& pane) { pane.clear(); });
-        config_bool_select(leftPane, rightPane, getSettings().video.enableVsync,
-            {
-                .key = "Enable VSync",
-                .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
-                .onChange = [](bool value) { aurora_enable_vsync(value); },
-            });
-        config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
-            {
-                .key = "Lock 4:3 Aspect Ratio",
-                .helpText = "Lock the game's aspect ratio to the original.",
-                .onChange =
-                    [](bool value) {
-                        AuroraSetViewportPolicy(
-                            value ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
-                    },
-            });
+        if constexpr (!dusk::platform::IsSwitchTarget) {
+            leftPane.register_control(leftPane.add_button("Toggle Fullscreen").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                getSettings().video.enableFullscreen.setValue(!getSettings().video.enableFullscreen);
+                VISetWindowFullscreen(getSettings().video.enableFullscreen);
+                config::Save();
+            }),
+                rightPane, [](Pane& pane) { pane.clear(); });
+            leftPane.register_control(leftPane.add_button("Restore Default Window Size").on_pressed([] {
+                mDoAud_seStartMenu(kSoundItemChange);
+                getSettings().video.enableFullscreen.setValue(false);
+                VISetWindowFullscreen(false);
+                VISetWindowSize(FB_WIDTH * 2, FB_HEIGHT * 2);
+                VICenterWindow();
+            }),
+                rightPane, [](Pane& pane) { pane.clear(); });
+        } else {
+            leftPane.add_text("Switch presentation is fixed to the handheld display mode.");
+        }
+
+        if constexpr (!dusk::platform::IsSwitchTarget) {
+            config_bool_select(leftPane, rightPane, getSettings().video.enableVsync,
+                {
+                    .key = "Enable VSync",
+                    .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
+                    .onChange = [](bool value) { aurora_enable_vsync(value); },
+                });
+        } else {
+            leftPane.add_text("Switch uses FIFO presentation; VSync is fixed on for stability.");
+        }
+
+        if constexpr (!dusk::platform::IsSwitchTarget) {
+            config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
+                {
+                    .key = "Lock 4:3 Aspect Ratio",
+                    .helpText = "Lock the game's aspect ratio to the original.",
+                    .onChange =
+                        [](bool value) {
+                            AuroraSetViewportPolicy(
+                                value ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
+                        },
+                });
+        }
+
         config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
             {
                 .key = "Pause on Focus Lost",
-                .isDisabled = [] { return IsMobile; },
+                .isDisabled = [] { return IsMobile || dusk::platform::IsSwitchTarget; },
             });
         leftPane.register_control(
             leftPane.add_select_button({

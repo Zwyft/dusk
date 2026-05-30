@@ -124,6 +124,7 @@ option(DUSK_BUILD_WARNINGS "Enable compiler warnings (off by default)")
 option(DUSK_SELECTED_OPT "If on, selected parts of the project will be compiled with optimizations on Debug, intending to make the game run at 30 FPS. Note for MSVC: you will need to remove '/RTC1' from your debug flags in CMake.")
 option(DUSK_MOVIE_SUPPORT "If on, compile against libjpeg-turbo to enable THP file decoding" ON)
 option(DUSK_ENABLE_UPDATE_CHECKER "Enable update checking support" ON)
+option(DUSK_EXPERIMENTAL_SWITCH "Enable early Nintendo Switch compile-time scaffolding (not a runnable port yet)" OFF)
 
 if(ANDROID)
     set(DUSK_MOVIE_SUPPORT OFF)
@@ -132,6 +133,17 @@ endif ()
 option(DUSK_ENABLE_SENTRY_NATIVE "Enable sentry-native crash reporting support" OFF)
 set(DUSK_SENTRY_DSN "" CACHE STRING "Sentry DSN")
 set(DUSK_SENTRY_ENVIRONMENT "development" CACHE STRING "Sentry environment")
+
+if (DUSK_EXPERIMENTAL_SWITCH)
+    set(DUSK_MOVIE_SUPPORT OFF CACHE BOOL
+        "Movie playback is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_UPDATE_CHECKER OFF CACHE BOOL
+        "Update checker is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_SENTRY_NATIVE OFF CACHE BOOL
+        "Sentry is currently disabled for the experimental Switch target" FORCE)
+    set(DUSK_ENABLE_DISCORD OFF CACHE BOOL
+        "Discord Rich Presence is currently disabled for the experimental Switch target" FORCE)
+endif ()
 
 # Edit & Continue
 if (MSVC)
@@ -450,6 +462,12 @@ if (CMAKE_CXX_LINK_GROUP_USING_RESCAN_SUPPORTED OR CMAKE_LINK_GROUP_USING_RESCAN
 endif ()
 
 set(DUSK_FILES src/dusk/main.cpp ${GAME_BASE_FILES} ${GAME_DEBUG_FILES})
+if (DUSK_EXPERIMENTAL_SWITCH)
+    list(APPEND DUSK_FILES
+        src/dusk/platform/switch/libnx_bootstrap.cpp
+        src/dusk/platform/switch/dvd_stubs.cpp
+        src/dusk/platform/switch/posix_stubs.c)
+endif ()
 if(ANDROID)
     add_library(dusk SHARED ${DUSK_FILES})
     set_target_properties(dusk PROPERTIES OUTPUT_NAME main)
@@ -462,6 +480,30 @@ target_include_directories(dusk PRIVATE ${GAME_INCLUDE_DIRS})
 target_link_libraries(dusk PRIVATE aurora::main ${GAME_LIBS} ${JSYSTEM_LINK_LIBRARIES})
 if (ANDROID)
     target_link_libraries(dusk PRIVATE EGL GLESv3)
+endif ()
+if (DUSK_EXPERIMENTAL_SWITCH)
+    # Static-link order fallback for devkitA64 when CMake LINK_GROUP:RESCAN is unavailable.
+    target_link_libraries(dusk PRIVATE JSystem_J3DGraphBase JSystem_JStudio JSystem_JUtility)
+
+    # Resolve static-link gaps seen in CI for Dawn/Abseil + libnx libc surface.
+    if (TARGET absl::base)
+        target_link_libraries(dusk PRIVATE absl::base)
+    endif ()
+    if (TARGET absl::synchronization)
+        target_link_libraries(dusk PRIVATE absl::synchronization)
+    endif ()
+
+    # Some transitive dependencies still inject -ldl in CI; libnx has no real libdl.
+    # Provide an empty shim archive so accidental -ldl does not fail final link.
+    set(_switch_shim_dir "${CMAKE_BINARY_DIR}/switch-shims/lib")
+    file(MAKE_DIRECTORY "${_switch_shim_dir}")
+    set(_switch_dl_shim "${_switch_shim_dir}/libdl.a")
+    if (NOT EXISTS "${_switch_dl_shim}")
+        execute_process(COMMAND "${CMAKE_AR}" qc "${_switch_dl_shim}")
+    endif ()
+    target_link_directories(dusk PRIVATE "${_switch_shim_dir}")
+
+    # Use libnx startup from switch.specs; do not force custom _start wiring.
 endif ()
 target_precompile_headers(dusk PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/include/dusk_pch.hpp>")
 if (TARGET crashpad_handler)

@@ -29,6 +29,9 @@ std::filesystem::path CalculateConfigPath(
     std::string_view cliConfigPath, std::string_view customDataPath, bool portableModeRequested);
 
 std::filesystem::path DefaultSwitchDataRoot();
+std::filesystem::path DefaultSwitchConfigRoot();
+std::filesystem::path DefaultSwitchDiscRoot();
+std::optional<std::filesystem::path> FindDefaultSwitchDiscPath();
 std::filesystem::path BundledPath(const std::filesystem::path& relativePath);
 std::filesystem::path BundledResourcePath(std::string_view assetName);
 std::optional<std::filesystem::path> FindBundledPath(

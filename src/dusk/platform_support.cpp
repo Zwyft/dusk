@@ -67,7 +67,38 @@ std::filesystem::path portable_data_root() {
 }  // namespace
 
 std::filesystem::path DefaultSwitchDataRoot() {
-    return "sdmc:/switch/Dusk";
+    return DefaultSwitchConfigRoot();
+}
+
+std::filesystem::path DefaultSwitchConfigRoot() {
+    return "sdmc:/aurora";
+}
+
+std::filesystem::path DefaultSwitchDiscRoot() {
+    return "sdmc:/dusk";
+}
+
+static const std::filesystem::path kSwitchDiscCandidates[] = {
+    "sdmc:/dusk/game.iso",
+    "sdmc:/dusk/game.gcm",
+    "sdmc:/dusk/dusk.iso",
+    "sdmc:/dusk/dusk.gcm",
+};
+
+std::optional<std::filesystem::path> FindDefaultSwitchDiscPath() {
+    if constexpr (!IsSwitchTarget) {
+        return std::nullopt;
+    }
+
+    std::error_code ec;
+    for (const auto& candidate : kSwitchDiscCandidates) {
+        if (std::filesystem::exists(candidate, ec)) {
+            return candidate;
+        }
+        ec.clear();
+    }
+
+    return std::nullopt;
 }
 
 std::filesystem::path BundledPath(const std::filesystem::path& relativePath) {
