@@ -11280,7 +11280,8 @@ static int camera_execute(camera_process_class* i_this) {
 #ifdef TARGET_PC
 void set_ar_corrected_trim(dDlst_window_c* window, float trim_height) {
     const auto viewport = window->getViewPort();
-    
+    float trim_width = 0.0f;
+
     if (mDoGph_gInf_c::isWideZoom()) {
         const auto target_ar = FB_WIDTH / (FB_HEIGHT - trim_height * 2.0f);
         const auto current_ar = mDoGph_gInf_c::m_safeWidthF / mDoGph_gInf_c::m_safeHeightF;
@@ -11289,14 +11290,18 @@ void set_ar_corrected_trim(dDlst_window_c* window, float trim_height) {
             trim_height = FB_HEIGHT / 2.0f * (1.0f - current_ar / target_ar);
         } else {
             trim_height = 0.0f;
+            if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
+                trim_width = FB_WIDTH / 2.0f * (1.0f - target_ar / current_ar);
+            }
         }
     }
 
+    trim_width *= viewport->width / FB_WIDTH;
     trim_height *= viewport->height / FB_HEIGHT;
-    window->setScissor(0.0f, trim_height, viewport->width, viewport->height - trim_height * 2.0f);
+    window->setScissor(trim_width, trim_height, viewport->width - trim_width * 2.0f,
+        viewport->height - trim_height * 2.0f);
 }
 #endif
-
 static int camera_draw(camera_process_class* i_this) {
     camera_class* a_this = (camera_class*)i_this;
     dCamera_c* body = &i_this->mCamera;

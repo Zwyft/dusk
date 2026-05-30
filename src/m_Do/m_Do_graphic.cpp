@@ -1197,6 +1197,14 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
         #if TARGET_PC
         f32 sc_top = param_1->scissor.y_orig;
         f32 sc_bottom = param_1->scissor.y_orig + param_1->scissor.height;
+
+        f32 sc_left = 0.0f;
+        f32 sc_right = param_1->width;
+
+        if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
+            sc_left = param_1->scissor.x_orig;
+            sc_right = sc_left + param_1->scissor.width;
+        }
         #else
         s32 sc_top = (int)param_1->scissor.y_orig;
         s32 sc_bottom = param_1->scissor.y_orig + param_1->scissor.height;
@@ -1235,15 +1243,17 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
         GXBegin(GX_QUADS, GX_VTXFMT0, 8);
 
         #if TARGET_PC
-        GXPosition3f32(0, 0, -5);
-        GXPosition3f32(param_1->width, 0, -5);
-        GXPosition3f32(param_1->width, sc_top, -5);
-        GXPosition3f32(0, sc_top, -5);
-        GXPosition3f32(0, sc_bottom, -5);
-        GXPosition3f32(param_1->width, sc_bottom, -5);
-        GXPosition3f32(param_1->width, param_1->height, -5);
-        GXPosition3f32(0, param_1->height, -5);
+        GXPosition3f32(sc_left, 0, -5);
+        GXPosition3f32(sc_right, 0, -5);
+        GXPosition3f32(sc_right, sc_top, -5);
+        GXPosition3f32(sc_left, sc_top, -5);
+
+        GXPosition3f32(sc_left, sc_bottom, -5);
+        GXPosition3f32(sc_right, sc_bottom, -5);
+        GXPosition3f32(sc_right, param_1->height, -5);
+        GXPosition3f32(sc_left, param_1->height, -5);
         #else
+
         GXPosition3s16(0, 0, -5);
         GXPosition3s16(FB_WIDTH, 0, -5);
         GXPosition3s16(FB_WIDTH, sc_top, -5);
