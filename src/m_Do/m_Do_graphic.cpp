@@ -657,8 +657,15 @@ void mDoGph_gInf_c::setWideZoomProjection(Mtx44& m) {
 
     temp_f30 *= getInvScale();
     temp_f29 *= getInvScale();
+#if TARGET_PC
+    if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
+        temp_f28 *= getInvScale();
+        temp_f27 *= getInvScale();
+    }
+#else
     temp_f28 *= getInvScale();
     temp_f27 *= getInvScale();
+#endif
 
     m[0][0] = (2.0f * temp_f31) / (temp_f27 - temp_f28);
     m[0][1] = 0.0f;
