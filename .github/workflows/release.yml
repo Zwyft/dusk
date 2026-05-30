@@ -225,13 +225,13 @@ jobs:
     env:
       RUSTC_WRAPPER:
       DEVKITPRO: /opt/devkitpro
-      DEVKITA64: /opt/devkitpro/devkita64
+      DEVKITA64: /opt/devkitpro/devkitA64
 
     steps:
       - name: Install dependencies
         run: |
           apt-get update -qq
-          apt-get install -y cmake make python3 zip git build-essential
+          apt-get install -y cmake ninja-build python3 zip git build-essential
 
       - name: Fix git ownership
         run: git config --global --add safe.directory /__w/dusk/dusk
@@ -246,7 +246,7 @@ jobs:
 
       - name: Configure Switch CMake
         run: |
-          cmake --preset switch-libnx-relwithdebinfo -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=/usr/bin/make
+          cmake --preset switch-libnx-relwithdebinfo -G "Ninja"
 
       - name: Build Switch
         run: cmake --build --preset switch-libnx-relwithdebinfo -- -j$(nproc)
