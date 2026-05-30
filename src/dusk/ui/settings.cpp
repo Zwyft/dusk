@@ -333,6 +333,43 @@ SelectButton& config_percent_select(Pane& leftPane, Pane& rightPane, ConfigVar<f
 }
 
 template <typename T>
+struct ConfigEnumProps {
+    Rml::String key;
+    Rml::String helpText;
+    std::vector<Rml::String> labels;
+    std::function<bool()> isDisabled;
+};
+
+template <typename T>
+SelectButton& config_enum_select(
+    Pane& leftPane, Pane& rightPane, ConfigVar<T>& var, ConfigEnumProps<T> props) {
+    auto& button = leftPane.add_select_button({
+        .key = std::move(props.key),
+        .getValue = [&var, labels = props.labels] {
+            return labels[static_cast<size_t>(var.getValue())];
+        },
+        .isDisabled = std::move(props.isDisabled),
+        .isModified = [&var] { return var.getValue() != var.getDefaultValue(); },
+    });
+    leftPane.register_control(
+        button, rightPane, [helpText = std::move(props.helpText), labels = std::move(props.labels), &var](Pane& pane) {
+            pane.clear();
+            for (size_t i = 0; i < labels.size(); ++i) {
+                pane.add_button({
+                    .text = labels[i],
+                    .isSelected = [&var, i] { return static_cast<size_t>(var.getValue()) == i; },
+                }).on_pressed([&var, i] {
+                    mDoAud_seStartMenu(kSoundItemChange);
+                    var.setValue(static_cast<T>(i));
+                    config::Save();
+                });
+            }
+            pane.add_rml("<br/>" + helpText);
+        });
+    return button;
+}
+
+template <typename T>
 void graphics_tuner_control(Window& window, Pane& leftPane, Pane& rightPane, ConfigVar<T>& var,
     const GraphicsTunerProps& props, bool prelaunch) {
     leftPane.register_control(
@@ -1415,7 +1452,12 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
         leftPane.register_control(
             leftPane.add_child<StringButton>(StringButton::Props{
                 .key = "Seed",
-                .value = &getSettings().randomizer.seed,
+                .getValue = [] { return getSettings().randomizer.seed.getValue(); },
+                .setValue =
+                    [](Rml::String value) {
+                        getSettings().randomizer.seed.setValue(std::move(value));
+                        config::Save();
+                    },
             }),
             rightPane, [](Pane& pane) {
                 pane.clear();
@@ -1423,14 +1465,14 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             });
 
         config_enum_select(leftPane, rightPane, getSettings().randomizer.logic,
-            {
+            ConfigEnumProps<RandomizerLogic>{
                 .key = "Logic",
                 .helpText = "Determines how the shuffler ensures the game is beatable.",
                 .labels = {"Glitchless", "Glitched", "No Logic"},
             });
 
         config_enum_select(leftPane, rightPane, getSettings().randomizer.goal,
-            {
+            ConfigEnumProps<RandomizerGoal>{
                 .key = "Goal",
                 .helpText = "The win condition for this randomized seed.",
                 .labels = {"Defeat Ganon", "All Dungeons", "Triforce Hunt"},
