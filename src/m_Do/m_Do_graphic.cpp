@@ -1252,12 +1252,6 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
 
         GXEnd();
     }
-#ifndef TARGET_PC
-    // due to rounding, the scaled scissor region doesn't align with the untrimmed area
-    // this creates a gap when drawing the flipped image for mirror mode
-    GXSetScissor(param_1->scissor.x_orig, param_1->scissor.y_orig, param_1->scissor.width,
-                 param_1->scissor.height);
-#endif
 }
 
 #if !PLATFORM_WII && !TARGET_PC
@@ -2144,8 +2138,8 @@ int mDoGph_Painter() {
                 view_port_class new_port;
                 new_port.x_orig = 0.0f;
                 new_port.y_orig = 0.0f;
-                new_port.width = FB_WIDTH;
-                new_port.height = FB_HEIGHT;
+                new_port.width = mDoGph_gInf_c::getWidth();
+                new_port.height = mDoGph_gInf_c::getHeight();
                 new_port.near_z = view_port->near_z;
                 new_port.far_z = view_port->far_z;
                 new_port.scissor = view_port->scissor;
@@ -2157,10 +2151,26 @@ int mDoGph_Painter() {
             captureScreenSetScissor(&view_port->scissor);
             #endif
 
-            GXSetViewport(view_port->x_orig, view_port->y_orig, view_port->width,
-                          view_port->height, view_port->near_z, view_port->far_z);
-            GXSetScissor(view_port->x_orig, view_port->y_orig, view_port->width,
-                         view_port->height);
+            f32 vp_x = view_port->x_orig;
+            f32 vp_y = view_port->y_orig;
+            f32 vp_w = view_port->width;
+            f32 vp_h = view_port->height;
+
+            f32 sc_x = view_port->x_orig;
+            f32 sc_y = view_port->y_orig;
+            f32 sc_w = view_port->width;
+            f32 sc_h = view_port->height;
+
+            if (mDoGph_gInf_c::isWideZoom() && dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
+                const f32 fullWidth = mDoGph_gInf_c::getWidth();
+                vp_x = 0.0f;
+                vp_w = fullWidth;
+                sc_x = 0.0f;
+                sc_w = fullWidth;
+            }
+
+            GXSetViewport(vp_x, vp_y, vp_w, vp_h, view_port->near_z, view_port->far_z);
+            GXSetScissor(sc_x, sc_y, sc_w, sc_h);
 
 #ifdef TARGET_PC
             // FRAME INTERP NOTE: Call setViewMtx earlier so that it's interpolated in time for draw_info to use it

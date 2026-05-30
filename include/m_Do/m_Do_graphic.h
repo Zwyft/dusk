@@ -122,7 +122,6 @@ public:
     static void setTickRate(u32 rate) { JFWDisplay::getManager()->setTickRate(rate); }
     static void waitBlanking(int wait) { JFWDisplay::getManager()->waitBlanking(wait); }
 
-#if TARGET_PC
     static f32 hudAspectScaleDown;
     static f32 hudAspectScaleUp;
     static void updateSafeAreaBounds();
@@ -134,7 +133,6 @@ public:
     static f32 getSafeMaxYF() { return m_safeMaxYF; }
     static f32 ScaleHUDXLeft(f32 baseX) { return getSafeMinXF() + baseX; }
     static f32 ScaleHUDXRight(f32 baseX) { return getSafeMaxXF() - FB_WIDTH_BASE + baseX; }
-#endif
 
     static void setBlureMtx(const Mtx m) {
         cMtx_copy(m, mBlureMtx);
@@ -157,18 +155,10 @@ public:
     }
 
     static f32 getWidth() {
-        #if TARGET_PC
         return JUTVideo::getManager()->getFbWidth();
-        #else
-        return FB_WIDTH;
-        #endif
     }
     static f32 getHeight() {
-        #if TARGET_PC
         return JUTVideo::getManager()->getEfbHeight();
-        #else
-        return FB_HEIGHT;
-        #endif
     }
 
     static f32 getMinYF() {
