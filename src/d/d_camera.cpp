@@ -11277,31 +11277,32 @@ static int camera_execute(camera_process_class* i_this) {
     return 1;
 }
 
-#ifdef TARGET_PC
 void set_ar_corrected_trim(dDlst_window_c* window, float trim_height) {
     const auto viewport = window->getViewPort();
+    const float width = mDoGph_gInf_c::getWidth();
+    const float height = mDoGph_gInf_c::getHeight();
     float trim_width = 0.0f;
-
+    
     if (mDoGph_gInf_c::isWideZoom()) {
-        const auto target_ar = FB_WIDTH / (FB_HEIGHT - trim_height * 2.0f);
+        const auto target_ar = width / (height - trim_height * 2.0f);
         const auto current_ar = mDoGph_gInf_c::m_safeWidthF / mDoGph_gInf_c::m_safeHeightF;
 
         if (current_ar < target_ar) {
-            trim_height = FB_HEIGHT / 2.0f * (1.0f - current_ar / target_ar);
+            trim_height = height / 2.0f * (1.0f - current_ar / target_ar);
         } else {
             trim_height = 0.0f;
             if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
-                trim_width = FB_WIDTH / 2.0f * (1.0f - target_ar / current_ar);
+                trim_width = width / 2.0f * (1.0f - target_ar / current_ar);
             }
         }
     }
 
-    trim_width *= viewport->width / FB_WIDTH;
-    trim_height *= viewport->height / FB_HEIGHT;
+    trim_width *= viewport->width / width;
+    trim_height *= viewport->height / height;
     window->setScissor(trim_width, trim_height, viewport->width - trim_width * 2.0f,
         viewport->height - trim_height * 2.0f);
 }
-#endif
+
 static int camera_draw(camera_process_class* i_this) {
     camera_class* a_this = (camera_class*)i_this;
     dCamera_c* body = &i_this->mCamera;
@@ -11354,7 +11355,6 @@ static int camera_draw(camera_process_class* i_this) {
     }
 #endif
 
-#if TARGET_PC
     set_ar_corrected_trim(window, body->TrimHeight());
 
     if (dusk::getSettings().game.enableFrameInterpolation) {
@@ -11389,11 +11389,6 @@ static int camera_draw(camera_process_class* i_this) {
             }
         }, i_this);
     }
-#else
-    int trim_height = body->TrimHeight();
-
-    window->setScissor(0.0f, trim_height, FB_WIDTH, FB_HEIGHT - trim_height * 2.0f);
-#endif
 
     C_MTXPerspective(process->view.projMtx, process->view.fovy, process->view.aspect, process->view.near_, process->view.far_);
     mDoMtx_lookAt(process->view.viewMtx, &process->view.lookat.eye, &process->view.lookat.center,

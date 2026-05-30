@@ -657,15 +657,11 @@ void mDoGph_gInf_c::setWideZoomProjection(Mtx44& m) {
 
     temp_f30 *= getInvScale();
     temp_f29 *= getInvScale();
-#if TARGET_PC
+
     if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
         temp_f28 *= getInvScale();
         temp_f27 *= getInvScale();
     }
-#else
-    temp_f28 *= getInvScale();
-    temp_f27 *= getInvScale();
-#endif
 
     m[0][0] = (2.0f * temp_f31) / (temp_f27 - temp_f28);
     m[0][1] = 0.0f;
@@ -1201,21 +1197,20 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
     if ((y_orig_pos == 0) && (param_1->scissor.y_orig != param_1->y_orig ||
                               (param_1->scissor.height != param_1->height)))
     {
-        #if TARGET_PC
+        f32 width = mDoGph_gInf_c::getWidth();
+        f32 height = mDoGph_gInf_c::getHeight();
+
         f32 sc_top = param_1->scissor.y_orig;
         f32 sc_bottom = param_1->scissor.y_orig + param_1->scissor.height;
-
+        
         f32 sc_left = 0.0f;
-        f32 sc_right = param_1->width;
+        f32 sc_right = width;
 
         if (!dusk::getSettings().game.disableCutscenePillarboxing.getValue()) {
             sc_left = param_1->scissor.x_orig;
             sc_right = sc_left + param_1->scissor.width;
         }
-        #else
-        s32 sc_top = (int)param_1->scissor.y_orig;
-        s32 sc_bottom = param_1->scissor.y_orig + param_1->scissor.height;
-        #endif
+
         GXSetNumChans(1);
         GXSetChanCtrl(GX_ALPHA0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_NONE);
         GXSetNumTexGens(0);
@@ -1235,11 +1230,7 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
         GXSetNumIndStages(0);
         Mtx44 ortho;
 
-        #if TARGET_PC
-        C_MTXOrtho(ortho, 0.0f, param_1->height, 0.0f, param_1->width, 0.0f, 10.0f);
-        #else
-        C_MTXOrtho(ortho, 0.0f, FB_HEIGHT, 0.0f, FB_WIDTH, 0.0f, 10.0f);
-        #endif
+        C_MTXOrtho(ortho, 0.0f, height, 0.0f, width, 0.0f, 10.0f);
 
         GXLoadPosMtxImm(cMtx_getIdentity(), 0);
         GXClearVtxDesc();
@@ -1249,27 +1240,15 @@ static void trimming(view_class* param_0, view_port_class* param_1) {
         GXSetCurrentMtx(0);
         GXBegin(GX_QUADS, GX_VTXFMT0, 8);
 
-        #if TARGET_PC
-        GXPosition3f32(sc_left, 0, -5);
-        GXPosition3f32(sc_right, 0, -5);
-        GXPosition3f32(sc_right, sc_top, -5);
-        GXPosition3f32(sc_left, sc_top, -5);
+        GXPosition3f32(sc_left, 0.0f, -5.0f);
+        GXPosition3f32(sc_right, 0.0f, -5.0f);
+        GXPosition3f32(sc_right, sc_top, -5.0f);
+        GXPosition3f32(sc_left, sc_top, -5.0f);
 
-        GXPosition3f32(sc_left, sc_bottom, -5);
-        GXPosition3f32(sc_right, sc_bottom, -5);
-        GXPosition3f32(sc_right, param_1->height, -5);
-        GXPosition3f32(sc_left, param_1->height, -5);
-        #else
-
-        GXPosition3s16(0, 0, -5);
-        GXPosition3s16(FB_WIDTH, 0, -5);
-        GXPosition3s16(FB_WIDTH, sc_top, -5);
-        GXPosition3s16(0, sc_top, -5);
-        GXPosition3s16(0, sc_bottom, -5);
-        GXPosition3s16(FB_WIDTH, sc_bottom, -5);
-        GXPosition3s16(FB_WIDTH, FB_HEIGHT, -5);
-        GXPosition3s16(0, FB_HEIGHT, -5);
-        #endif
+        GXPosition3f32(sc_left, sc_bottom, -5.0f);
+        GXPosition3f32(sc_right, sc_bottom, -5.0f);
+        GXPosition3f32(sc_right, height, -5.0f);
+        GXPosition3f32(sc_left, height, -5.0f);
 
         GXEnd();
     }
