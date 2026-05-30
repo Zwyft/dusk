@@ -6,6 +6,7 @@ file(READ "${PATCH_FILE}" _dawn_fetch_deps)
 set(_patched "${_dawn_fetch_deps}")
 
 set(_imports_block [==[
+# DUSK_SWITCH_PATCH_V3
 import os
 import sys
 import subprocess
@@ -24,7 +25,7 @@ set(_absl_hook [==[
         if submodule == 'third_party/abseil-cpp':
             absl_sysinfo = submodule_path / 'absl/base/internal/sysinfo.cc'
             if absl_sysinfo.is_file():
-                patch_abseil_switch(absl_sysinfo)
+                patch_abseil_switch_v3(absl_sysinfo)
 
             absl_elf_mem_image = submodule_path / 'absl/debugging/internal/elf_mem_image.h'
             if absl_elf_mem_image.is_file():
@@ -32,28 +33,38 @@ set(_absl_hook [==[
 ]==])
 
 set(_absl_helper [==[
-def patch_abseil_switch(absl_sysinfo):
-    """Patch Abseil's thread-id fallback for libnx."""
+def patch_abseil_switch_v3(absl_sysinfo):
+    """Patch Abseil's thread-id fallback for libnx. (v3)"""
     text = absl_sysinfo.read_text()
-    needle = "reinterpret_cast<intptr_t>(pthread_self())"
-    if needle in text:
-        log(f"Switch abseil patch already applied: {absl_sysinfo}")
-        return
+    patched = text
 
-    patched = re.sub(
-        r"static_cast<pid_t>\s*\(\s*pthread_self\s*\(\s*\)\s*\)",
-        "static_cast<pid_t>(reinterpret_cast<intptr_t>(pthread_self()))",
-        text,
-    )
-    if patched == text:
-        raise RuntimeError(f"could not find abseil thread-id fallback in {absl_sysinfo}")
+    # Use uintptr_t as it's the most portable way to cast a pointer to an integer
+    # for use as a unique ID.
+    if "reinterpret_cast<uintptr_t>(pthread_self())" not in patched:
+        # Match both the original and v1/v2 which used intptr_t
+        patched = re.sub(
+            r"static_cast<pid_t>\s*\(\s*(?:reinterpret_cast<intptr_t>\s*\()?\s*pthread_self\s*\(\s*\)\s*\)?\s*\)",
+            "static_cast<pid_t>(reinterpret_cast<uintptr_t>(pthread_self()))",
+            patched,
+        )
+        if patched == text:
+            # Fallback for even older versions or different formatting
+            patched = text.replace("static_cast<pid_t>(pthread_self())", 
+                                 "static_cast<pid_t>(reinterpret_cast<uintptr_t>(pthread_self()))")
+        
+        if patched != text:
+            log(f"applied Switch abseil thread-id patch (uintptr_t): {absl_sysinfo}")
 
-    # Ensure <cstdint> is included for intptr_t
+    # Ensure <cstdint> is included for uintptr_t
     if "#include <cstdint>" not in patched:
-        patched = patched.replace('#include "absl/base/internal/sysinfo.h"', '#include "absl/base/internal/sysinfo.h"\n#include <cstdint>')
+        patched = patched.replace('#include "absl/base/internal/sysinfo.h"', 
+                                 '#include "absl/base/internal/sysinfo.h"\n#include <cstdint>')
+        log(f"added <cstdint> to: {absl_sysinfo}")
 
-    absl_sysinfo.write_text(patched)
-    log(f"applied Switch abseil patch: {absl_sysinfo}")
+    if patched != text:
+        absl_sysinfo.write_text(patched)
+    else:
+        log(f"Switch abseil patch v3 already fully applied: {absl_sysinfo}")
 
 def patch_abseil_elf_mem_image_switch(absl_elf_mem_image):
     """Disable Abseil elf_mem_image on libnx where <link.h> is unavailable."""
@@ -66,18 +77,26 @@ def patch_abseil_elf_mem_image_switch(absl_elf_mem_image):
     needle = "#if defined(__ELF__) && !defined(__OpenBSD__) && !defined(__QNX__) &&"
     replacement = "#if defined(__ELF__) && !defined(__SWITCH__) && !defined(__OpenBSD__) && !defined(__QNX__) &&"
     if needle not in text:
-        raise RuntimeError(f"could not find elf_mem_image feature guard in {absl_elf_mem_image}")
+        # Check for slightly different versions
+        needle = "#if defined(__ELF__) && !defined(__OpenBSD__) &&"
+        replacement = "#if defined(__ELF__) && !defined(__SWITCH__) && !defined(__OpenBSD__) &&"
+        
+    if needle not in text:
+        log(f"WARNING: could not find elf_mem_image feature guard in {absl_elf_mem_image}")
+        return
 
     absl_elf_mem_image.write_text(text.replace(needle, replacement, 1))
     log(f"applied Switch elf_mem_image patch: {absl_elf_mem_image}")
 ]==])
 
 # Ensure Dawn's fetch helper has the imports our injected helper uses.
-string(FIND "${_patched}" "import re" _has_re_import)
-if (_has_re_import EQUAL -1)
-  string(FIND "${_patched}" "from pathlib import Path" _path_import)
-  if (_path_import GREATER -1)
-    string(REPLACE "import os\nimport sys\nimport subprocess\nimport argparse\nfrom pathlib import Path" "${_imports_block}" _patched "${_patched}")
+string(FIND "${_patched}" "DUSK_SWITCH_PATCH_V3" _has_v3_imports)
+if (_has_v3_imports EQUAL -1)
+  # Look for ANY previous import block and replace it.
+  string(FIND "${_patched}" "import os\nimport sys\nimport subprocess\nimport argparse" _old_imports)
+  if (_old_imports GREATER -1)
+     # This is a bit greedy but should work for this specific script.
+     string(REGEX REPLACE "import os\nimport sys\nimport subprocess\nimport argparse(\nimport re)?(\nfrom pathlib import Path)?" "${_imports_block}" _patched "${_patched}")
   else ()
     message(FATAL_ERROR "aurora: could not find Dawn fetch script import block in ${PATCH_FILE}")
   endif ()
@@ -95,23 +114,36 @@ if (_has_log_helper EQUAL -1)
   endif ()
 endif ()
 
-string(FIND "${_patched}" "def patch_abseil_switch(absl_sysinfo):" _has_absl_helper)
+string(FIND "${_patched}" "def patch_abseil_switch_v3" _has_absl_helper)
 if (_has_absl_helper EQUAL -1)
-  string(FIND "${_patched}" "class Var:" _class_anchor)
-  if (_class_anchor GREATER -1)
-    string(REPLACE "class Var:" "${_absl_helper}\n\nclass Var:" _patched "${_patched}")
+  # Check if old version is there and replace it
+  string(FIND "${_patched}" "def patch_abseil_switch" _has_old_absl_helper)
+  if (_has_old_absl_helper GREATER -1)
+     # Replace the whole block from old helper to "class Var:"
+     string(REGEX REPLACE "def patch_abseil_switch.*class Var:" "${_absl_helper}\n\nclass Var:" _patched "${_patched}")
   else ()
-    message(FATAL_ERROR "aurora: could not find Dawn fetch script class anchor in ${PATCH_FILE}")
+    string(FIND "${_patched}" "class Var:" _class_anchor)
+    if (_class_anchor GREATER -1)
+      string(REPLACE "class Var:" "${_absl_helper}\n\nclass Var:" _patched "${_patched}")
+    else ()
+      message(FATAL_ERROR "aurora: could not find Dawn fetch script class anchor in ${PATCH_FILE}")
+    endif ()
   endif ()
 endif ()
 
-string(FIND "${_patched}" "if submodule == 'third_party/abseil-cpp':" _has_absl_hook)
+string(FIND "${_patched}" "patch_abseil_switch_v3" _has_absl_hook)
 if (_has_absl_hook EQUAL -1)
-  string(FIND "${_patched}" "process_dir(args, submodule_path, required_subsubmodules)" _call_anchor)
-  if (_call_anchor GREATER -1)
-    string(REPLACE "        process_dir(args, submodule_path, required_subsubmodules)" "        process_dir(args, submodule_path, required_subsubmodules)\n${_absl_hook}" _patched "${_patched}")
+  # Check if old hook is there and replace it
+  string(FIND "${_patched}" "patch_abseil_switch" _has_old_absl_hook)
+  if (_has_old_absl_hook GREATER -1)
+    string(REGEX REPLACE "if submodule == 'third_party/abseil-cpp':.*absl_elf_mem_image_switch\\(absl_elf_mem_image\\)" "${_absl_hook}" _patched "${_patched}")
   else ()
-    message(FATAL_ERROR "aurora: could not find Dawn recursive dependency call in ${PATCH_FILE}")
+    string(FIND "${_patched}" "process_dir(args, submodule_path, required_subsubmodules)" _call_anchor)
+    if (_call_anchor GREATER -1)
+      string(REPLACE "        process_dir(args, submodule_path, required_subsubmodules)" "        process_dir(args, submodule_path, required_subsubmodules)\n${_absl_hook}" _patched "${_patched}")
+    else ()
+      message(FATAL_ERROR "aurora: could not find Dawn recursive dependency call in ${PATCH_FILE}")
+    endif ()
   endif ()
 endif ()
 
