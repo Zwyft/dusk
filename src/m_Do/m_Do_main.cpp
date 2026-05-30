@@ -64,6 +64,7 @@
 #include "dusk/iso_validate.hpp"
 #include "dusk/logging.h"
 #include "dusk/main.h"
+#include "dusk/platform_support.hpp"
 #include "dusk/mod_manager.hpp"
 #include "dusk/ui/menu_bar.hpp"
 #include "dusk/ui/overlay.hpp"
