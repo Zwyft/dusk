@@ -231,7 +231,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -qq
-          apt-get install -y cmake python3 zip
+          apt-get install -y cmake make python3 zip build-essential
 
       - uses: actions/checkout@v6
         with:
