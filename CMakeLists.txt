@@ -109,10 +109,18 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_cmake")
 
+option(DUSK_EXPERIMENTAL_SWITCH "Enable early Nintendo Switch compile-time scaffolding (not a runnable port yet)" OFF)
+
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   set(DAWN_USE_WAYLAND ON CACHE BOOL "Enable support for Wayland surface" FORCE)
 endif ()
-set(AURORA_ENABLE_DVD ON CACHE BOOL "Enable DVD API support" FORCE)
+
+if (DUSK_EXPERIMENTAL_SWITCH)
+    set(AURORA_ENABLE_DVD OFF CACHE BOOL "Enable DVD API support" FORCE)
+else ()
+    set(AURORA_ENABLE_DVD ON CACHE BOOL "Enable DVD API support" FORCE)
+endif ()
+
 set(AURORA_ENABLE_CARD ON CACHE BOOL "Enable CARD API support" FORCE)
 set(AURORA_ENABLE_RMLUI ON CACHE BOOL "Enable RmlUi UI support" FORCE)
 add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
@@ -124,7 +132,6 @@ option(DUSK_BUILD_WARNINGS "Enable compiler warnings (off by default)")
 option(DUSK_SELECTED_OPT "If on, selected parts of the project will be compiled with optimizations on Debug, intending to make the game run at 30 FPS. Note for MSVC: you will need to remove '/RTC1' from your debug flags in CMake.")
 option(DUSK_MOVIE_SUPPORT "If on, compile against libjpeg-turbo to enable THP file decoding" ON)
 option(DUSK_ENABLE_UPDATE_CHECKER "Enable update checking support" ON)
-option(DUSK_EXPERIMENTAL_SWITCH "Enable early Nintendo Switch compile-time scaffolding (not a runnable port yet)" OFF)
 
 if(ANDROID)
     set(DUSK_MOVIE_SUPPORT OFF)
@@ -143,8 +150,6 @@ if (DUSK_EXPERIMENTAL_SWITCH)
         "Sentry is currently disabled for the experimental Switch target" FORCE)
     set(DUSK_ENABLE_DISCORD OFF CACHE BOOL
         "Discord Rich Presence is currently disabled for the experimental Switch target" FORCE)
-    set(AURORA_ENABLE_DVD OFF CACHE BOOL
-        "Aurora DVD (nod) is currently disabled for the experimental Switch target" FORCE)
 endif ()
 
 # Edit & Continue
