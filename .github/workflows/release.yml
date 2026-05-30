@@ -218,9 +218,62 @@ jobs:
           name: dusk-${{env.DUSK_VERSION}}-android
           path: platforms/android/app/build/outputs/apk/debug/*.apk
 
+  build-switch:
+    name: Build Switch (experimental)
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    env:
+      RUSTC_WRAPPER:
+
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y cmake ninja-build python3
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Patch aurora
+        run: python3 ci/patch-aurora.py
+
+      - name: Configure Switch CMake
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITA64=/opt/devkitpro/devkita64
+          cmake --preset switch-libnx-relwithdebinfo
+
+      - name: Build Switch
+        run: cmake --build --preset switch-libnx-relwithdebinfo
+
+      - name: Package Switch NRO
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITA64=/opt/devkitpro/devkita64
+          BUILD_DIR=build/switch-libnx-relwithdebinfo
+          $DEVKITPRO/tools/bin/nacptool --create "Dusk" "Dusk" "${{github.ref_name}}" $BUILD_DIR/dusk.nacp
+          $DEVKITPRO/tools/bin/elf2nro $BUILD_DIR/dusk $BUILD_DIR/dusk.nro --nacp=$BUILD_DIR/dusk.nacp --romfsdir=res
+
+      - name: Stage Switch upload payloads
+        run: |
+          BUILD_DIR=build/switch-libnx-relwithdebinfo
+          ARTIFACT_DIR=$BUILD_DIR/upload-artifacts
+          mkdir -p $ARTIFACT_DIR
+          cp $BUILD_DIR/dusk.nro $ARTIFACT_DIR/dusk.nro
+          cp $BUILD_DIR/dusk.nacp $ARTIFACT_DIR/dusk.nacp
+          zip -r $ARTIFACT_DIR/dusk-${{github.ref_name}}-switch.zip $BUILD_DIR/dusk.nro $BUILD_DIR/dusk.nacp res
+
+      - name: Upload Switch artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dusk-${{github.ref_name}}-switch
+          path: build/switch-libnx-relwithdebinfo/upload-artifacts
+
   release:
     name: Create Release
-    needs: [build-linux, build-macos, build-windows, build-android]
+    needs: [build-linux, build-macos, build-windows, build-android, build-switch]
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
 
@@ -243,3 +296,5 @@ jobs:
             artifacts/**/*.dll
             artifacts/**/*.AppImage
             artifacts/**/*.app
+            artifacts/**/*.nro
+            artifacts/**/*.zip
