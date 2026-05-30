@@ -824,6 +824,11 @@
       "targets": [
         "install"
       ]
+    },
+    {
+      "name": "switch-libnx-relwithdebinfo",
+      "configurePreset": "switch-libnx-relwithdebinfo",
+      "displayName": "Nintendo Switch (scaffolding)"
     }
   ]
 }
