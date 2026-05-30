@@ -381,10 +381,10 @@
       "hidden": true,
       "inherits": [
         "android-base",
-        "ci",
-        "minsize"
+        "ci"
       ],
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
         "DUSK_ENABLE_SENTRY_NATIVE": {
           "type": "BOOL",
           "value": false
