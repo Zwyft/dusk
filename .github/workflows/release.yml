@@ -246,7 +246,7 @@ jobs:
 
       - name: Configure Switch CMake
         run: |
-          cmake --preset switch-libnx-relwithdebinfo -G "Ninja"
+          cmake --preset switch-libnx-relwithdebinfo -G "Ninja" -DAURORA_ENABLE_DVD=OFF
 
       - name: Build Switch
         run: cmake --build --preset switch-libnx-relwithdebinfo -- -j$(nproc)
