@@ -2,14 +2,21 @@
 
 #include "aurora/lib/logging.hpp"
 #include "dusk/achievements.h"
-#include "dusk/touch_controls.hpp"
+#include "dusk/action_bindings.h"
+#include "controller_config.hpp"
+#include "dusk/livesplit.h"
+#include "dusk/settings.h"
+#include "dusk/speedrun.h"
+#include "fmt/format.h"
 #include "magic_enum.hpp"
 #include "window.hpp"
 
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_timer.h>
 #include <algorithm>
+#include <aurora/gfx.h>
 #include <dolphin/pad.h>
+#include <m_Do/m_Do_main.h>
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -26,6 +33,10 @@ const Rml::String kDocumentSource = R"RML(
 </head>
 <body>
     <fps id="fps" />
+    <speedrun-timer id="speedrun-timer">
+        <speedrun-rta id="speedrun-rta" />
+        <speedrun-igt id="speedrun-igt" />
+    </speedrun-timer>
 </body>
 </rml>
 )RML";
@@ -94,13 +105,13 @@ Rml::Element* create_controller_warning(Rml::Element* parent) {
 
     auto* heading = append(elem, "heading");
     auto* title = append(heading, "span");
-    title->SetInnerRML("No controller assigned");
+    title->SetInnerRML("No Device Assigned");
     auto* icon = append(heading, "icon");
     icon->SetClass("warning", true);
 
     auto* message = append(elem, "message");
     auto* content = append(message, "span");
-    content->SetInnerRML("Configure controller port 1 in Settings.");
+    content->SetInnerRML("Configure <b>Port 1</b> in Settings.");
 
     return elem;
 }
@@ -138,19 +149,29 @@ Rml::String back_button_name() {
 #if defined(TARGET_ANDROID) || (defined(__APPLE__) && TARGET_OS_IOS && !TARGET_OS_MACCATALYST)
 constexpr auto kMenuNotificationPrefix = "3-finger tap or";
 #else
-constexpr auto kMenuNotificationPrefix = "Press F1 or";
+constexpr auto kMenuNotificationPrefix = "Press <b>F1</b> or";
 #endif
 
 Rml::Element* create_menu_notification(Rml::Element* parent) {
     auto* elem = append(parent, "toast");
     elem->SetClass("menu-notification", true);
 
+    // Get name of button for action binding if the action is bound
+    Rml::String padButton{};
+    SDL_Gamepad* gamepad = gamepad_for_port(PAD_CHAN0);
+    if (isActionBound(ActionBinds::OPEN_DUSKLIGHT_MENU, PAD_CHAN0) && gamepad != nullptr) {
+        padButton = native_button_name(gamepad,
+            getActionBindButton(ActionBinds::OPEN_DUSKLIGHT_MENU, PAD_CHAN0));
+    } else {
+        padButton = back_button_name();
+    }
+
     auto* message = append(elem, "message");
     auto* row = append(message, "row");
     append(row, "span")->SetInnerRML(kMenuNotificationPrefix);
     auto* icon = append(row, "icon");
     icon->SetClass("controller", true);
-    append(row, "span")->SetInnerRML(escape(back_button_name()));
+    append(row, "span")->SetInnerRML("<b>" + escape(padButton) + "</b>");
     append(row, "span")->SetInnerRML("to open menu");
 
     return elem;
@@ -168,45 +189,17 @@ void remove_element(Rml::Element*& elem) noexcept {
 
 }  // namespace
 
-// https://vplesko.com/posts/how_to_implement_an_fps_counter.html
-void Overlay::advance_fps_counter(float& outFps, Uint64 perfFreq) {
-    if (perfFreq == 0) {
-        outFps = 0.f;
-        return;
-    }
-
-    const Uint64 curr = SDL_GetPerformanceCounter();
-    if (!mFpsHavePrevCounter) {
-        mFpsPrevCounter = curr;
-        mFpsHavePrevCounter = true;
-        outFps = 0.f;
-        return;
-    }
-
-    const Uint64 processingTicks = curr - mFpsPrevCounter;
-    mFpsPrevCounter = curr;
-
-    mFpsFrameEvents.push_back({curr, processingTicks});
-    mFpsSumTicks += processingTicks;
-
-    while (!mFpsFrameEvents.empty() && mFpsFrameEvents.front().endCounter + perfFreq < curr) {
-        mFpsSumTicks -= mFpsFrameEvents.front().processingTicks;
-        mFpsFrameEvents.pop_front();
-    }
-
-    const auto n = mFpsFrameEvents.size();
-    if (n == 0 || mFpsSumTicks == 0) {
-        outFps = 0.f;
-        return;
-    }
-
-    const double avgSeconds =
-        static_cast<double>(mFpsSumTicks) / static_cast<double>(n) / static_cast<double>(perfFreq);
-    outFps = static_cast<float>(1.0 / avgSeconds);
+static std::string FormatTime(OSTime ticks) {
+    OSCalendarTime t;
+    OSTicksToCalendarTime(ticks, &t);
+    return fmt::format("{0:02}:{1:02}:{2:02}.{3:03}", t.hour, t.min, t.sec, t.msec);
 }
 
-Overlay::Overlay() : Document(kDocumentSource) {
+Overlay::Overlay() : Document(kDocumentSource, true) {
     mFpsCounter = mDocument->GetElementById("fps");
+    mSpeedrunTimer = mDocument->GetElementById("speedrun-timer");
+    mSpeedrunRta = mDocument->GetElementById("speedrun-rta");
+    mSpeedrunIgt = mDocument->GetElementById("speedrun-igt");
 
     listen(mDocument, Rml::EventId::Focus, [](Rml::Event&) { Log.warn("Overlay received focus"); });
     listen(mDocument, Rml::EventId::Transitionend, [this](Rml::Event& event) {
@@ -248,8 +241,7 @@ void Overlay::update() {
             mFpsCounter->SetAttribute("corner", kFpsCorners[idx]);
 
             const Uint64 perfFreq = SDL_GetPerformanceFrequency();
-            float fps = 0.f;
-            advance_fps_counter(fps, perfFreq);
+            float fps = aurora_get_fps();
 
             const Uint64 now = SDL_GetPerformanceCounter();
             // Limit updates to twice per second
@@ -262,16 +254,71 @@ void Overlay::update() {
             }
         } else {
             mFpsCounter->RemoveAttribute("open");
-            mFpsFrameEvents.clear();
-            mFpsSumTicks = 0;
-            mFpsHavePrevCounter = false;
             mFpsLastUpdate = 0;
         }
     }
 
+#if !(defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS && !TARGET_OS_MACCATALYST))
+    if (getSettings().game.speedrunMode && getSettings().game.liveSplitEnabled) {
+        dusk::speedrun::updateLiveSplit();
+        if (dusk::speedrun::consumeConnectedEvent()) {
+            push_toast({.title = "LiveSplit connected", .duration = std::chrono::seconds(3)});
+        }
+        if (dusk::speedrun::consumeDisconnectedEvent()) {
+            push_toast({.title = "LiveSplit disconnected", .duration = std::chrono::seconds(3)});
+        }
+    }
+#endif
+
+    if (mSpeedrunTimer != nullptr && mSpeedrunRta != nullptr && mSpeedrunIgt != nullptr) {
+        if (getSettings().game.speedrunMode) {
+            // L+R+A+Start to reset timer
+            if (mDoCPd_c::getHoldL(PAD_1) && mDoCPd_c::getHoldR(PAD_1) &&
+                mDoCPd_c::getHoldA(PAD_1) && mDoCPd_c::getTrigZ(PAD_1))
+            {
+                m_speedrunInfo.reset();
+            }
+
+            // L+R+A+Y to manually stop timer
+            if (mDoCPd_c::getHoldL(PAD_1) && mDoCPd_c::getHoldR(PAD_1) &&
+                mDoCPd_c::getHoldA(PAD_1) && mDoCPd_c::getTrigY(PAD_1))
+            {
+                if (m_speedrunInfo.m_isRunStarted) {
+                    m_speedrunInfo.m_endTimestamp = OSGetTime() - m_speedrunInfo.m_startTimestamp;
+                    m_speedrunInfo.m_isRunStarted = false;
+                }
+            }
+
+            OSTime elapsedTime = 0;
+            if (m_speedrunInfo.m_isRunStarted) {
+                elapsedTime = OSGetTime() - m_speedrunInfo.m_startTimestamp;
+            } else if (m_speedrunInfo.m_endTimestamp != 0) {
+                elapsedTime = m_speedrunInfo.m_endTimestamp;
+            }
+
+            if (!m_speedrunInfo.m_isPauseIGT) {
+                m_speedrunInfo.m_igtTimer = elapsedTime - m_speedrunInfo.m_totalLoadTime;
+            }
+
+            mSpeedrunTimer->SetAttribute("open", "");
+
+            if (getSettings().game.showSpeedrunRTATimer) {
+                mSpeedrunRta->SetAttribute("open", "");
+                mSpeedrunRta->SetInnerRML(escape(fmt::format("RTA  {}", FormatTime(elapsedTime))));
+            } else {
+                mSpeedrunRta->RemoveAttribute("open");
+            }
+
+            mSpeedrunIgt->SetInnerRML(escape(fmt::format("IGT  {}", FormatTime(m_speedrunInfo.m_igtTimer))));
+        } else {
+            mSpeedrunTimer->RemoveAttribute("open");
+        }
+    }
+
+    u32 count = 0;
     const bool showControllerWarning = PADGetIndexForPort(PAD_CHAN0) < 0 &&
-                                       PADGetKeyButtonBindings(PAD_CHAN0, nullptr) == nullptr &&
-                                       !dusk::touch_controls::is_enabled() &&
+                                       PADGetKeyButtonBindings(PAD_CHAN0, &count) == nullptr &&
+                                       !getSettings().game.enableTouchControls &&
                                        dynamic_cast<Window*>(top_document()) == nullptr &&
                                        dynamic_cast<WindowSmall*>(top_document()) == nullptr;
     if (showControllerWarning && mControllerWarning == nullptr) {

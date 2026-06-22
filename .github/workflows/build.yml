@@ -5,7 +5,16 @@ on:
     paths-ignore:
       - '*.md'
       - '*LICENSE'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - '*.md'
+      - '*LICENSE'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   actions: write
@@ -34,6 +43,14 @@ jobs:
             runner: ubuntu-24.04
             preset: gcc
             artifact_arch: x86_64
+          - name: GCC aarch64
+            runner: ubuntu-24.04-arm
+            preset: gcc
+            artifact_arch: aarch64
+          # - name: Clang x86_64
+          #   runner: ubuntu-latest
+          #   preset: clang
+          #   artifact_arch: x86_64
 
     steps:
       - uses: actions/checkout@v6
@@ -48,25 +65,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ninja-build libfuse2 \
-            libcurl4-openssl-dev libssl-dev libglu1-mesa-dev libasound2-dev \
-            libpulse-dev libudev-dev libx11-xcb-dev libxrandr-dev libxi-dev \
-            libxcursor-dev libxinerama-dev libdbus-1-dev libpng-dev \
-            libvulkan-dev zlib1g-dev libfreetype-dev libgtk-3-dev \
-            libdecor-0-dev libpipewire-0.3-dev libunwind-dev \
-            libusb-1.0-0-dev libxss-dev
-
-      - name: Patch aurora
-        run: python3 ci/patch-aurora.py
-
-      - name: Restore sccache cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/sccache
-          key: sccache-linux-v1
-          restore-keys: |
-            sccache-linux-
+          sudo apt-get update
+          sudo apt-get -y install ninja-build clang lld mold openssl libcurl4-openssl-dev \
+            zlib1g-dev libglu1-mesa-dev libdbus-1-dev libvulkan-dev libxi-dev libxrandr-dev libasound2-dev \
+            libpulse-dev libudev-dev libpng-dev libncurses5-dev libx11-xcb-dev libfreetype-dev \
+            libxinerama-dev libxcursor-dev python3-markupsafe libgtk-3-dev libssl-dev \
+            libxss-dev libfuse2 libusb-1.0-0-dev libdecor-0-dev libpipewire-0.3-dev libunwind-dev
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -86,9 +90,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: dusk-${{env.DUSK_VERSION}}-linux-${{matrix.preset}}-${{matrix.artifact_arch}}
+          name: dusklight-${{env.DUSK_VERSION}}-linux-${{matrix.preset}}-${{matrix.artifact_arch}}
           path: |
-            build/install/Dusk-*.AppImage
+            build/install/Dusklight-*.AppImage
             build/install/debug.tar.*
 
   build-apple:
@@ -145,11 +149,77 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: dusk-${{env.DUSK_VERSION}}-${{matrix.artifact_name}}
+          name: dusklight-${{env.DUSK_VERSION}}-${{matrix.artifact_name}}
           path: |
-            build/install/Dusk.app
+            build/install/Dusklight.app
             build/install/debug.tar.*
 
+  build-android:
+    name: Build Android (${{matrix.name}})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Clang arm64-v8a
+            preset: x-android-ci-arm64
+            abi: arm64-v8a
+            artifact_arch: arm64
+            rust_target: aarch64-linux-android
+
+    env:
+      ANDROID_NDK_VERSION: "29.0.14206865"
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install ninja-build
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.1.0" "ndk;${ANDROID_NDK_VERSION}"
+
+      - name: Install Rust Android target
+        run: |
+          rustup toolchain install stable
+          rustup target add ${{matrix.rust_target}}
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Configure CMake
+        run: cmake --preset ${{matrix.preset}}
+
+      - name: Build native library
+        run: cmake --build --preset ${{matrix.preset}} --target dusklight
+
+      - name: Stage stripped JNI library
+        run: ANDROID_STAGE_ABIS="${{matrix.abi}}" platforms/android/scripts/stage-jni-libs.sh
+
+      - name: Build APK
+        working-directory: platforms/android
+        run: ./gradlew :app:assembleRelease --rerun-tasks
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dusk-${{env.DUSK_VERSION}}-android-${{matrix.artifact_arch}}
+          path: platforms/android/app/build/outputs/apk/release/app-${{matrix.abi}}-release-unsigned.apk
   build-windows:
     name: Build Windows (${{matrix.name}})
     runs-on: ${{matrix.runner}}
@@ -164,6 +234,18 @@ jobs:
             msvc_arch: amd64
             vcpkg_arch: x64
             artifact_arch: x86_64
+          - name: MSVC arm64
+            runner: windows-latest
+            preset: arm64-msvc
+            msvc_arch: amd64_arm64
+            vcpkg_arch: arm64
+            artifact_arch: arm64
+          # - name: Clang x86_64
+          #   runner: windows-latest
+          #   preset: clang
+          #   msvc_arch: amd64
+          #   vcpkg_arch: x64
+          #   artifact_arch: x86_64
 
     steps:
       - uses: actions/checkout@v6
@@ -194,7 +276,9 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Install dependencies
-        run: vcpkg install freetype:${{matrix.vcpkg_arch}}-windows-static zstd:${{matrix.vcpkg_arch}}-windows-static
+        run: |
+          choco install ninja
+          vcpkg install freetype:${{matrix.vcpkg_arch}}-windows zstd:${{matrix.vcpkg_arch}}-windows
 
       - name: Configure CMake
         run: cmake --preset x-windows-ci-${{matrix.preset}}
@@ -205,64 +289,11 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: dusk-${{env.DUSK_VERSION}}-win32-msvc-${{matrix.artifact_arch}}
+          name: dusklight-${{env.DUSK_VERSION}}-win32-msvc-${{matrix.artifact_arch}}
           path: |
             build/install/*.exe
             build/install/*.dll
             build/install/res/
             build/install/debug.7z
 
-  build-android:
-    name: Build Android (arm64-v8a)
-    runs-on: ubuntu-24.04
-    env:
-      ANDROID_NDK_VERSION: 29.0.14206865
-      RUSTC_WRAPPER:
-      ANDROID_STAGE_STRIP: 0
-      ANDROID_STAGE_ABIS: arm64-v8a
 
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platforms;android-35 build-tools;35.0.0 ndk;29.0.14206865'
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ninja-build
-
-      - name: Install Rust Android targets
-        run: |
-          rustup target add aarch64-linux-android
-
-      - name: Build native libs (arm64-v8a)
-        run: |
-          cmake --preset android-arm64
-          cmake --build --preset android-arm64
-
-      - name: Stage JNI libs
-        run: ./platforms/android/scripts/stage-jni-libs.sh
-
-      - name: Assemble APK
-        working-directory: platforms/android
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug
-
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: dusk-${{env.DUSK_VERSION}}-android
-          path: platforms/android/app/build/outputs/apk/debug/*.apk

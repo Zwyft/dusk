@@ -157,6 +157,9 @@ public:
     int getDispType() const;
     void _move(f32, f32, int, f32);
     void _draw();
+#if TARGET_PC
+    bool refreshTextureSize();
+#endif
 
     virtual ~dMap_c() {
 #if DEBUG
@@ -223,6 +226,9 @@ private:
     /* 0x8F */ u8 field_0x8f;
     /* 0x90 */ u8 field_0x90;
     /* 0x91 */ u8 field_0x91;
+#if TARGET_PC
+    bool previousMirror;
+#endif
 };  // Size: 0x94
 
 class dMap_HIO_list_c : public dMpath_HIO_n::hioList_c {

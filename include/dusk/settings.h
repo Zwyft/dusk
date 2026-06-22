@@ -1,7 +1,9 @@
-#ifndef DUSK_CONFIG_H
-#define DUSK_CONFIG_H
+#pragma once
+
+#include <array>
 
 #include "dusk/config_var.hpp"
+#include "dusk/ui/controls.hpp"
 
 namespace dusk {
 
@@ -11,6 +13,17 @@ enum class BloomMode : int {
     Off = 0,
     Classic = 1,
     Dusk = 2,
+};
+
+enum class DepthOfFieldMode : int {
+    Off = 0,
+    Classic = 1,
+    Dusk = 2,
+};
+
+enum class Resampler : int {
+    Bilinear = 0,
+    Area = 1,
 };
 
 enum class GameLanguage : u8 {
@@ -27,9 +40,24 @@ enum class DiscVerificationState : u8 {
     HashMismatch,
 };
 
-enum class GyroMode : u8 {
-    Sensor = 0,
-    Mouse = 1,
+enum class FrameInterpMode : u8 {
+    Off = 0,
+    Capped = 1,
+    Unlimited = 2,
+};
+
+enum class MenuScaling : u8 {
+    GameCube = 0,
+    Wii = 1,
+    Dusklight = 2,
+};
+
+enum class MagicArmorMode : u8 {
+    NORMAL = 0,
+    ON_DAMAGE = 1,
+    DOUBLE_DEFENSE = 2,
+    INVINCIBLE = 3,
+    COSMETIC = 4,
 };
 
 enum class BattleBGMMode : u8 {
@@ -59,6 +87,18 @@ struct ConfigEnumRange<BloomMode> {
 };
 
 template <>
+struct ConfigEnumRange<DepthOfFieldMode> {
+    static constexpr auto min = DepthOfFieldMode::Off;
+    static constexpr auto max = DepthOfFieldMode::Dusk;
+};
+
+template <>
+struct ConfigEnumRange<Resampler> {
+    static constexpr auto min = Resampler::Bilinear;
+    static constexpr auto max = Resampler::Area;
+};
+
+template <>
 struct ConfigEnumRange<GameLanguage> {
     static constexpr auto min = GameLanguage::English;
     static constexpr auto max = GameLanguage::Italian;
@@ -71,9 +111,9 @@ struct ConfigEnumRange<DiscVerificationState> {
 };
 
 template <>
-struct ConfigEnumRange<GyroMode> {
-    static constexpr auto min = GyroMode::Sensor;
-    static constexpr auto max = GyroMode::Mouse;
+struct ConfigEnumRange<FrameInterpMode> {
+    static constexpr auto min = FrameInterpMode::Off;
+    static constexpr auto max = FrameInterpMode::Unlimited;
 };
 
 template <>
@@ -87,7 +127,24 @@ struct ConfigEnumRange<IngameHudMode> {
     static constexpr auto min = IngameHudMode::Off;
     static constexpr auto max = IngameHudMode::On;
 };
-}
+
+template <>
+struct ConfigEnumRange<MenuScaling> {
+    static constexpr auto min = MenuScaling::GameCube;
+    static constexpr auto max = MenuScaling::Dusklight;
+};
+
+template <>
+struct ConfigEnumRange<MagicArmorMode> {
+    static constexpr auto min = MagicArmorMode::NORMAL;
+    static constexpr auto max = MagicArmorMode::COSMETIC;
+};
+
+template <>
+struct ConfigValueTraits<ui::ControlLayout> {
+    static constexpr bool enabled = true;
+};
+}  // namespace config
 
 // Persistent user settings
 
@@ -103,6 +160,10 @@ struct UserSettings {
         ConfigVar<int> fpsOverlayCorner;
         ConfigVar<int> windowPositionX;
         ConfigVar<int> windowPositionY;
+        ConfigVar<int> maxFrameRate;
+        ConfigVar<bool> rememberWindowSize;
+        ConfigVar<int> lastWindowWidth;
+        ConfigVar<int> lastWindowHeight;
     } video;
 
     struct {
@@ -136,36 +197,44 @@ struct UserSettings {
         ConfigVar<bool> noMissClimbing;
         ConfigVar<bool> fastTears;
         ConfigVar<bool> no2ndFishForCat;
+        ConfigVar<bool> buttonFishing;
         ConfigVar<bool> instantSaves;
         ConfigVar<bool> instantText;
         ConfigVar<bool> sunsSong;
         ConfigVar<bool> autoSave;
         ConfigVar<bool> fastAreaTransitions;
+        ConfigVar<bool> enhancedMapMenus;
 
         // Preferences
         ConfigVar<bool> enableMirrorMode;
         ConfigVar<IngameHudMode> ingameHudMode;
+        ConfigVar<bool> minimalHUD;
+        ConfigVar<float> hudScale;
         ConfigVar<bool> pauseOnFocusLost;
         ConfigVar<bool> enableLinkDollRotation;
         ConfigVar<bool> enableAchievementToasts;
         ConfigVar<bool> enableControllerToasts;
+        ConfigVar<bool> enableDiscordPresence;
+        ConfigVar<MenuScaling> menuScalingMode;
 
         // Graphics
         ConfigVar<BloomMode> bloomMode;
         ConfigVar<float> bloomMultiplier;
+        ConfigVar<DepthOfFieldMode> depthOfFieldMode;
         ConfigVar<bool> disableWaterRefraction;
-        ConfigVar<bool> enableFrameInterpolation;
+        ConfigVar<bool> enableTextureReplacements;
+        ConfigVar<FrameInterpMode> enableFrameInterpolation;
         ConfigVar<int> internalResolutionScale;
         ConfigVar<int> shadowResolutionMultiplier;
-        ConfigVar<bool> enableDepthOfField;
+        ConfigVar<Resampler> resampler;
         ConfigVar<bool> enableMapBackground;
+        ConfigVar<bool> disableCutscenePillarboxing;
 
         // Audio
         ConfigVar<bool> noLowHpSound;
         ConfigVar<BattleBGMMode> battleBGM;
 
         // Input
-        ConfigVar<GyroMode> gyroMode;
         ConfigVar<bool> enableGyroAim;
         ConfigVar<bool> enableGyroRollgoal;
         ConfigVar<float> gyroSensitivityX;
@@ -175,19 +244,32 @@ struct UserSettings {
         ConfigVar<float> gyroDeadband;
         ConfigVar<bool> gyroInvertPitch;
         ConfigVar<bool> gyroInvertYaw;
+        ConfigVar<bool> enableMouseCamera;
+        ConfigVar<bool> enableMouseAim;
+        ConfigVar<float> mouseAimSensitivity;
+        ConfigVar<float> mouseCameraSensitivity;
+        ConfigVar<bool> invertMouseY;
         ConfigVar<bool> freeCamera;
+        ConfigVar<bool> enableTouchControls;
+        ConfigVar<bool> enableMenuPointer;
+        ConfigVar<ui::ControlLayout> touchControlsLayout;
         ConfigVar<bool> invertCameraXAxis;
         ConfigVar<bool> invertCameraYAxis;
         ConfigVar<bool> invertFirstPersonXAxis;
         ConfigVar<bool> invertFirstPersonYAxis;
         ConfigVar<bool> invertAirSwimX;
         ConfigVar<bool> invertAirSwimY;
-        ConfigVar<float> freeCameraSensitivity;
+        ConfigVar<float> freeCameraXSensitivity;
+        ConfigVar<float> freeCameraYSensitivity;
+        ConfigVar<float> touchCameraXSensitivity;
+        ConfigVar<float> touchCameraYSensitivity;
         ConfigVar<bool> debugFlyCam;
         ConfigVar<bool> debugFlyCamLockEvents;
         ConfigVar<bool> allowBackgroundInput;
         ConfigVar<bool> enableMouseFreeLook;
         ConfigVar<bool> firstPersonFreeCam;
+        std::array<ConfigVar<bool>, 4> enableLED;
+        ConfigVar<bool> swapDirectSelect;
 
         // Quality of Life
         ConfigVar<int> anisotropicFiltering;
@@ -211,6 +293,7 @@ struct UserSettings {
         ConfigVar<bool> fastRoll;
         ConfigVar<bool> fastSpinner;
         ConfigVar<bool> freeMagicArmor;
+        ConfigVar<MagicArmorMode> armorRupeeDrain;
         ConfigVar<bool> invincibleEnemies;
         ConfigVar<bool> infiniteChuJelly;
         ConfigVar<bool> transformWithoutShadowCrystal;
@@ -220,13 +303,17 @@ struct UserSettings {
 
         // Controls
         ConfigVar<bool> enableTurboKeybind;
+        ConfigVar<bool> enableResetKeybind;
 
         // Tools
         ConfigVar<bool> speedrunMode;
         ConfigVar<bool> liveSplitEnabled;
+        ConfigVar<bool> showSpeedrunRTATimer;
         ConfigVar<bool> recordingMode;
         ConfigVar<bool> enableSaveStates;
         ConfigVar<bool> removeQuestMapMarkers;
+        ConfigVar<bool> showInputViewer;
+        ConfigVar<bool> showInputViewerGyro;
     } game;
 
     struct {
@@ -268,6 +355,16 @@ struct UserSettings {
         ConfigVar<bool> portableMode;
         ConfigVar<std::string> customDataPath;
     } backend;
+
+    // Arrays of size 4 for 4 ports
+    struct {
+        std::array<ActionBindConfigVar, 4> firstPersonCamera;
+        std::array<ActionBindConfigVar, 4> callMidna;
+        std::array<ActionBindConfigVar, 4> openMapScreen;
+        std::array<ActionBindConfigVar, 4> toggleMinimap;
+        std::array<ActionBindConfigVar, 4> openDusklightMenu;
+        std::array<ActionBindConfigVar, 4> turboSpeedButton;
+    } actionBindings;
 };
 
 UserSettings& getSettings();
@@ -296,6 +393,4 @@ struct TransientSettings {
 
 TransientSettings& getTransientSettings();
 
-}
-
-#endif // DUSK_CONFIG_H
+}  // namespace dusk

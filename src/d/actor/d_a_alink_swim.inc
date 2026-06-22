@@ -216,11 +216,7 @@ void daAlink_c::setSpeedAndAngleSwim() {
             if (checkEventRun()) {
                 var_r28 = mMoveAngle;
             } else {
-#if TARGET_PC
-                var_r28 = shape_angle.y + (16384.0f * cM_ssin(mStickAngle) * (dusk::getSettings().game.invertAirSwimX ? -1.0f : 1.0f));
-#else
-                var_r28 = shape_angle.y + (16384.0f * cM_ssin(mStickAngle));
-#endif
+                var_r28 = shape_angle.y + (16384.0f * cM_ssin(mStickAngle) IF_DUSK(* (dusk::getSettings().game.invertAirSwimX ? -1.0f : 1.0f)));
             }
 
             cLib_addCalcAngleS(&shape_angle.y, var_r28, mpHIO->mSwim.m.mUnderwaterTurnRate, mpHIO->mSwim.m.mUnderwaterMaxTurn, mpHIO->mSwim.m.mUnderwaterMinTurn);
@@ -839,11 +835,7 @@ void daAlink_c::setSwimMoveAnime() {
         } else {
             s16 var_r24;
             if (checkInputOnR() && !checkEventRun()) {
-#if TARGET_PC
-                var_r24 = 13653.0f * cM_scos(mStickAngle) * (dusk::getSettings().game.invertAirSwimY ? -1.0f : 1.0f);
-#else
-                var_r24 = 13653.0f * cM_scos(mStickAngle);
-#endif
+                var_r24 = 13653.0f * cM_scos(mStickAngle) IF_DUSK(* (dusk::getSettings().game.invertAirSwimY ? -1.0f : 1.0f));
             } else {
                 var_r24 = 0;
             }

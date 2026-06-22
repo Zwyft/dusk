@@ -4,6 +4,7 @@
 #include "dolphin/types.h"
 #include <type_traits>
 #include <cstdlib>
+#include <limits>
 #include <string>
 
 /**
@@ -48,6 +49,13 @@ enum class ConfigVarLayer : u8 {
      * Will not get saved to config.
      */
     Override,
+
+    /**
+     * The CVar is temporarily overridden by speedrun mode.
+     * Will not get saved to config. Cleared when speedrun mode is disabled.
+     * Lower priority than Override, so launch args still win.
+     */
+    Speedrun,
 };
 
 class ConfigImplBase;
@@ -113,6 +121,12 @@ public:
      * This is necessary to make it legal to access.
      */
     void markRegistered();
+
+    /**
+     * Clear a speedrun-mode override if one is active on this CVar.
+     * Safe to call on any CVar, no-op if not at the Speedrun layer.
+     */
+    virtual void clearSpeedrunOverride() {}
 };
 
 template <typename T>
@@ -126,11 +140,16 @@ concept ConfigValueInteger =
     || std::is_same_v<T, s64>
     || std::is_same_v<T, u64>;
 
+template <typename T>
+struct ConfigValueTraits {
+    static constexpr bool enabled = false;
+};
+
 /**
  * \brief Concept that defines the legal set of types that can be used for CVar values.
  *
  * Valid types cannot be cv-qualified and must be basic primitive types (int, float, bool),
- * strings, or enums of the basic primitives.
+ * strings, enums of the basic primitives, or explicitly-enabled structured settings.
  */
 template <typename T>
 concept ConfigValue =
@@ -141,7 +160,8 @@ concept ConfigValue =
         || std::is_same_v<T, f32>
         || std::is_same_v<T, f64>
         || std::is_same_v<T, std::string>
-        || (std::is_enum_v<T> && ConfigValueInteger<std::underlying_type_t<T>>));
+        || (std::is_enum_v<T> && ConfigValueInteger<std::underlying_type_t<T>>)
+        || ConfigValueTraits<T>::enabled);
 
 template <ConfigValue T>
 const ConfigImplBase* GetConfigImpl();
@@ -162,6 +182,7 @@ class ConfigVar : public ConfigVarBase {
     T defaultValue;
     T value;
     T overrideValue;
+    ConfigVarLayer priorLayer = ConfigVarLayer::Default;
 
 public:
     /**
@@ -189,6 +210,7 @@ public:
         case ConfigVarLayer::Value:
             return value;
         case ConfigVarLayer::Override:
+        case ConfigVarLayer::Speedrun:
             return overrideValue;
         default:
             abort();
@@ -239,7 +261,53 @@ public:
         overrideValue = std::move(newValue);
         layer = ConfigVarLayer::Override;
     }
+
+    /**
+     * \brief Give a CVar a speedrun-mode override value.
+     *
+     * Lower priority than a launch-arg override. Cleared when speedrun mode is disabled.
+     * The overridden value will not get saved to config.
+     *
+     * @param newValue The new value the CVar will get.
+     */
+    void setSpeedrunValue(T newValue) {
+        checkRegistered();
+        if (layer != ConfigVarLayer::Override) {
+            priorLayer = layer;
+            overrideValue = std::move(newValue);
+            layer = ConfigVarLayer::Speedrun;
+        }
+    }
+
+    void clearOverride() {
+        checkRegistered();
+        if (layer == ConfigVarLayer::Override) {
+            overrideValue = {};
+            layer = ConfigVarLayer::Value;
+        }
+    }
+
+    void clearSpeedrunOverride() override {
+        checkRegistered();
+        if (layer == ConfigVarLayer::Speedrun) {
+            overrideValue = {};
+            layer = priorLayer;
+        }
+    }
+
+    /**
+     * \brief Get the user-persisted value, ignoring any temporary overrides.
+     *
+     * Used by Save() to write the correct value even when a speedrun override is active.
+     */
+    [[nodiscard]] constexpr const T& getValueForSave() const noexcept {
+        checkRegistered();
+        const ConfigVarLayer effectiveLayer = (layer == ConfigVarLayer::Speedrun) ? priorLayer : layer;
+        return effectiveLayer == ConfigVarLayer::Default ? defaultValue : value;
+    }
 };
+
+using ActionBindConfigVar = ConfigVar<int>;
 
 }
 

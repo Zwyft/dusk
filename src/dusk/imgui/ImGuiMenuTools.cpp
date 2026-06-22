@@ -12,6 +12,7 @@
 #include "d/actor/d_a_alink.h"
 #include "d/actor/d_a_horse.h"
 #include "d/d_com_inf_game.h"
+#include "dusk/data.hpp"
 #include "dusk/dusk.h"
 #include "dusk/main.h"
 #include "m_Do/m_Do_main.h"
@@ -44,7 +45,7 @@ namespace dusk {
 
             ImGui::MenuItem("Save Editor", hotkeys::SHOW_SAVE_EDITOR, &m_showSaveEditor);
             ImGui::MenuItem("Map Loader", hotkeys::SHOW_MAP_LOADER, &m_showMapLoader);
-            ImGui::MenuItem("Save States", nullptr, &m_showStateShare);
+            ImGui::MenuItem("Save States", hotkeys::SHOW_STATE_SHARE, &m_showStateShare);
 
             ImGui::EndDisabled();
 
@@ -52,13 +53,10 @@ namespace dusk {
                 ImGui::EndDisabled();
             }
 
-            ImGui::Separator();
-            ImGui::Checkbox("Show Input Viewer", &m_showInputViewer);
-
 #if DUSK_CAN_OPEN_DATA_FOLDER
             ImGui::Separator();
             if (ImGui::MenuItem("Open Data Folder")) {
-                OpenDataFolder();
+                data::open_data_path();
             }
 #endif
 
@@ -215,6 +213,27 @@ namespace dusk {
             daAlink_c* player = (daAlink_c*)dComIfGp_getPlayer(0);
             daHorse_c* horse = dComIfGp_getHorseActor();
 
+            double speedXzy = 0.0;
+            if (player != nullptr) {
+                speedXzy = sqrtf(player->speed.x * player->speed.x
+                    + player->speed.z * player->speed.z
+                    + player->speed.y * player->speed.y);
+            }
+
+            ImGui::Text("Global");
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Stage: {}\n", dComIfGp_getStartStageName()) 
+                : "Stage: ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Layer: {0}\n", dComIfG_play_c::getLayerNo(0))
+                : "Layer: ?\n"
+            );
+
+            ImGui::Separator();
             ImGui::Text("Link");
             ImGuiStringViewText(
                 player != nullptr
@@ -224,14 +243,38 @@ namespace dusk {
 
             ImGuiStringViewText(
                 player != nullptr
-                ? fmt::format("Angle: {0}\n", player->shape_angle.y)
-                : "Angle: ?\n"
+                ? fmt::format("Velocity (XYZ): {: .4f}, {: .4f}, {: .4f}\n", player->speed.x, player->speed.y, player->speed.z)
+                : "Velocity (XYZ): ?, ?, ?\n"
             );
 
             ImGuiStringViewText(
                 player != nullptr
-                ? fmt::format("Speed: {: .4f}\n", player->speedF)
-                : "Speed: ?\n"
+                ? fmt::format("Speed (SpeedF): {: .4f}\n", player->speedF)
+                : "Speed (SpeedF): ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Speed (3D): {: .4f}\n", speedXzy)
+                : "Speed (3D): ?\n"
+            );
+
+            ImGuiStringViewText(
+                 player != nullptr
+                 ? fmt::format("Angle: {0}\n", player->shape_angle.y)
+                 : "Angle: ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Room: {0}\n", fopAcM_GetRoomNo(player))
+                : "Room: ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Entry: {0}\n", dComIfGp_getStartStagePoint())
+                : "Entry: ?\n"
             );
 
             ImGui::Separator();
@@ -243,6 +286,18 @@ namespace dusk {
             );
 
             ImGuiStringViewText(
+                 horse != nullptr
+                 ? fmt::format("Velocity (XYZ): {: .4f}, {: .4f}, {: .4f}\n", horse->speed.x, horse->speed.y, horse->speed.z)
+                 : "Velocity (XYZ): ?, ?, ?\n"
+            );
+
+            ImGuiStringViewText(
+                horse != nullptr
+                ? fmt::format("Speed (SpeedF): {: .4f}\n", horse->speedF)
+                : "Speed (SpeedF): ?\n"
+            );
+
+            ImGuiStringViewText(
                 horse != nullptr
                 ? fmt::format("Angle: {0}\n", horse->shape_angle.y)
                 : "Angle: ?\n"
@@ -250,8 +305,20 @@ namespace dusk {
 
             ImGuiStringViewText(
                 horse != nullptr
-                ? fmt::format("Speed: {: .4f}\n", horse->speedF)
-                : "Speed: ?\n"
+                ? fmt::format("Room: {0}\n", fopAcM_GetRoomNo(horse))
+                : "Room: ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Saved Stage: {}\n", dComIfGs_getHorseRestartStageName())
+                : "Saved Stage: ?\n"
+            );
+
+            ImGuiStringViewText(
+                player != nullptr
+                ? fmt::format("Saved Room: {0}\n", dComIfGs_getHorseRestartRoomNo())
+                : "Saved Room: ?\n"
             );
 
             ShowCornerContextMenu(m_playerInfoOverlayCorner, m_debugOverlayCorner);

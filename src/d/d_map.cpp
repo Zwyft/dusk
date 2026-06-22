@@ -1148,6 +1148,9 @@ dMap_c::dMap_c(int width, int height, int param_2, int param_3) {
     field_0x91 = 0;
     m_mySelfPointer = this;
 #endif
+#if TARGET_PC
+    previousMirror = dusk::getSettings().game.enableMirrorMode;
+#endif
 
     m_res = JKR_NEW_ARGS (0x20) dMap_prm_res_s;
     JUT_ASSERT(2559, m_res != NULL);
@@ -1210,6 +1213,10 @@ void dMap_c::changeTextureSize(int param_1, int param_2, int param_3) {
     JUT_ASSERT(2672, mImage_p != NULL);
     JUT_ASSERT(2673, mResTIMG != NULL);
 
+#if TARGET_PC
+    GXDestroyCopyTex(mImage_p);
+#endif
+
     mTexSizeX = param_1 >> param_3;
     mTexSizeY = param_2 >> param_3;
 
@@ -1220,6 +1227,24 @@ void dMap_c::changeTextureSize(int param_1, int param_2, int param_3) {
 
     init(mImage_p, mTexSizeX, mTexSizeY, param_1, param_2);
     makeResTIMG(mResTIMG, mTexSizeX, mTexSizeY, mImage_p, (u8*)m_res, 0x33);
+}
+#endif
+
+#if TARGET_PC
+bool dMap_c::refreshTextureSize() {
+    JUT_ASSERT(2688, mImage_p != NULL);
+    JUT_ASSERT(2689, mResTIMG != NULL);
+
+    const u16 oldWidth = mResTIMG->width;
+    const u16 oldHeight = mResTIMG->height;
+    makeResTIMG(mResTIMG, mTexSizeX, mTexSizeY, mImage_p, (u8*)m_res, 0x33);
+
+    if (mResTIMG->width == oldWidth && mResTIMG->height == oldHeight) {
+        return false;
+    }
+
+    GXDestroyCopyTex(mImage_p);
+    return true;
 }
 #endif
 
@@ -1586,6 +1611,17 @@ bool dMap_c::isDrawRoomIcon(int param_0, int param_1) const {
 }
 
 void dMap_c::_move(f32 i_centerX, f32 i_centerZ, int i_roomNo, f32 param_3) {
+#if TARGET_PC
+    bool currentMirror = dusk::getSettings().game.enableMirrorMode;
+    if (currentMirror != previousMirror) {
+        previousMirror = currentMirror;
+        if (currentMirror) {
+            mCenterX -= 2.0f * mPackX;
+        } else {
+            mCenterX += 2.0f * mPackX;
+        }
+    }
+#endif
     if (mStayRoomNo == -1) {
         mStayRoomNo = i_roomNo;
         field_0x80 = mStayRoomNo;
