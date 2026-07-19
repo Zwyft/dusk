@@ -518,7 +518,11 @@
       ],
       "cacheVariables": {
         "CMAKE_C_COMPILER_LAUNCHER": "sccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
+        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
+        "Rust_RUSTUP_INSTALL_MISSING_TARGET": {
+          "type": "BOOL",
+          "value": true
+        }
       }
     },
     {
