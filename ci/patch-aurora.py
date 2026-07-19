@@ -37,8 +37,8 @@ apply(
 apply(
     CARD,
     "  std::filesystem::path cardWorkingDir;\n"
-    "  if (aurora::g_config.configPath != nullptr)\n"
-    "    cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.configPath);\n"
+    "  if (aurora::g_config.userPath != nullptr)\n"
+    "    cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.userPath);\n"
     "  else\n"
     "    cardWorkingDir = std::filesystem::current_path();",
     "  std::filesystem::path cardWorkingDir;\n"
@@ -53,8 +53,8 @@ apply(
     "      }\n"
     "    }\n"
     "    if (cardWorkingDir.empty()) {\n"
-    "      if (aurora::g_config.configPath != nullptr)\n"
-    "        cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.configPath);\n"
+    "      if (aurora::g_config.userPath != nullptr)\n"
+    "        cardWorkingDir = reinterpret_cast<const char8_t*>(aurora::g_config.userPath);\n"
     "      else\n"
     "        cardWorkingDir = std::filesystem::current_path();\n"
     "    }\n"
