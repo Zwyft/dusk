@@ -107,6 +107,11 @@ jobs:
             platform: macos
             preset: x-macos-ci-arm64
             artifact_name: macos-appleclang-arm64
+          - name: AppleClang iOS arm64
+            runner: macos-15
+            platform: ios
+            preset: x-ios-ci
+            artifact_name: ios-appleclang-arm64
 
     steps:
       - uses: actions/checkout@v6
@@ -146,12 +151,21 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{matrix.preset}}
 
+      - name: Package iOS IPA
+        if: matrix.platform == 'ios'
+        run: |
+          mkdir -p build/install/Payload
+          cp -r build/install/Dusklight.app build/install/Payload/
+          cd build/install
+          zip -r Dusklight-ios-arm64.ipa Payload
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: dusklight-${{env.DUSK_VERSION}}-${{matrix.artifact_name}}
           path: |
             build/install/Dusklight.app
+            build/install/Dusklight-ios-arm64.ipa
             build/install/debug.tar.*
 
   build-android:

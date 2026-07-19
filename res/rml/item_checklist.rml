@@ -1,0 +1,32 @@
+<rml>
+<head>
+    <link type="text/rcss" href="res/rcss/item_checklist.rcss" />
+</head>
+<body>
+    <div id="tracker-root" class="tracker-window">
+        <div class="tracker-shell">
+            <div class="tracker-header">
+                <div class="tracker-titleblock">
+                    <div class="tracker-kicker">Item tracker</div>
+                    <h1>Emotracker-style checklist</h1>
+                    <div id="tracker-status" class="tracker-status">Waiting for disc assets</div>
+                </div>
+                <button class="tracker-close" onmousedown="this.blur(); {dusk::ui::ItemChecklist::instance().hideChecklist();}">
+                    <icon class="material-symbols-rounded">close</icon>
+                </button>
+            </div>
+
+            <div class="tracker-summary-row">
+                <div class="tracker-summary-meta">
+                    <span id="tracker-summary">0 / 0 collected</span>
+                </div>
+                <div class="tracker-progress">
+                    <div id="tracker-summary-fill" class="tracker-progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="tracker-sections" class="tracker-sections"></div>
+        </div>
+    </div>
+</body>
+</rml>
