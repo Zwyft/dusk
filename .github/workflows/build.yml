@@ -153,6 +153,19 @@ jobs:
           mkdir -p build/install/Payload
           cp -r build/install/Dusklight.app build/install/Payload/
           cd build/install
+          cat << 'EOF' > entitlements.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>application-identifier</key>
+              <string>dev.twilitrealm.dusk</string>
+              <key>get-task-allow</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          codesign -f -s - --entitlements entitlements.plist Payload/Dusklight.app
           zip -r Dusklight-ios-arm64.ipa Payload
 
       - name: Upload artifacts
