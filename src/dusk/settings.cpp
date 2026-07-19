@@ -81,6 +81,7 @@ UserSettings g_userSettings = {
 
         // Audio
         .noLowHpSound {"game.noLowHpSound", false},
+        .midnasLamentNonStop {"game.midnasLamentNonStop", false},
         .battleBGM {"game.battleBGM", BattleBGMMode::On},
 
         // Input
@@ -174,6 +175,19 @@ UserSettings g_userSettings = {
         .removeQuestMapMarkers {"game.removeQuestMapMarkers", false},
         .showInputViewer {"game.showInputViewer", false},
         .showInputViewerGyro {"game.showInputViewerGyro", false}
+    },
+
+    .randomizer = {
+        .enabled {"randomizer.enabled", false},
+        .seed {"randomizer.seed", ""},
+        .logic {"randomizer.logic", RandomizerLogic::Glitchless},
+        .goal {"randomizer.goal", RandomizerGoal::Ganon},
+        .shuffleDungeonItems {"randomizer.shuffleDungeonItems", false},
+        .shuffleBugs {"randomizer.shuffleBugs", false},
+        .shufflePoes {"randomizer.shufflePoes", false},
+        .shuffleSkills {"randomizer.shuffleSkills", false},
+        .shuffleShops {"randomizer.shuffleShops", false},
+        .openCastle {"randomizer.openCastle", false},
     },
 
     .backend = {
@@ -307,6 +321,7 @@ void registerSettings() {
     Register(g_userSettings.game.shadowResolutionMultiplier);
     Register(g_userSettings.game.enableMapBackground);
     Register(g_userSettings.game.noLowHpSound);
+    Register(g_userSettings.game.midnasLamentNonStop);
     Register(g_userSettings.game.battleBGM);
     Register(g_userSettings.game.disableCutscenePillarboxing);
     Register(g_userSettings.game.enableFastIronBoots);
@@ -318,7 +333,6 @@ void registerSettings() {
     Register(g_userSettings.game.enableAchievementToasts);
     Register(g_userSettings.game.enableControllerToasts);
     Register(g_userSettings.game.noMissClimbing);
-    Register(g_userSettings.game.restoreWiiGlitches);
     Register(g_userSettings.game.enableTurboKeybind);
     Register(g_userSettings.game.enableResetKeybind);
     Register(g_userSettings.game.speedrunMode);
@@ -378,6 +392,18 @@ void registerSettings() {
     Register(g_userSettings.game.enableLED[2]);
     Register(g_userSettings.game.enableLED[3]);
     Register(g_userSettings.game.swapDirectSelect);
+
+    // Randomizer
+    Register(g_userSettings.randomizer.enabled);
+    Register(g_userSettings.randomizer.seed);
+    Register(g_userSettings.randomizer.logic);
+    Register(g_userSettings.randomizer.goal);
+    Register(g_userSettings.randomizer.shuffleDungeonItems);
+    Register(g_userSettings.randomizer.shuffleBugs);
+    Register(g_userSettings.randomizer.shufflePoes);
+    Register(g_userSettings.randomizer.shuffleSkills);
+    Register(g_userSettings.randomizer.shuffleShops);
+    Register(g_userSettings.randomizer.openCastle);
 
     Register(g_userSettings.backend.isoPath);
     Register(g_userSettings.backend.isoVerification);

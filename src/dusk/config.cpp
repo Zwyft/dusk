@@ -320,7 +320,6 @@ void ConfigImpl<FrameInterpMode>::loadFromJson(
 
     cVar.setValue(sanitizeEnumValue(cVar, jsonValue.get<FrameInterpMode>()), false);
 }
-}
 
 template <>
 void ConfigImpl<ui::ControlLayout>::loadFromJson(
@@ -385,6 +384,8 @@ template class ConfigImpl<dusk::MenuScaling>;
 template class ConfigImpl<dusk::Resampler>;
 template class ConfigImpl<dusk::MagicArmorMode>;
 template class ConfigImpl<dusk::ui::ControlLayout>;
+template class ConfigImpl<dusk::RandomizerLogic>;
+template class ConfigImpl<dusk::RandomizerGoal>;
 }  // namespace dusk::config
 
 void dusk::config::Register(ConfigVarBase& configVar) {

@@ -16,10 +16,10 @@
 #include "f_pc/f_pc_name.h"
 #include "imgui.h"
 #include "modal.hpp"
+#include "dusk/item_checklist/ItemChecklistDocument.h"
 #include "settings.hpp"
 #include "warp.hpp"
 #include "ui.hpp"
-#include "warp.hpp"
 #include "window.hpp"
 
 #include <chrono>
@@ -60,6 +60,7 @@ MenuBar::MenuBar() : Document(kDocumentSource), mRoot(mDocument->GetElementById(
     }
 
     mTabBar->add_tab("Achievements", [this] { push(std::make_unique<AchievementsWindow>()); });
+    mTabBar->add_tab("Checklist", [this] { push(std::make_unique<ItemChecklistDocument>()); });
 
 
     mTabBar->add_tab("Reset", [this] {

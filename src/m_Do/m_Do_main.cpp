@@ -75,7 +75,6 @@
 #include "dusk/ui/preset.hpp"
 #include "dusk/ui/touch_controls.hpp"
 #include "dusk/ui/ui.hpp"
-#include "dusk/touch_controls.hpp"
 #include "version.h"
 
 #include <aurora/aurora.h>
@@ -191,7 +190,6 @@ bool launchUILoop() {
                 dusk::mouse::handle_event(event->sdl);
                 dusk::ui::handle_event(event->sdl);
                 dusk::g_imguiConsole.HandleSDLEvent(event->sdl);
-                dusk::touch_controls::handle_event(event->sdl);
                 break;
             case AURORA_DISPLAY_SCALE_CHANGED:
                 dusk::ImGuiEngine_Initialize(event->windowSize.scale);
@@ -279,7 +277,6 @@ void main01(void) {
                 dusk::mouse::handle_event(event->sdl);
                 dusk::ui::handle_event(event->sdl);
                 dusk::g_imguiConsole.HandleSDLEvent(event->sdl);
-                dusk::touch_controls::handle_event(event->sdl);
                 break;
             case AURORA_WINDOW_RESIZED:
                 if (dusk::getSettings().video.rememberWindowSize && !dusk::getSettings().video.enableFullscreen) {
@@ -732,7 +729,6 @@ int game_main(int argc, char* argv[]) {
 
     dusk::texture_replacements::reload();
     dusk::ui::initialize();
-    dusk::touch_controls::init();
     dusk::ui::push_document(std::make_unique<dusk::ui::Overlay>(), true, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::TouchControls>(), false, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::MenuBar>(), false);

@@ -79,7 +79,9 @@ void update_presence() {
     static std::string sStateBuf;
 
     rpc::Presence presence{};
-    presence.startTimestamp = g_startTime;
+    // Use current system time for start timestamp so the displayed time matches the actual launch time
+    presence.startTimestamp = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     presence.largeImageKey = "icon";
     presence.largeImageText = "Dusklight";
 

@@ -17,7 +17,6 @@
 #include "aurora/lib/window.hpp"
 #include "dusk/config.hpp"
 #include "dusk/io.hpp"
-#include "dusk/touch_controls.hpp"
 #include "input.hpp"
 #include "icon_provider.hpp"
 #include "prelaunch.hpp"
@@ -134,7 +133,6 @@ void handle_event(const SDL_Event& event) noexcept {
     }
 
     if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
-        dusk::touch_controls::notify_controller_added();
         auto* gamepad = SDL_GetGamepadFromID(event.gdevice.which);
         if (SDL_GamepadConnected(gamepad)) {
             if (getSettings().game.enableControllerToasts) {
@@ -169,7 +167,6 @@ void handle_event(const SDL_Event& event) noexcept {
     } else if (event.type == SDL_EVENT_GAMEPAD_REMOVED &&
                sConnectedGamepads.contains(event.gdevice.which))
     {
-        dusk::touch_controls::notify_controller_removed();
         if (getSettings().game.enableControllerToasts) {
             const char* name = SDL_GetGamepadNameForID(event.gdevice.which);
             push_toast({

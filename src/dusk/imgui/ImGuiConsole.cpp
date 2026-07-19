@@ -21,7 +21,6 @@
 #include "dusk/livesplit.h"
 #include "dusk/main.h"
 #include "dusk/settings.h"
-#include "dusk/touch_controls.hpp"
 #include "dusk/ui/ui.hpp"
 #include "f_pc/f_pc_manager.h"
 #include "f_pc/f_pc_name.h"
@@ -274,23 +273,13 @@ namespace dusk {
 
         if (ImGui::GetIO().KeyShift && ImGui::IsKeyPressed(ImGuiKey_F1)) {
             if (getSettings().backend.enableAdvancedSettings) {
-                m_isHidden = !m_isHidden;
+                bool showMenu = true;
             } else {
                 m_isHidden = true;
             }
         }
         
-        bool showMenu = !m_isHidden;
-
-        // The menu bar renders with ImGuiCol_WindowBg behind it. We just want ImGuiCol_MenuBarBg,
-        // so make the window bg fully transparent temporarily
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-        if (showMenu && ImGui::BeginMainMenuBar()) {
-            m_menuTools.draw();
-
-            ImGui::EndMainMenuBar();
-        }
-        ImGui::PopStyleColor();
+        bool showMenu = false; // Scraped per user request
 
         if (dusk::IsGameLaunched && !m_isLaunchInitialized) {
             m_isLaunchInitialized = true;
@@ -384,7 +373,6 @@ namespace dusk {
     void ImGuiConsole::PostDraw() {
         m_menuTools.afterDraw();
         ShowPipelineProgress();
-        dusk::touch_controls::draw();
     }
 
     void ImGuiConsole::UpdateDragScroll() {

@@ -164,12 +164,17 @@ bool Pane::focus() {
 }
 
 Rml::Element* Pane::add_section(const Rml::String& text, bool collapsible) {
+#if defined(TARGET_ANDROID) || defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS && !TARGET_OS_MACCATALYST)
+    bool forceCollapsible = true;
+#else
+    bool forceCollapsible = false;
+#endif
     auto* wrapper = append(mRoot, "div");
     wrapper->SetClass("section-wrapper", true);
 
     auto* heading = append(wrapper, "div");
     heading->SetClass("section-heading", true);
-    if (collapsible) {
+    if (forceCollapsible) {
         heading->SetClass("collapsible", true);
         heading->SetAttribute("tabindex", "0");
     }
@@ -177,13 +182,13 @@ Rml::Element* Pane::add_section(const Rml::String& text, bool collapsible) {
 
     auto* content = append(wrapper, "div");
     content->SetClass("section-content", true);
-    if (collapsible) {
+    if (forceCollapsible) {
         wrapper->SetAttribute("collapsed", "");
     }
 
-    mCurrentSection = collapsible ? content : nullptr;
+    mCurrentSection = forceCollapsible ? content : nullptr;
 
-    if (collapsible) {
+    if (forceCollapsible) {
         Component::listen(heading, Rml::EventId::Click, [wrapper](Rml::Event&) {
             if (wrapper->HasAttribute("collapsed")) {
                 wrapper->RemoveAttribute("collapsed");

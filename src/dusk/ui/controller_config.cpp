@@ -8,7 +8,6 @@
 #include "dusk/config.hpp"
 #include "dusk/imgui/ImGuiEngine.hpp"
 #include "dusk/settings.h"
-#include "dusk/touch_controls.hpp"
 
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_keyboard.h>

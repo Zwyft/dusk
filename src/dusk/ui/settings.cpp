@@ -1669,6 +1669,122 @@ SettingsWindow::SettingsWindow(bool prelaunch) : mPrelaunch(prelaunch) {
             "Recording Mode",
             "Disables the game HUD and all background music.<br/><br/>Useful for recording footage.");
     });
+
+    add_tab("Randomizer", [this](Rml::Element* content) {
+        auto& leftPane = add_child<Pane>(content, Pane::Type::Controlled);
+        auto& rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+
+        leftPane.add_section("General", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.enabled,
+            {
+                .key = "Enable Randomizer",
+                .helpText = "Enable native item randomization.<br/><br/>"
+                            "Requires a fresh save or seed generation.",
+            });
+
+        leftPane.register_control(
+            leftPane.add_child<StringButton>(StringButton::Props{
+                .key = "Seed",
+                .getValue = [] { return getSettings().randomizer.seed.getValue(); },
+                .setValue = [](Rml::String val) { getSettings().randomizer.seed.setValue(val); config::Save(); },
+            }),
+            rightPane, [](Pane& pane) {
+                pane.clear();
+                pane.add_text("The unique string used to generate the randomized item layout.");
+            });
+
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "Logic",
+                .getValue = [] {
+                    const char* labels[] = {"Glitchless", "Glitched", "No Logic"};
+                    return labels[static_cast<u8>(getSettings().randomizer.logic.getValue())];
+                },
+                .isModified = [] {
+                    return getSettings().randomizer.logic.getValue() != getSettings().randomizer.logic.getDefaultValue();
+                },
+            }),
+            rightPane, [](Pane& pane) {
+                const char* labels[] = {"Glitchless", "Glitched", "No Logic"};
+                for (int i = 0; i < 3; ++i) {
+                    pane.add_button({
+                            .text = labels[i],
+                            .isSelected = [i] {
+                                return getSettings().randomizer.logic.getValue() == static_cast<RandomizerLogic>(i);
+                            },
+                        })
+                        .on_pressed([i] {
+                            mDoAud_seStartMenu(kSoundItemChange);
+                            getSettings().randomizer.logic.setValue(static_cast<RandomizerLogic>(i));
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>Determines how the shuffler ensures the game is beatable.");
+            });
+
+        leftPane.register_control(
+            leftPane.add_select_button({
+                .key = "Goal",
+                .getValue = [] {
+                    const char* labels[] = {"Defeat Ganon", "All Dungeons", "Triforce Hunt"};
+                    return labels[static_cast<u8>(getSettings().randomizer.goal.getValue())];
+                },
+                .isModified = [] {
+                    return getSettings().randomizer.goal.getValue() != getSettings().randomizer.goal.getDefaultValue();
+                },
+            }),
+            rightPane, [](Pane& pane) {
+                const char* labels[] = {"Defeat Ganon", "All Dungeons", "Triforce Hunt"};
+                for (int i = 0; i < 3; ++i) {
+                    pane.add_button({
+                            .text = labels[i],
+                            .isSelected = [i] {
+                                return getSettings().randomizer.goal.getValue() == static_cast<RandomizerGoal>(i);
+                            },
+                        })
+                        .on_pressed([i] {
+                            mDoAud_seStartMenu(kSoundItemChange);
+                            getSettings().randomizer.goal.setValue(static_cast<RandomizerGoal>(i));
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>The win condition for this randomized seed.");
+            });
+
+        leftPane.add_section("Shuffle Options", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleDungeonItems,
+            {
+                .key = "Shuffle Dungeon Items",
+                .helpText = "Small Keys, Big Keys, Maps, and Compasses are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleBugs,
+            {
+                .key = "Shuffle Golden Bugs",
+                .helpText = "Golden Bugs are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shufflePoes,
+            {
+                .key = "Shuffle Poe Souls",
+                .helpText = "Poe Souls are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleSkills,
+            {
+                .key = "Shuffle Hidden Skills",
+                .helpText = "Hidden Skills are shuffled into the item pool.",
+            });
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.shuffleShops,
+            {
+                .key = "Shuffle Shops",
+                .helpText = "All shop items are randomized.",
+            });
+
+        leftPane.add_section("Rules", true);
+        config_bool_select(leftPane, rightPane, getSettings().randomizer.openCastle,
+            {
+                .key = "Open Hyrule Castle",
+                .helpText = "Hyrule Castle is open from the start (no Fused Shadows/Mirror Shards needed).",
+            });
+    });
 }
 
 void SettingsWindow::update() {

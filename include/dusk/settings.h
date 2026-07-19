@@ -60,6 +60,18 @@ enum class MagicArmorMode : u8 {
     COSMETIC = 4,
 };
 
+enum class RandomizerLogic : u8 {
+    Glitchless = 0,
+    Glitched = 1,
+    NoLogic = 2,
+};
+
+enum class RandomizerGoal : u8 {
+    Ganon = 0,
+    AllDungeons = 1,
+    TriforceHunt = 2,
+};
+
 enum class BattleBGMMode : u8 {
     On = 0,
     Off = 1,
@@ -84,6 +96,18 @@ template <>
 struct ConfigEnumRange<BloomMode> {
     static constexpr auto min = BloomMode::Off;
     static constexpr auto max = BloomMode::Dusk;
+};
+
+template <>
+struct ConfigEnumRange<RandomizerLogic> {
+    static constexpr auto min = RandomizerLogic::Glitchless;
+    static constexpr auto max = RandomizerLogic::NoLogic;
+};
+
+template <>
+struct ConfigEnumRange<RandomizerGoal> {
+    static constexpr auto min = RandomizerGoal::Ganon;
+    static constexpr auto max = RandomizerGoal::TriforceHunt;
 };
 
 template <>
@@ -232,6 +256,7 @@ struct UserSettings {
 
         // Audio
         ConfigVar<bool> noLowHpSound;
+        ConfigVar<bool> midnasLamentNonStop;
         ConfigVar<BattleBGMMode> battleBGM;
 
         // Input
@@ -317,29 +342,17 @@ struct UserSettings {
     } game;
 
     struct {
-        // Touch controls
         ConfigVar<bool> enabled;
-        ConfigVar<bool> menuTapNav;
-        ConfigVar<float> opacity;
-        ConfigVar<float> scale;
-        ConfigVar<float> btnAX, btnAY;
-        ConfigVar<float> btnBX, btnBY;
-        ConfigVar<float> btnXX, btnXY;
-        ConfigVar<float> btnYX, btnYY;
-        ConfigVar<float> btnLX, btnLY;
-        ConfigVar<float> btnRX, btnRY;
-        ConfigVar<float> btnZX, btnZY;
-        ConfigVar<float> btnStartX, btnStartY;
-        ConfigVar<float> dpadX, dpadY;
-        ConfigVar<float> stickMainX, stickMainY;
-        ConfigVar<float> stickCX, stickCY;
-        ConfigVar<int> stickMainDeadzone;
-        ConfigVar<int> stickCDeadzone;
-        ConfigVar<bool> floatingCamera;
-        ConfigVar<float> floatingCameraX;
-        ConfigVar<float> floatingCameraY;
-        ConfigVar<float> floatingCameraSize;
-    } touch;
+        ConfigVar<std::string> seed;
+        ConfigVar<RandomizerLogic> logic;
+        ConfigVar<RandomizerGoal> goal;
+        ConfigVar<bool> shuffleDungeonItems;
+        ConfigVar<bool> shuffleBugs;
+        ConfigVar<bool> shufflePoes;
+        ConfigVar<bool> shuffleSkills;
+        ConfigVar<bool> shuffleShops;
+        ConfigVar<bool> openCastle;
+    } randomizer;
 
     struct {
         ConfigVar<std::string> isoPath;

@@ -9,9 +9,22 @@
 #include "f_op/f_op_camera_mng.h"
 #include "SSystem/SComponent/c_math.h"
 #include "Z2AudioLib/Z2Instances.h"
+#include "dusk/randomizer/RandomizerManager.hpp"
 #include <cmath>
 #include <cstring>
 
+int daTbox_c::getItemNo() {
+    int itemNo = (field_0x982 >> 8) & 0xff;
+    
+    u8 randomizedItem = dusk::randomizer::RandomizerManager::instance().getItemAtLocation(
+        dComIfGp_getStartStageName(), fopAcM_GetRoomNo(this), getTboxNo(), 0);
+    
+    if (randomizedItem != 0xFF) {
+        return randomizedItem;
+    }
+    
+    return itemNo;
+}
 static const f32 l_cull_size_box[6] = { -150.0f, -10.0f, -150.0f, 150.0f, 300.0f, 100.0f };
 
 static const cM3dGCylS l_cyl_info[3] = {

@@ -1428,6 +1428,8 @@ set(DUSK_FILES
         src/dusk/crash_reporting.cpp
         src/dusk/data.cpp
         src/dusk/data.hpp
+        src/dusk/save_import.cpp
+        include/dusk/save_import.hpp
         src/dusk/endian.cpp
         src/dusk/extras.c
         src/dusk/file_select.cpp
@@ -1451,6 +1453,8 @@ set(DUSK_FILES
         src/dusk/speedrun.cpp
         src/dusk/string.cpp
         src/dusk/stubs.cpp
+        include/dusk/platform_support.hpp
+        src/dusk/platform_support.cpp
         include/dusk/texture_replacements.hpp
         src/dusk/texture_replacements.cpp
         src/dusk/touch_camera.cpp
@@ -1513,6 +1517,9 @@ set(DUSK_FILES
         src/dusk/ui/pane.hpp
         src/dusk/ui/menu_bar.cpp
         src/dusk/ui/menu_bar.hpp
+        src/dusk/item_checklist/ItemChecklist.cpp
+        src/dusk/item_checklist/ItemChecklistDocument.cpp
+        src/dusk/randomizer/RandomizerManager.cpp
         src/dusk/ui/mods.cpp
         src/dusk/ui/prelaunch.cpp
         src/dusk/ui/prelaunch.hpp

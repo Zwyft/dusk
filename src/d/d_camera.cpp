@@ -7703,9 +7703,8 @@ bool dCamera_c::freeCamera() {
         float mouseX, mouseY;
         SDL_GetRelativeMouseState(&mouseX, &mouseY);
         constexpr float kMouseSensitivity = 0.005f;
-        float mouseScale = kMouseSensitivity * dusk::getSettings().game.freeCameraSensitivity;
-        camMovement.x += mouseX * mouseScale;
-        camMovement.y += mouseY * mouseScale;
+        camMovement.x += mouseX * kMouseSensitivity * dusk::getSettings().game.freeCameraXSensitivity;
+        camMovement.y += mouseY * kMouseSensitivity * dusk::getSettings().game.freeCameraYSensitivity;
     }
     f32 magnitude = sqrt(mPadInfo.mCStick.mLastPosX * mPadInfo.mCStick.mLastPosX + mPadInfo.mCStick.mLastPosY * mPadInfo.mCStick.mLastPosY);
 

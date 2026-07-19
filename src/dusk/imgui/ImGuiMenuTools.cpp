@@ -44,7 +44,6 @@ namespace dusk {
             ImGui::BeginDisabled(getSettings().game.speedrunMode);
 
             ImGui::MenuItem("Save Editor", hotkeys::SHOW_SAVE_EDITOR, &m_showSaveEditor);
-            ImGui::MenuItem("Map Loader", hotkeys::SHOW_MAP_LOADER, &m_showMapLoader);
             ImGui::MenuItem("Save States", hotkeys::SHOW_STATE_SHARE, &m_showStateShare);
 
             ImGui::EndDisabled();
@@ -61,7 +60,11 @@ namespace dusk {
 #endif
 
             ImGui::EndMenu();
+        } // close Tools menu
+        if (ImGui::BeginMenu("Settings")) {
+            ImGui::EndMenu();
         }
+
 
         if (ImGui::BeginMenu("Debug")) {
             ImGui::BeginDisabled(getSettings().game.speedrunMode);
@@ -108,8 +111,6 @@ namespace dusk {
             ImGui::MenuItem("Debug Camera", hotkeys::SHOW_DEBUG_CAMERA, &m_showCameraOverlay);
             ImGui::MenuItem("Audio Debug", hotkeys::SHOW_AUDIO_DEBUG, &m_showAudioDebug);
             ImGui::MenuItem("Bloom", nullptr, &m_showBloomWindow);
-            ImGui::MenuItem("Stub Log", nullptr, &m_showStubLog);
-            ImGui::MenuItem("Actor Spawner", nullptr, &m_showActorSpawner);
 
             if (!dusk::IsGameLaunched) {
                 ImGui::EndDisabled();
