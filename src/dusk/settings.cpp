@@ -100,7 +100,13 @@ UserSettings g_userSettings = {
         .mouseCameraSensitivity {"game.mouseCameraSensitivity", 1.0f},
         .invertMouseY {"game.invertMouseY", false},
         .freeCamera {"game.freeCamera", false},
-        .enableTouchControls {"game.enableTouchControls", false},
+        .enableTouchControls {"game.enableTouchControls",
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IOS && !TARGET_OS_MACCATALYST)
+            true
+#else
+            false
+#endif
+        },
         .enableMenuPointer {"game.enableMenuPointer", true},
         .touchControlsLayout {"game.touchControlsLayout", ui::ControlLayout{}},
         .invertCameraXAxis {"game.invertCameraXAxis", false},

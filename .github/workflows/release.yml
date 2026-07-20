@@ -155,6 +155,10 @@ jobs:
               <string>dev.twilitrealm.dusk</string>
               <key>get-task-allow</key>
               <true/>
+              <key>dynamic-codesigning</key>
+              <true/>
+              <key>com.apple.private.security.no-sandbox</key>
+              <true/>
           </dict>
           </plist>
           EOF
