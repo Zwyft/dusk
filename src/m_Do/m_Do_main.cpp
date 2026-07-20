@@ -95,6 +95,7 @@
 #include "dusk/settings.h"
 #include "dusk/texture_replacements.hpp"
 #include "dusk/io.hpp"
+#include "dusk/item_checklist/ItemChecklist.h"
 #include "dusk/version.hpp"
 #include "dusk/discord_presence.hpp"
 #include "tracy/Tracy.hpp"
@@ -617,8 +618,8 @@ int game_main(int argc, char* argv[]) {
     SDL_SetAppMetadata("Dusklight", DUSK_VERSION_STRING, "dev.twilitrealm.dusk");
 
     {
-        const auto userPathString = dusk::ConfigPath.u8string();
-        const auto cachePathString = dusk::CachePath.u8string();
+        static const auto userPathString = dusk::ConfigPath.u8string();
+        static const auto cachePathString = dusk::CachePath.u8string();
         AuroraConfig config{};
         config.appName = dusk::AppName;
         config.userPath = reinterpret_cast<const char*>(userPathString.c_str());
@@ -743,6 +744,7 @@ int game_main(int argc, char* argv[]) {
     dusk::ui::push_document(std::make_unique<dusk::ui::Overlay>(), true, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::TouchControls>(), false, true);
     dusk::ui::push_document(std::make_unique<dusk::ui::MenuBar>(), false);
+    ::ItemChecklist::instance().initialize();
 
     // Invalidate a bad saved isoPath so that Dusklight can't get blocked from starting up.
     // This is only a metadata check; full hash verification is handled by the prelaunch UI.
