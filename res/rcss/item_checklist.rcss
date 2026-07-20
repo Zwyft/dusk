@@ -126,13 +126,11 @@
 }
 
 .tracker-card.locked {
-    opacity: 0.55;
-    filter: grayscale(100%) brightness(0.72) contrast(0.92);
+    opacity: 0.35;
 }
 
 .tracker-card.owned {
     opacity: 1;
-    filter: none;
 }
 
 .tracker-card-icon {
