@@ -683,9 +683,10 @@ int game_main(int argc, char* argv[]) {
         // where it crashes if the cache exists on boot before context is fully initialized.
         if (dusk::IsMobile) {
             std::error_code ec;
-            std::filesystem::remove_all(dusk::ConfigPath / "Cache", ec);
+            std::filesystem::remove(dusk::CachePath / "pipeline_cache.db", ec);
+            std::filesystem::remove(dusk::CachePath / "pipeline_cache.db-journal", ec);
             if (ec) {
-                DuskLog.warn("Failed to clear Aurora Cache directory: {}", ec.message());
+                DuskLog.warn("Failed to clear Aurora pipeline_cache.db: {}", ec.message());
             }
         }
 
