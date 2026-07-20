@@ -679,6 +679,16 @@ int game_main(int argc, char* argv[]) {
             }
         }
 
+        // Workaround: Prevent Aurora pipeline_worker race condition on mobile
+        // where it crashes if the cache exists on boot before context is fully initialized.
+        if (dusk::IsMobile) {
+            std::error_code ec;
+            std::filesystem::remove_all(dusk::ConfigPath / "Cache", ec);
+            if (ec) {
+                DuskLog.warn("Failed to clear Aurora Cache directory: {}", ec.message());
+            }
+        }
+
         auroraInfo = aurora_initialize(argc, argv, &config);
     }
 
