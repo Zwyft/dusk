@@ -152,12 +152,12 @@ ItemChecklistDocument::CardRefs ItemChecklistDocument::createCard(
 
     const auto iconPath = ItemChecklist::instance().iconPathFor(item.id);
     if (!iconPath.empty()) {
-        auto* icon = append(button, "img");
+        auto* icon = append(button, "div");
         if (icon == nullptr) {
             return refs;
         }
         icon->SetClass("tracker-card-icon", true);
-        icon->SetAttribute("src", iconPath);
+        icon->SetProperty("background-image", fmt::format("url('{}')", iconPath));
         refs.icon = icon;
         refs.iconSource = iconPath;
     }
@@ -194,10 +194,10 @@ void ItemChecklistDocument::refreshItem(uint8_t itemId) {
     if (it->second.icon != nullptr) {
         const auto iconPath = ItemChecklist::instance().iconPathFor(itemId);
         if (iconPath.empty()) {
-            it->second.icon->RemoveAttribute("src");
+            it->second.icon->RemoveProperty("background-image");
             it->second.iconSource.clear();
         } else if (iconPath != it->second.iconSource) {
-            it->second.icon->SetAttribute("src", iconPath);
+            it->second.icon->SetProperty("background-image", fmt::format("url('{}')", iconPath));
             it->second.iconSource = iconPath;
         }
     }
