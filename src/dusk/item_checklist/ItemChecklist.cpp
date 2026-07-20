@@ -278,7 +278,7 @@ void ItemChecklist::loadItemDefinitions() {
                 info.name = item.value("name", "");
                 info.tab = item.value("tab", "Essentials");
                 info.category = item.value("category", "Wheel");
-                info.iconPath = item.value("icon", "");
+                info.iconPath = item.value("iconPath", "");
                 info.liveItemId = item.value("liveItemId", info.id);
                 info.useLiveState = item.value("useLiveState", true);
                 info.isQuestItem = item.value("isQuestItem", false);
