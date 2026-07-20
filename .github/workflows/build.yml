@@ -164,8 +164,6 @@ jobs:
               <true/>
               <key>dynamic-codesigning</key>
               <true/>
-              <key>com.apple.private.security.no-sandbox</key>
-              <true/>
           </dict>
           </plist>
           EOF
